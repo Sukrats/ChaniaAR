@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_profile"
+        android:enabled="true"
+        android:icon="@drawable/ic_person_white_48dp"
+        android:title="@string/profile"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_camera"
+        android:enabled="true"
+        android:icon="@drawable/ic_party_mode_white_48dp"
+        android:title="@string/arview"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_collection"
+        android:enabled="true"
+        android:icon="@drawable/ic_collections_white_48dp"
+        android:title="@string/collection"
+        app:showAsAction="ifRoom" />
+</menu>
