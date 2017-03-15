@@ -138,7 +138,7 @@ public class MapsActivity extends AppCompatActivity implements
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setPadding(0,0,0,100);
-		
+
         mUiSettings = mMap.getUiSettings();
         //mUiSettings.setZoomControlsEnabled(true);
         //mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
