@@ -385,9 +385,11 @@ public class MapsActivity extends AppCompatActivity implements
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
     }
 
-    public void userAtLocation(Location location){
-        Toast.makeText(this,"LOCATION READY FOR EVENT", Toast.LENGTH_LONG).show();
-    }
+
+    public void userEnteredArea(int areaID){}
+
+    public void userLeftArea(int areaID){}
+
 
     private class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter{
 

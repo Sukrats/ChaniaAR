@@ -7,6 +7,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 import tuc.christos.chaniacitywalk2.data.dataManager;
+import tuc.christos.chaniacitywalk2.model.Scene;
 
 /**
  * Created by Christos on 16-Mar-17.
@@ -33,9 +34,27 @@ public class LocationEventHandler implements LocationCallback {
 
     public void handleNewLocation(Location location){
         this.lastKnownLocation = location;
-        for(LocationEventsListener temp: iLocationEventListener)
-            temp.userAtLocation(location);
+
+        for(Scene temp:mDataManager.getScenes()) {
+            Location fence = new Location("");
+            fence.setLatitude(temp.getLatitude());
+            fence.setLongitude(temp.getLongitude());
+            if (location.distanceTo(fence) <= MIN_RADIUS ){
+                triggerUserEnteredArea(temp.getId());
+            }
+        }
+
+
         //Toast.makeText(mContext,"LOCATION READY FOR EVENT", Toast.LENGTH_LONG).show();
     }
 
+    public void triggerUserEnteredArea(int id){
+        for(LocationEventsListener temp: iLocationEventListener)
+            temp.userEnteredArea(id);
+    }
+
+    public void triggerUserLeftArea(int id){
+        for(LocationEventsListener temp: iLocationEventListener)
+            temp.userLeftArea(id);
+    }
 }
