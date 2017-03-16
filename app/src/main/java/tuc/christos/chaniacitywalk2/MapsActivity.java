@@ -12,26 +12,19 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.support.design.internal.BottomNavigationItemView;
 import android.support.design.widget.BottomNavigationView;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -41,7 +34,6 @@ import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -49,16 +41,12 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
+import tuc.christos.chaniacitywalk2.collection.CollectionSiblings;
 import tuc.christos.chaniacitywalk2.model.Scene;
-import tuc.christos.chaniacitywalk2.Collection.SceneListActivity;
-import tuc.christos.chaniacitywalk2.Data.dataManager;
-import tuc.christos.chaniacitywalk2.Utils.PermissionUtils;
-import tuc.christos.chaniacitywalk2.Utils.Tags;
+import tuc.christos.chaniacitywalk2.data.dataManager;
+import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 
 
 public class MapsActivity extends AppCompatActivity implements
@@ -94,7 +82,7 @@ public class MapsActivity extends AppCompatActivity implements
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             buildIntentForActivity(item.getItemId());
-            return false;
+            return true;
         }
     };
 	
@@ -107,7 +95,8 @@ public class MapsActivity extends AppCompatActivity implements
         mLocationProvider = new LocationProvider( this, this);
         //get data Manager instance and read from db
 		mDataManager = dataManager.getInstance();
-        mDataManager.init(this);
+        if(!mDataManager.isInstantiated())
+            mDataManager.init(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -279,18 +268,33 @@ public class MapsActivity extends AppCompatActivity implements
     }
 	
 	private void buildIntentForActivity(int id){
-        Intent intent;
+        Intent intent = null;
         switch(id) {
-            case R.id.action_camera:
-                intent = new Intent(this, SceneListActivity.class);
-            case R.id.action_collection:
-                intent = new Intent(this, SceneListActivity.class);
             case R.id.action_profile:
-                intent = new Intent(this, SceneListActivity.class);
-            default:
-                intent = new Intent(this, SceneListActivity.class);
+                break;
+            case R.id.action_camera:
+                break;
+            case R.id.action_collection:
+                intent = new Intent(this, CollectionSiblings.class);
+                break;
         }
-        startActivity(intent);
+        if(intent!=null){
+             aSyncActivity(intent);
+        }
+
+    }
+
+    public void aSyncActivity(final Intent intent){
+        Handler mHandler = new Handler();
+        mHandler.postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                //start your activity here
+                startActivity(intent);
+            }
+
+        }, 200L);
     }
 
    public void setCameraPosition(double latitude, double longitude) {

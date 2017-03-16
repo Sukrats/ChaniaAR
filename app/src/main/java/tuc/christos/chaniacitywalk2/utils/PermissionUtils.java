@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tuc.christos.chaniacitywalk2.Utils;
+package tuc.christos.chaniacitywalk2.utils;
 
 import android.Manifest;
 import android.app.AlertDialog;

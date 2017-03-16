@@ -1,15 +1,17 @@
-package tuc.christos.chaniacitywalk2.Collection;
+package tuc.christos.chaniacitywalk2.collection;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -17,9 +19,10 @@ import android.widget.TextView;
 import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
 
+import tuc.christos.chaniacitywalk2.data.dataManager;
 import tuc.christos.chaniacitywalk2.R;
 
-import tuc.christos.chaniacitywalk2.Collection.dummy.DummyContent;
+import tuc.christos.chaniacitywalk2.model.Scene;
 
 import java.util.List;
 
@@ -41,12 +44,17 @@ public class SceneListActivity extends AppCompatActivity {
      */
     private boolean mTwoPane;
 
+    private dataManager mDataManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scene_list);
 
+        mDataManager = dataManager.getInstance();
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
         setSupportActionBar(toolbar);
         //toolbar.setTitle(getTitle());
 
@@ -68,6 +76,10 @@ public class SceneListActivity extends AppCompatActivity {
         assert recyclerView != null;
         setupRecyclerView((RecyclerView) recyclerView);
 
+        CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
+        if (appBarLayout != null) {
+            appBarLayout.setBackgroundResource(R.drawable.venice_flag);
+        }
         if (findViewById(R.id.scene_detail_container) != null) {
             // The detail container view will be present only in the
             // large-screen layouts (res/values-w900dp).
@@ -76,7 +88,12 @@ public class SceneListActivity extends AppCompatActivity {
             mTwoPane = true;
         }
     }
-
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_collection_siblings, menu);
+        return true;
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -95,14 +112,14 @@ public class SceneListActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DummyContent.ITEMS));
+        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(mDataManager.getScenes()));
     }
 
-    public class SimpleItemRecyclerViewAdapter extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
+    class SimpleItemRecyclerViewAdapter extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
 
-        private final List<DummyContent.DummyItem> mValues;
+        private final List<Scene> mValues;
 
-        public SimpleItemRecyclerViewAdapter(List<DummyContent.DummyItem> items) {
+        SimpleItemRecyclerViewAdapter(List<Scene> items) {
             mValues = items;
         }
 
@@ -116,15 +133,15 @@ public class SceneListActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             holder.mItem = mValues.get(position);
-            holder.mIdView.setText(mValues.get(position).id);
-            holder.mContentView.setText(mValues.get(position).content);
+            holder.mIdView.setText(mValues.get(position).getName());
+            //holder.mContentView.setText(mValues.get(position).getTAG());
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (mTwoPane) {
                         Bundle arguments = new Bundle();
-                        arguments.putString(SceneDetailFragment.ARG_ITEM_ID, holder.mItem.id);
+                        arguments.putString(SceneDetailFragment.ARG_ITEM_ID, Integer.toString(holder.mItem.getId()));
                         SceneDetailFragment fragment = new SceneDetailFragment();
                         fragment.setArguments(arguments);
                         getSupportFragmentManager().beginTransaction()
@@ -133,7 +150,7 @@ public class SceneListActivity extends AppCompatActivity {
                     } else {
                         Context context = v.getContext();
                         Intent intent = new Intent(context, SceneDetailActivity.class);
-                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, holder.mItem.id);
+                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Integer.toString(holder.mItem.getId()));
 
                         context.startActivity(intent);
                     }
@@ -146,22 +163,22 @@ public class SceneListActivity extends AppCompatActivity {
             return mValues.size();
         }
 
-        public class ViewHolder extends RecyclerView.ViewHolder {
-            public final View mView;
-            public final TextView mIdView;
-            public final TextView mContentView;
-            public DummyContent.DummyItem mItem;
+        class ViewHolder extends RecyclerView.ViewHolder {
+            final View mView;
+            final TextView mIdView;
+            //public final TextView mContentView;
+            Scene mItem;
 
-            public ViewHolder(View view) {
+            ViewHolder(View view) {
                 super(view);
                 mView = view;
                 mIdView = (TextView) view.findViewById(R.id.id);
-                mContentView = (TextView) view.findViewById(R.id.content);
+                //mContentView = (TextView) view.findViewById(R.id.content);
             }
 
             @Override
             public String toString() {
-                return super.toString() + " '" + mContentView.getText() + "'";
+                return super.toString();// + " '" + mContentView.getText() + "'";
             }
         }
     }

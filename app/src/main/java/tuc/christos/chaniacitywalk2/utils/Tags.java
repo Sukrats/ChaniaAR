@@ -1,7 +1,8 @@
-package tuc.christos.chaniacitywalk2.Utils;
+package tuc.christos.chaniacitywalk2.utils;
 
 /**
  * Created by Christos on 14-Mar-17.
+ *
  */
 
 public enum Tags {

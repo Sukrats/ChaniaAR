@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.Data;
+package tuc.christos.chaniacitywalk2.data;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -17,16 +17,15 @@ import java.util.ArrayList;
 
 import tuc.christos.chaniacitywalk2.model.Scene;
 
-import static android.webkit.ConsoleMessage.MessageLevel.LOG;
-
 /**
  * Created by Christos on 16-Feb-17.
+ *
  */
 
-public final class mDBHelper extends SQLiteOpenHelper {
+final class mDBHelper extends SQLiteOpenHelper {
 
-    public static final String TAG = "myDBHelper";
-    public static final int DB_VERSION = 1;
+    private static final String TAG = "myDBHelper";
+    private static final int DB_VERSION = 1;
     private static String DB_PATH;// = "/data/data/tuc.christos.chaniacitywalk2/databases/";
     private static String DB_NAME = "scenesDBtest.db";
     private SQLiteDatabase myDataBase;
@@ -49,7 +48,7 @@ public final class mDBHelper extends SQLiteOpenHelper {
                     FeedEntry.TABLE_COLUMN_HASAR + "BOOLEAN)";
     */
 
-    public mDBHelper(Context context){
+    mDBHelper(Context context){
         super(context, DB_NAME, null, DB_VERSION);
         DB_PATH = context.getApplicationInfo().dataDir + "/databases/";
         this.mContext = context;
@@ -59,7 +58,7 @@ public final class mDBHelper extends SQLiteOpenHelper {
     /**
      * Creates a empty database on the system and rewrites it with your own database.
      * */
-    public void createDataBase() throws IOException{
+    void createDataBase() throws IOException{
 
         boolean dbExist = checkDataBase();
 
@@ -93,7 +92,7 @@ public final class mDBHelper extends SQLiteOpenHelper {
         if(checkDB != null){
             checkDB.close();
         }
-        return checkDB != null ? true : false;
+        return checkDB != null;
     }
 
     /**
@@ -126,13 +125,13 @@ public final class mDBHelper extends SQLiteOpenHelper {
 
     }
 
-    public void openDataBase() throws SQLException {
+    void openDataBase() throws SQLException {
         //Open the database
         String myPath = DB_PATH + DB_NAME;
         myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
     }
 
-    public void closeDataBase(){
+    void closeDataBase(){
         myDataBase.close();
     }
 	
@@ -151,7 +150,7 @@ public final class mDBHelper extends SQLiteOpenHelper {
        // onUpgrade(db, oldVersion, newVersion);
     }
 
-    public Cursor getEntries(){
+    Cursor getEntries(){
 
         String selectQ = "SELECT * FROM Scenes";
 
@@ -159,7 +158,7 @@ public final class mDBHelper extends SQLiteOpenHelper {
         return myDataBase.rawQuery(selectQ,null);
     }
 
-    public void updateLocalDB(ArrayList<Scene> Scenes){
+    void updateLocalDB(ArrayList<Scene> Scenes){
 
         String deleteQ = "DELETE * FROM Scenes";
         myDataBase.rawQuery(deleteQ, null);
@@ -189,16 +188,16 @@ public final class mDBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static class FeedEntry implements BaseColumns{
-        public static final String TABLE_NAME="Scenes";
-        public static final String TABLE_COLUMN_NAME="name";
-        public static final String TABLE_COLUMN_LATITUDE="latitude";
-        public static final String TABLE_COLUMN_LONGITUDE="longitude";
-        public static final String TABLE_COLUMN_VISITED="visited";
-        public static final String TABLE_COLUMN_VISIBLE="visible";
-        public static final String TABLE_COLUMN_HASAR="hasAR";
-        public static final String TABLE_COLUMN_DESCRIPTION="description";
-        public static final String TABLE_COLUMN_TAG="TAG";
+    static class FeedEntry implements BaseColumns{
+        //public static final String TABLE_NAME="Scenes";
+        static final String TABLE_COLUMN_NAME="name";
+        static final String TABLE_COLUMN_LATITUDE="latitude";
+        static final String TABLE_COLUMN_LONGITUDE="longitude";
+        static final String TABLE_COLUMN_VISITED="visited";
+        static final String TABLE_COLUMN_VISIBLE="visible";
+        static final String TABLE_COLUMN_HASAR="hasAR";
+        static final String TABLE_COLUMN_DESCRIPTION="description";
+        static final String TABLE_COLUMN_TAG="TAG";
     }
 
 }

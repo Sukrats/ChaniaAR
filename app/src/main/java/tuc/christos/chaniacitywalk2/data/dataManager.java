@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.Data;
+package tuc.christos.chaniacitywalk2.data;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -12,7 +12,6 @@ import com.google.android.gms.maps.model.Polyline;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Random;
 
 import tuc.christos.chaniacitywalk2.model.Scene;
 
@@ -24,9 +23,15 @@ import tuc.christos.chaniacitywalk2.model.Scene;
  public class dataManager {
 
     private static dataManager INSTANCE = null;
-	
+
+    private boolean initiated = false;
+
     private ArrayList<Scene> Route = new ArrayList<>();
+    private HashMap<String,Scene> routeMap = new HashMap<>();
+
     private ArrayList<Scene> Scenes = new ArrayList<>();
+    private HashMap<String,Scene> scenesMap = new HashMap<>();
+
 
     private HashMap<Marker,Scene> markerSceneMap = new HashMap<>();
     private HashMap<Scene,Marker> sceneMarkerMap = new HashMap<>();
@@ -38,7 +43,7 @@ import tuc.christos.chaniacitywalk2.model.Scene;
     private HashMap<ArrayList<LatLng>,Scene> pointsToSceneMap = new HashMap<>();
 
     private String TAG = "Data Manager";
-    private Context mContext;
+    //private Context mContext;
     private mDBHelper mDBh;
 
     private dataManager(){}
@@ -52,16 +57,20 @@ import tuc.christos.chaniacitywalk2.model.Scene;
         instantiate();*/
         return INSTANCE;
     }
+
+    public boolean isInstantiated(){
+        return (initiated);
+    }
 	
 	public void init(Context context){
-        mContext = context;
-        initDBhelper();
+        this.initiated = true;
+        initDBhelper(context);
         instantiate();
         mDBh.closeDataBase();
     }
     
-	private void initDBhelper(){
-        mDBh = new mDBHelper(mContext);
+	private void initDBhelper(Context context){
+        this.mDBh = new mDBHelper(context);
         try {
             mDBh.createDataBase();
         }catch(IOException e){
@@ -94,10 +103,13 @@ import tuc.christos.chaniacitywalk2.model.Scene;
 
                     Scene temp = new Scene(lat, lon, id, name, tVisit, tVisible, tHasAR, descr, TAG);
 
-                    Scenes.add(temp);
+                    this.Scenes.add(temp);
+                    this.scenesMap.put(Integer.toString(id),temp);
                     if(temp.isHasAR()){
-                        Route.add(temp);
+                        this.Route.add(temp);
+                        this.routeMap.put(Integer.toString(id),temp);
                     }
+
                 }
                 setPolyPoints();
     }
@@ -149,53 +161,26 @@ import tuc.christos.chaniacitywalk2.model.Scene;
         return true;
     }
 
+    public Scene getScene(String id){
+        return scenesMap.get(id);
+    }
+
     public ArrayList<Scene> getScenes(){
                    return Scenes;
     }
 
+    public ArrayList<Scene> getScenesFromTag(String tag){
+        ArrayList<Scene> result = new ArrayList<>();
+        for(Scene temp: Scenes){
+            if(temp.getTAG().equalsIgnoreCase(tag)){
+                result.add(temp);
+            }
+        }
+        return result;
+    }
+
     public ArrayList<Scene> getRoute() {
         return Route;
-    }
-
-    public void setRoute(ArrayList<Scene> route) {
-        Route = route;
-    }
-
-    void setAllInvisible(){
-        for(Scene temp: Scenes)
-        {
-            temp.setVisible(false);
-        }
-    }
-
-    void setAllvisible(){
-        for(Scene temp: Scenes)
-        {
-            temp.setVisible(true);
-        }
-    }
-
-    void setAllvisited(){
-        for(Scene temp: Scenes)
-        {
-            temp.setVisited(true);
-        }
-    }
-
-    void unsetAllvisited(){
-        for(Scene temp: Scenes)
-        {
-            temp.setVisited(false);
-        }
-    }
-
-    void setRandVisited(){
-        for(Scene temp: Scenes)
-        {
-            Random rd = new Random();
-            if(rd.nextInt(50)%2==1)
-                temp.setVisited(true);
-        }
     }
 
     private void updateLocalDB(){

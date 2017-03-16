@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.Collection;
+package tuc.christos.chaniacitywalk2.collection;
 
 import android.content.Intent;
 import android.os.Bundle;
