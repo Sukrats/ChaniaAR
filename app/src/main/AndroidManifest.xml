@@ -46,7 +46,7 @@
                 android:value="tuc.christos.chaniacitywalk2.collection.SceneListActivity" />
         </activity>
         <activity
-            android:name=".collection.CollectionSiblings"
+            android:name=".collection.Collection"
             android:label="@string/title_activity_collection_siblings"
             android:parentActivityName=".MapsActivity"
             android:theme="@style/AppTheme">

@@ -148,7 +148,7 @@ public abstract class PermissionUtils {
         }
 
         @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
+        public Dialog onCreateDialog( Bundle savedInstanceState) {
             Bundle arguments = getArguments();
             final int requestCode = arguments.getInt(ARGUMENT_PERMISSION_REQUEST_CODE);
             mFinishActivity = arguments.getBoolean(ARGUMENT_FINISH_ACTIVITY);

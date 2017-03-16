@@ -41,7 +41,7 @@ import static android.support.v4.app.NavUtils.navigateUpFromSameTask;
  * {@link android.support.v4.app.FragmentStatePagerAdapter}.
  */
 
-public class CollectionSiblings extends AppCompatActivity {
+public class Collection extends AppCompatActivity {
 
 
 

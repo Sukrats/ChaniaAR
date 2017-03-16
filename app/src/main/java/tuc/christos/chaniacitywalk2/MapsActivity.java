@@ -24,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -43,7 +44,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.text.DateFormat;
 import java.util.Date;
 
-import tuc.christos.chaniacitywalk2.collection.CollectionSiblings;
+import tuc.christos.chaniacitywalk2.collection.Collection;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.data.dataManager;
 import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
@@ -51,6 +52,7 @@ import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 
 public class MapsActivity extends AppCompatActivity implements
         LocationCallback,
+        LocationEventsListener,
         GoogleMap.OnMapClickListener,
         OnMapReadyCallback {
 
@@ -62,6 +64,8 @@ public class MapsActivity extends AppCompatActivity implements
     private UiSettings mUiSettings;
 
     private LocationProvider mLocationProvider;
+
+    private LocationEventHandler mEventHandler;
 
     private Marker mSelectedMarker = null;
 
@@ -91,8 +95,14 @@ public class MapsActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        mEventHandler = new LocationEventHandler(this);
+        mEventHandler.registerLocationEventListener(this);
 		//initiate location provider
-        mLocationProvider = new LocationProvider( this, this);
+        mLocationProvider = new LocationProvider(this);
+
+        mLocationProvider.registerLocationListener(this);
+        mLocationProvider.registerLocationListener(mEventHandler);
+
         //get data Manager instance and read from db
 		mDataManager = dataManager.getInstance();
         if(!mDataManager.isInstantiated())
@@ -275,7 +285,7 @@ public class MapsActivity extends AppCompatActivity implements
             case R.id.action_camera:
                 break;
             case R.id.action_collection:
-                intent = new Intent(this, CollectionSiblings.class);
+                intent = new Intent(this, Collection.class);
                 break;
         }
         if(intent!=null){
@@ -373,6 +383,10 @@ public class MapsActivity extends AppCompatActivity implements
     public void handleNewLocation(Location location){
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+    }
+
+    public void userAtLocation(Location location){
+        Toast.makeText(this,"LOCATION READY FOR EVENT", Toast.LENGTH_LONG).show();
     }
 
     private class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter{

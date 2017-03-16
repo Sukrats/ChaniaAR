@@ -16,18 +16,19 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.LocationSource;
 
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListener, LocationListener  {
 
     private static final String TAG = "LocationProvider";
 
-    private static final long DEFAULT_INTERVAL = 5000;
+    private static final long DEFAULT_INTERVAL = 1000;
     private static final long DEFAULT_FASTEST_INTERVAL = 1000;
     private static final int DEFAULT_PRIORITY = LocationRequest.PRIORITY_HIGH_ACCURACY;
 
-    private LocationCallback mLocationCallback;
-    private Context mContext;
+    private ArrayList<LocationCallback> mLocationCallback = new ArrayList<>();
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest = new LocationRequest();
 
@@ -38,18 +39,21 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
     //private boolean mRequestingLocationUpdates = true;
 
 
-    public LocationProvider (Context context, LocationCallback callback){
+    public LocationProvider (Context context){
         this.mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
-
-        this.mContext = context;
-
-        this.mLocationCallback = callback;
-
         createLocationRequest(DEFAULT_INTERVAL,DEFAULT_FASTEST_INTERVAL,DEFAULT_PRIORITY);
+    }
+
+    public void registerLocationListener(LocationCallback callback){
+        this.mLocationCallback.add(callback);
+    }
+
+    public void removeLocationCallbackListener(){
+        this.mLocationCallback = null;
     }
 
     /**
@@ -139,7 +143,8 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
     @Override
     public void onLocationChanged(Location location){
         mLastKnownLocation = location;
-        mLocationCallback.handleNewLocation(location);
+        for(LocationCallback temp: mLocationCallback)
+            temp.handleNewLocation(location);
 
         //Update Location for the provider
         //mListener.onLocationChanged(location);
