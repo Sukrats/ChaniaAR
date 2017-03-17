@@ -34,6 +34,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
@@ -43,6 +45,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.HashMap;
 
 import tuc.christos.chaniacitywalk2.collection.Collection;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -71,14 +74,17 @@ public class MapsActivity extends AppCompatActivity implements
 
     protected static final String TAG = "MAPS ACTIVITY";
 
+    private final float DEFAULT_ZOOM_LEVEL = 17.0f;
+
     protected Location mCurrentLocation;
 	
     protected String mLastUpdateTime;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private HashMap<String,Circle> circleMap =new HashMap<>();
 
     private CameraPosition defaultCameraPosition = new CameraPosition.Builder()
-            .target(new LatLng(35.514388, 24.020335)).zoom(17.0f).bearing(0).tilt(50).build();
+            .target(new LatLng(35.514388, 24.020335)).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
 			
     private boolean camToStart = false;
 
@@ -93,10 +99,10 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
+        setContentView(R.layout.activity_maps_custom);
 
         mEventHandler = new LocationEventHandler(this);
-        mEventHandler.registerLocationEventListener(this);
+        mEventHandler.setLocationEventListener(this);
 		//initiate location provider
         mLocationProvider = new LocationProvider(this);
 
@@ -112,7 +118,6 @@ public class MapsActivity extends AppCompatActivity implements
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
         BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
-
         bottomNavigationView.setOnNavigationItemSelectedListener(mItemSelectedListener);
 
         if (savedInstanceState == null) {
@@ -307,9 +312,9 @@ public class MapsActivity extends AppCompatActivity implements
         }, 200L);
     }
 
-   public void setCameraPosition(double latitude, double longitude) {
+   public void setCameraPosition(double latitude, double longitude, float zoomf) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(latitude, longitude)).zoom(17.0f).bearing(0).tilt(50).build();
+                .target(new LatLng(latitude, longitude)).zoom(zoomf).bearing(0).tilt(50).build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
 
@@ -348,11 +353,13 @@ public class MapsActivity extends AppCompatActivity implements
 
     protected void onStart() {
         mLocationProvider.connect();
+        mEventHandler.setLocationEventListener(this);
         super.onStart();
     }
 
     protected void onStop() {
         mLocationProvider.disconnect();
+        mEventHandler.removeLocationEventListener(this);
         super.onStop();
     }
 
@@ -386,9 +393,26 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
 
-    public void userEnteredArea(int areaID){}
+    public void userEnteredArea(String areaID){
+        Scene scene = mDataManager.getScene(areaID);
+        Toast.makeText(this,"User Entered Area: "+ scene.getName(), Toast.LENGTH_LONG).show();
+        setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
 
-    public void userLeftArea(int areaID){}
+        Circle circle = mMap.addCircle(new CircleOptions()
+                    .center(new LatLng(scene.getLatitude(),scene.getLongitude()))
+                    .radius(15)
+                    .strokeWidth(2)
+                    .strokeColor(ContextCompat.getColor(this,R.color.circleStroke))
+                    .fillColor(ContextCompat.getColor(this,R.color.circleFill)));
+        circleMap.put(areaID,circle);
+    }
+
+    public void userLeftArea(String areaID){
+        Toast.makeText(this,"User Left Area: "+ mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
+        Circle circle = circleMap.get(areaID);
+        circle.setVisible(false);
+        circleMap.remove(areaID);
+    }
 
 
     private class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter{

@@ -11,7 +11,7 @@
         android:id="@+id/action_camera"
         android:enabled="true"
         android:icon="@drawable/ic_party_mode_white_48dp"
-        android:title="@string/arview"
+        android:title="@string/ar_view"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_collection"

@@ -9,8 +9,8 @@ import android.location.Location;
 
 public interface LocationEventsListener {
 
-    void userEnteredArea(int areaID);
+    void userEnteredArea(String areaID);
 
-    void userLeftArea(int areaID);
+    void userLeftArea(String areaID);
 
 }

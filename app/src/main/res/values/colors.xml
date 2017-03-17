@@ -4,5 +4,8 @@
     <color name="colorPrimaryDark">#212121</color>
     <color name="colorAccent">#E0E0E0</color>
 
+    <color name="circleStroke">#00106FF3</color>
+    <color name="circleFill">#1B106FF3</color>
+
     <color name="bottomBarBlack">#CC212121</color>
 </resources>

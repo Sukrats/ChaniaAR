@@ -1,0 +1,53 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="tuc.christos.chaniacitywalk2.MapsActivity" />
+
+
+    <android.support.design.widget.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|bottom"
+        app:itemBackground="@color/bottomBarBlack"
+        app:itemIconTint="@color/colorAccent"
+        app:itemTextColor="@color/colorAccent"
+        app:menu="@menu/bottom_navigation_main">
+    </android.support.design.widget.BottomNavigationView>
+
+    <ImageButton
+        android:id ="@+id/push_button"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:text="Round Button"
+        android:layout_gravity="center_horizontal|bottom"
+        android:src="@drawable/ic_party_mode_white_48dp"
+        android:background="@drawable/round_button"
+        android:padding="15dp"
+        />
+   <!-- <Button
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:background="@drawable/ic_party_mode_white_48dp"/>
+-->
+
+</FrameLayout>
+    <!--            COMMENTS
+
+
+    <android.support.design.widget.FloatingActionButton
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:background="@drawable/ic_party_mode_white_48dp">
+        </android.support.design.widget.FloatingActionButton>
+    -->

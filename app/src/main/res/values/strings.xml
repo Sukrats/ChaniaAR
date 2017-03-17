@@ -10,7 +10,7 @@
     <string name="permission_required_toast">Location permission is required for this demo.</string>
 
     <!-- Button Bar Labels  -->
-    <string name="arview">camera</string>
+    <string name="ar_view">camera</string>
     <string name="profile">profile</string>
     <string name="collection">collection</string>
 
