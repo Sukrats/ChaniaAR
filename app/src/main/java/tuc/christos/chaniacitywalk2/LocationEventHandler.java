@@ -29,6 +29,12 @@ public class LocationEventHandler implements LocationCallback {
     private String activeFenceID;
     private boolean fenceTriggered = false;
 
+    /**
+     * public EventHandler Constructor
+     * @param context
+     * Creator activity context for Toasts
+     * Can be removed
+     */
 
     public LocationEventHandler(Context context){
         this.mContext = context;
@@ -36,17 +42,34 @@ public class LocationEventHandler implements LocationCallback {
 
     }
 
+    /**
+     * Register Listeners to the EventHandler
+     * @param listener
+     * Activity that implements LocationEventListener Interface to Listen to LocationEvents
+     */
+
     public void setLocationEventListener(LocationEventsListener listener){
         this.iLocationEventListener.add(listener);
         Log.i("Event Handler","Listeners Registered: " + this.iLocationEventListener );
 
     }
 
+    /**
+     * Remove Listener From EventHandler
+     * @param listener
+     * Listener to be removed from the EventHandler
+     */
     public void removeLocationEventListener(LocationEventsListener listener){
         iLocationEventListener.remove(listener);
         Log.i("Event Handler","Listeners Removed: " + listener );
     }
 
+
+    /**
+     * Called when Location Provider fires a new location
+     * @param location
+     * new location
+     */
     public void handleNewLocation(Location location){
         /*
          *      Set GeoFences based on User Location
@@ -59,6 +82,7 @@ public class LocationEventHandler implements LocationCallback {
         /*
          *      Check GeoFence Status
          *  if a fence is triggered we fire the event on the Listeners
+         *  else we check when the user leaves the area to fire the event
          */
         if(!fenceTriggered){
             for(GeoFence temp: GeoFences) {
@@ -78,6 +102,9 @@ public class LocationEventHandler implements LocationCallback {
 
     private void setGeoFences(Location location){
         GeoFences.clear();
+        /*
+         *      Clear previous Fences and Set new Ones Based on user Location and RADIUS
+         */
         for(Scene scene: mDataManager.getScenes()){
             String id = Integer.toString(scene.getId());
             Location loc = new Location("");
@@ -98,18 +125,32 @@ public class LocationEventHandler implements LocationCallback {
 
     }
 
+    /**
+     * Fire User Entered GeoFence Event for every Listener
+     * @param id
+     * id of triggered GeoFence
+     */
+
     private void triggerUserEnteredArea(String id){
         Log.i("EventHandler","GeoFenceTriggered: " + mDataManager.getScene(id).getName());
         for(LocationEventsListener temp: iLocationEventListener)
             temp.userEnteredArea(id);
     }
 
+    /**
+     * Fire User Left GeoFence Event for every Listener
+     * @param id
+     * id for GeoFence left
+     */
     private void triggerUserLeftArea(String id){
         Log.i("EventHandler","GeoFenceClosed: " + mDataManager.getScene(id).getName());
         for(LocationEventsListener temp: iLocationEventListener)
             temp.userLeftArea(id);
     }
 
+    /**
+     * Private GeoFence Implementation
+     */
     private class GeoFence{
         private Location location;
         private String ID;
