@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -13,15 +14,19 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.support.design.widget.BottomNavigationView;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.BounceInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -81,12 +86,15 @@ public class MapsActivity extends AppCompatActivity implements
     protected String mLastUpdateTime;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+
     private HashMap<String,Circle> circleMap =new HashMap<>();
 
     private CameraPosition defaultCameraPosition = new CameraPosition.Builder()
             .target(new LatLng(35.514388, 24.020335)).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
 			
     private boolean camToStart = false;
+
+    private Marker mLocationMarker = null;
 
     BottomNavigationView.OnNavigationItemSelectedListener mItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
@@ -101,18 +109,16 @@ public class MapsActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps_custom);
 
+        //get data Manager instance and read from db
+        mDataManager = dataManager.getInstance();
+        if(!mDataManager.isInstantiated())
+            mDataManager.init(this);
+
         mEventHandler = new LocationEventHandler(this);
-        mEventHandler.setLocationEventListener(this);
+        //mEventHandler.setLocationEventListener(this);
 		//initiate location provider
         mLocationProvider = new LocationProvider(this);
 
-        mLocationProvider.registerLocationListener(this);
-        mLocationProvider.registerLocationListener(mEventHandler);
-
-        //get data Manager instance and read from db
-		mDataManager = dataManager.getInstance();
-        if(!mDataManager.isInstantiated())
-            mDataManager.init(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -170,30 +176,74 @@ public class MapsActivity extends AppCompatActivity implements
 
                 // Since we return true, we have to show the info window manually
                 //marker.showInfoWindow();
-                Scene scene = mDataManager.getSceneFromMarker(marker);
-                if (scene.isHasAR()) {
-                    Polyline line = mDataManager.getLineFromScene(scene);
-                    if (line.getColor() == Color.BLUE) {
-                        line.setColor(Color.GREEN);
-                    } else if (line.getColor() == Color.GREEN) {
-                        line.setColor(Color.BLUE);
+                if(!marker.equals(mLocationMarker)) {
+                    Scene scene = mDataManager.getSceneFromMarker(marker);
+                    if (scene.isHasAR()) {
+                        Polyline line = mDataManager.getLineFromScene(scene);
+                        if (line.getColor() == Color.BLUE) {
+                            line.setColor(Color.GREEN);
+                        } else if (line.getColor() == Color.GREEN) {
+                            line.setColor(Color.BLUE);
+                        }
                     }
+                    if (marker.equals(mSelectedMarker)) {
+                        mSelectedMarker = null;
+                        return true;
+                    }
+                    mSelectedMarker = marker;
+                    // We have handled the click, so don't centre again and return true
+                    return false;
                 }
-                if(marker.equals(mSelectedMarker)){
-                    mSelectedMarker = null;
-                    return true;
-                }
-                mSelectedMarker = marker;
-                // We have handled the click, so don't centre again and return true
-                return false;
+                return true;
             }
 
         });
 
         setupMapOptions();
         drawMap();
-        enableMyLocation();
+        //enableMyLocation();
 
+    }
+
+
+    public void moveMyLocationMarker(Location location){
+        if(mLocationMarker != null) {
+            LatLng lastPos = mLocationMarker.getPosition();
+            Location prLoc = new Location("");
+            prLoc.setLatitude(lastPos.latitude);
+            prLoc.setLongitude(lastPos.longitude);
+
+            final Location prLocation = prLoc;
+            final Location crLocation = location;
+            final float distance = crLocation.distanceTo(prLocation);
+
+            final Handler handler = new Handler();
+            final long start = SystemClock.uptimeMillis();
+            final long duration = 1500;
+            final Interpolator interpolator = new FastOutSlowInInterpolator();
+
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    long elapsed = SystemClock.uptimeMillis() - start;
+                    float t = Math.max(1 - interpolator.getInterpolation((float) elapsed / duration), 0);
+                    mLocationMarker.setAnchor(0.5f, 1.0f + 2 * t);
+
+                    if (t > 0.0) {
+                        // Post again 16ms later.
+                        handler.postDelayed(this, 16);
+                    }
+                }
+            });
+            mLocationMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+        }else{
+
+            Bitmap bm = BitmapFactory.decodeResource(this.getResources(),R.drawable.angry_thor_512px);
+            mLocationMarker = mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()))
+                    .title("mLocationMarker")
+                    .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm,64,64,false))));
+        }
     }
 
     public void setupMapOptions() {
@@ -353,12 +403,16 @@ public class MapsActivity extends AppCompatActivity implements
 
     protected void onStart() {
         mLocationProvider.connect();
+        mLocationProvider.setLocationCallbackListener(this);
+        mLocationProvider.setLocationCallbackListener(mEventHandler);
         mEventHandler.setLocationEventListener(this);
         super.onStart();
     }
 
     protected void onStop() {
         mLocationProvider.disconnect();
+        mLocationProvider.removeLocationCallbackListener(this);
+        mLocationProvider.removeLocationCallbackListener(mEventHandler);
         mEventHandler.removeLocationEventListener(this);
         super.onStop();
     }
@@ -390,12 +444,13 @@ public class MapsActivity extends AppCompatActivity implements
     public void handleNewLocation(Location location){
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+        moveMyLocationMarker(location);
     }
-
 
     public void userEnteredArea(String areaID){
         Scene scene = mDataManager.getScene(areaID);
         Toast.makeText(this,"User Entered Area: "+ scene.getName(), Toast.LENGTH_LONG).show();
+
         setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
 
         Circle circle = mMap.addCircle(new CircleOptions()
@@ -404,14 +459,19 @@ public class MapsActivity extends AppCompatActivity implements
                     .strokeWidth(2)
                     .strokeColor(ContextCompat.getColor(this,R.color.circleStroke))
                     .fillColor(ContextCompat.getColor(this,R.color.circleFill)));
+
         circleMap.put(areaID,circle);
     }
 
-    public void userLeftArea(String areaID){
-        Toast.makeText(this,"User Left Area: "+ mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
-        Circle circle = circleMap.get(areaID);
-        circle.setVisible(false);
-        circleMap.remove(areaID);
+    public void userLeftArea(String areaID) {
+
+        if (circleMap.containsKey(areaID)){
+            Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
+            Circle circle = circleMap.get(areaID);
+            circle.remove();
+            circleMap.remove(areaID);
+        }
+
     }
 
 

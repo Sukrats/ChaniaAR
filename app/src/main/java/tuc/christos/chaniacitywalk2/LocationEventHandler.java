@@ -2,6 +2,7 @@ package tuc.christos.chaniacitywalk2;
 
 import android.content.Context;
 import android.location.Location;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -21,11 +22,11 @@ public class LocationEventHandler implements LocationCallback {
     private Context mContext;
     private long MIN_RADIUS = 15;
     private long COVER_RADIUS = 100;
-    private boolean fenceTriggered = false;
 
     private ArrayList<GeoFence> GeoFences = new ArrayList<>();
     private Location activeFenceLocation = new Location("");
     private String activeFenceID;
+    private boolean fenceTriggered = false;
 
 
     public LocationEventHandler(Context context){
@@ -36,21 +37,24 @@ public class LocationEventHandler implements LocationCallback {
 
     public void setLocationEventListener(LocationEventsListener listener){
         this.iLocationEventListener.add(listener);
+        Log.i("Event Handler","Listeners Registered: " + this.iLocationEventListener );
+
     }
 
     public void removeLocationEventListener(LocationEventsListener listener){
-                iLocationEventListener.remove(listener);
+        iLocationEventListener.remove(listener);
+        Log.i("Event Handler","Listeners Removed: " + listener );
     }
 
     public void handleNewLocation(Location location){
         if(location.distanceTo(lastKnownLocation) >= COVER_RADIUS) {
             this.lastKnownLocation = location;
-            initGeoFences(location);
+            setGeoFences(location);
         }
         checkGeoFence(location);
-        //Toast.makeText(mContext,"LOCATION READY FOR EVENT", Toast.LENGTH_LONG).show();
     }
-    public void initGeoFences(Location location){
+
+    private void setGeoFences(Location location){
         GeoFences.clear();
         for(Scene scene: mDataManager.getScenes()){
             String id = Integer.toString(scene.getId());
@@ -71,7 +75,7 @@ public class LocationEventHandler implements LocationCallback {
 
     }
 
-    public void checkGeoFence(Location location){
+    private void checkGeoFence(Location location){
         if(!fenceTriggered){
             for(GeoFence temp: GeoFences) {
                 if (location.distanceTo(temp.getLocation()) <= MIN_RADIUS ){
@@ -81,22 +85,21 @@ public class LocationEventHandler implements LocationCallback {
                     triggerUserEnteredArea(activeFenceID);
                 }
             }
-        }else{
+        }else
             if (location.distanceTo(activeFenceLocation) >= MIN_RADIUS ){
-                triggerUserLeftArea(activeFenceID);
                 fenceTriggered = false;
+                triggerUserLeftArea(activeFenceID);
             }
-        }
-
     }
 
-
-    public void triggerUserEnteredArea(String id){
+    private void triggerUserEnteredArea(String id){
+        Log.i("EventHandler","GeoFenceTriggered "+ iLocationEventListener);
         for(LocationEventsListener temp: iLocationEventListener)
             temp.userEnteredArea(id);
     }
 
-    public void triggerUserLeftArea(String id){
+    private void triggerUserLeftArea(String id){
+        Log.i("EventHandler","GeoFenceClosed");
         for(LocationEventsListener temp: iLocationEventListener)
             temp.userLeftArea(id);
     }

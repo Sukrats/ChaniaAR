@@ -48,12 +48,14 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
         createLocationRequest(DEFAULT_INTERVAL,DEFAULT_FASTEST_INTERVAL,DEFAULT_PRIORITY);
     }
 
-    public void registerLocationListener(LocationCallback callback){
+    public void setLocationCallbackListener(LocationCallback callback){
         this.mLocationCallback.add(callback);
+        Log.i("Location Provider","Listeners Registered: " + mLocationCallback );
     }
 
-    public void removeLocationCallbackListener(){
-        this.mLocationCallback = null;
+    public void removeLocationCallbackListener(LocationCallback callback){
+        this.mLocationCallback.remove(callback);
+        Log.i("Location Provider","Listeners Removed: " + callback );
     }
 
     /**
@@ -143,9 +145,9 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
     @Override
     public void onLocationChanged(Location location){
         mLastKnownLocation = location;
-        for(LocationCallback temp: mLocationCallback)
+        for(LocationCallback temp: mLocationCallback) {
             temp.handleNewLocation(location);
-
+        }
         //Update Location for the provider
         //mListener.onLocationChanged(location);
     }
