@@ -16,6 +16,7 @@ import tuc.christos.chaniacitywalk2.model.Scene;
  */
 
 public class LocationEventHandler implements LocationCallback {
+
     private dataManager mDataManager;
     private Location lastKnownLocation = new Location("");
     private ArrayList<LocationEventsListener> iLocationEventListener = new ArrayList<>();
@@ -47,35 +48,18 @@ public class LocationEventHandler implements LocationCallback {
     }
 
     public void handleNewLocation(Location location){
-        if(location.distanceTo(lastKnownLocation) >= COVER_RADIUS) {
+        /*
+         *      Set GeoFences based on User Location
+         *COVER_RADIUS is the distance in which we enable the fences
+         */
+        if( location.distanceTo(lastKnownLocation) >= ( COVER_RADIUS - MIN_RADIUS ) ) {
             this.lastKnownLocation = location;
             setGeoFences(location);
         }
-        checkGeoFence(location);
-    }
-
-    private void setGeoFences(Location location){
-        GeoFences.clear();
-        for(Scene scene: mDataManager.getScenes()){
-            String id = Integer.toString(scene.getId());
-            Location loc = new Location("");
-            loc.setLatitude(scene.getLatitude());
-            loc.setLongitude(scene.getLongitude());
-            if(location.distanceTo(loc) <= COVER_RADIUS) {
-                GeoFences.add(new GeoFence(loc, id));
-            }
-        }
-        if(GeoFences.isEmpty()){
-            Toast.makeText(mContext,"NO GEO FENCE ACTIVE ", Toast.LENGTH_LONG).show();
-
-        }else{
-            Toast.makeText(mContext,"GEO FENCES ACTIVE: "+GeoFences.size(), Toast.LENGTH_LONG).show();
-
-        }
-
-    }
-
-    private void checkGeoFence(Location location){
+        /*
+         *      Check GeoFence Status
+         *  if a fence is triggered we fire the event on the Listeners
+         */
         if(!fenceTriggered){
             for(GeoFence temp: GeoFences) {
                 if (location.distanceTo(temp.getLocation()) <= MIN_RADIUS ){
@@ -86,20 +70,42 @@ public class LocationEventHandler implements LocationCallback {
                 }
             }
         }else
-            if (location.distanceTo(activeFenceLocation) >= MIN_RADIUS ){
-                fenceTriggered = false;
-                triggerUserLeftArea(activeFenceID);
+        if (location.distanceTo(activeFenceLocation) >= MIN_RADIUS ){
+            fenceTriggered = false;
+            triggerUserLeftArea(activeFenceID);
+        }
+    }
+
+    private void setGeoFences(Location location){
+        GeoFences.clear();
+        for(Scene scene: mDataManager.getScenes()){
+            String id = Integer.toString(scene.getId());
+            Location loc = new Location("");
+            loc.setLatitude(scene.getLatitude());
+            loc.setLongitude(scene.getLongitude());
+
+            if(location.distanceTo(loc) <= COVER_RADIUS) {
+                GeoFences.add(new GeoFence(loc, id));
             }
+        }
+        if(GeoFences.isEmpty()){
+            Toast.makeText(mContext,"NO GEO FENCE ACTIVE ", Toast.LENGTH_LONG).show();
+
+        }else{
+            Toast.makeText(mContext,"GEO FENCES ACTIVE: " + GeoFences.size(), Toast.LENGTH_LONG).show();
+
+        }
+
     }
 
     private void triggerUserEnteredArea(String id){
-        Log.i("EventHandler","GeoFenceTriggered "+ iLocationEventListener);
+        Log.i("EventHandler","GeoFenceTriggered: " + mDataManager.getScene(id).getName());
         for(LocationEventsListener temp: iLocationEventListener)
             temp.userEnteredArea(id);
     }
 
     private void triggerUserLeftArea(String id){
-        Log.i("EventHandler","GeoFenceClosed");
+        Log.i("EventHandler","GeoFenceClosed: " + mDataManager.getScene(id).getName());
         for(LocationEventsListener temp: iLocationEventListener)
             temp.userLeftArea(id);
     }
