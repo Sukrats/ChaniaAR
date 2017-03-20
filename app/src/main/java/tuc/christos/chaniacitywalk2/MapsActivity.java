@@ -25,8 +25,10 @@ import android.support.design.widget.BottomNavigationView;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -208,39 +210,40 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void moveMyLocationMarker(Location location){
         if(mLocationMarker != null) {
-            LatLng lastPos = mLocationMarker.getPosition();
-            Location prLoc = new Location("");
-            prLoc.setLatitude(lastPos.latitude);
-            prLoc.setLongitude(lastPos.longitude);
-
-            final Location prLocation = prLoc;
-            final Location crLocation = location;
-            final float distance = crLocation.distanceTo(prLocation);
 
             final Handler handler = new Handler();
             final long start = SystemClock.uptimeMillis();
-            final long duration = 1500;
+            final long duration = 999;
+            final double currentX = mLocationMarker.getPosition().latitude, targetX = location.getLatitude();
+            final double currentY = mLocationMarker.getPosition().longitude, targetY = location.getLongitude();
+
             final Interpolator interpolator = new FastOutSlowInInterpolator();
 
             handler.post(new Runnable() {
                 @Override
                 public void run() {
                     long elapsed = SystemClock.uptimeMillis() - start;
-                    float t = Math.max(1 - interpolator.getInterpolation((float) elapsed / duration), 0);
-                    mLocationMarker.setAnchor(0.5f, 1.0f + 2 * t);
+                    float t = Math.max(interpolator.getInterpolation((float) elapsed / duration), 0);
+                    //mLocationMarker.setAnchor(0.5f, 1.0f + 2 * t);
 
-                    if (t > 0.0) {
+                    double x = currentX + t*(targetX - currentX);
+                    double y = currentY + t*(targetY - currentY);
+
+                    mLocationMarker.setPosition(new LatLng( x, y));
+
+                    if (t > 0.0 && t < 1.0) {
                         // Post again 16ms later.
                         handler.postDelayed(this, 16);
                     }
+
                 }
             });
-            mLocationMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+
         }else{
 
             Bitmap bm = BitmapFactory.decodeResource(this.getResources(),R.drawable.angry_thor_512px);
             mLocationMarker = mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()))
+                    .position(new LatLng(location.getLatitude(), location.getLongitude()))
                     .title("mLocationMarker")
                     .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm,64,64,false))));
         }
@@ -422,24 +425,6 @@ public class MapsActivity extends AppCompatActivity implements
         mSelectedMarker = null;
     }
 
-    private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {
-
-            View customMarkerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.view_custom_marker, null);
-            ImageView markerImageView = (ImageView) customMarkerView.findViewById(R.id.profile_image);
-            markerImageView.setImageResource(resId);
-            customMarkerView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-            customMarkerView.layout(0, 0, customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight());
-            customMarkerView.buildDrawingCache();
-            Bitmap returnedBitmap = Bitmap.createBitmap(customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight(),
-                    Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(returnedBitmap);
-            canvas.drawColor(Color.WHITE, PorterDuff.Mode.SRC_IN);
-            Drawable drawable = customMarkerView.getBackground();
-            if (drawable != null)
-                drawable.draw(canvas);
-            customMarkerView.draw(canvas);
-            return returnedBitmap;
-        }
 
     public void handleNewLocation(Location location){
         mCurrentLocation = location;
@@ -472,6 +457,24 @@ public class MapsActivity extends AppCompatActivity implements
             circleMap.remove(areaID);
         }
 
+    }
+    private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {
+
+        View customMarkerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.view_custom_marker, null);
+        ImageView markerImageView = (ImageView) customMarkerView.findViewById(R.id.profile_image);
+        markerImageView.setImageResource(resId);
+        customMarkerView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        customMarkerView.layout(0, 0, customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight());
+        customMarkerView.buildDrawingCache();
+        Bitmap returnedBitmap = Bitmap.createBitmap(customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(returnedBitmap);
+        canvas.drawColor(Color.WHITE, PorterDuff.Mode.SRC_IN);
+        Drawable drawable = customMarkerView.getBackground();
+        if (drawable != null)
+            drawable.draw(canvas);
+        customMarkerView.draw(canvas);
+        return returnedBitmap;
     }
 
 
