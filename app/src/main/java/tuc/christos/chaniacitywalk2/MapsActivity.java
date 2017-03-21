@@ -19,14 +19,18 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.support.design.widget.BottomNavigationView;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,6 +55,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import tuc.christos.chaniacitywalk2.collection.Collection;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -82,7 +87,7 @@ public class MapsActivity extends AppCompatActivity implements
     private final float DEFAULT_ZOOM_LEVEL = 17.0f;
 
     protected Location mCurrentLocation;
-	
+
     protected String mLastUpdateTime;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -91,7 +96,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     private CameraPosition defaultCameraPosition = new CameraPosition.Builder()
             .target(new LatLng(35.514388, 24.020335)).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
-			
+
     private boolean camToStart = false;
 
     private Marker mLocationMarker = null;
@@ -103,7 +108,7 @@ public class MapsActivity extends AppCompatActivity implements
             return true;
         }
     };
-	
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,10 +121,16 @@ public class MapsActivity extends AppCompatActivity implements
 
         mEventHandler = new LocationEventHandler(this);
         //mEventHandler.setLocationEventListener(this);
-		//initiate location provider
+        //initiate location provider
         mLocationProvider = new LocationProvider(this);
 
-
+        /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowHomeEnabled(true);
+            //actionBar.setDisplayHomeAsUpEnabled(true);
+        }*/
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
@@ -130,8 +141,8 @@ public class MapsActivity extends AppCompatActivity implements
             mapFragment.setRetainInstance(true);
             camToStart = true;
         }else camToStart = false;
-		
-		mapFragment.getMapAsync(this);
+
+        mapFragment.getMapAsync(this);
     }
 
 
@@ -208,39 +219,38 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void moveMyLocationMarker(Location location){
         if(mLocationMarker != null) {
-            LatLng lastPos = mLocationMarker.getPosition();
-            Location prLoc = new Location("");
-            prLoc.setLatitude(lastPos.latitude);
-            prLoc.setLongitude(lastPos.longitude);
-
-            final Location prLocation = prLoc;
-            final Location crLocation = location;
-            final float distance = crLocation.distanceTo(prLocation);
 
             final Handler handler = new Handler();
             final long start = SystemClock.uptimeMillis();
-            final long duration = 1500;
+            final long duration = 999;
+            final double currentX = mLocationMarker.getPosition().latitude, targetX = location.getLatitude();
+            final double currentY = mLocationMarker.getPosition().longitude, targetY = location.getLongitude();
             final Interpolator interpolator = new FastOutSlowInInterpolator();
 
             handler.post(new Runnable() {
                 @Override
                 public void run() {
                     long elapsed = SystemClock.uptimeMillis() - start;
-                    float t = Math.max(1 - interpolator.getInterpolation((float) elapsed / duration), 0);
-                    mLocationMarker.setAnchor(0.5f, 1.0f + 2 * t);
+                    float t = Math.max(interpolator.getInterpolation((float) elapsed / duration), 0);
 
-                    if (t > 0.0) {
+                    double x = currentX + t*(targetX - currentX);
+                    double y = currentY + t*(targetY - currentY);
+
+                    mLocationMarker.setPosition(new LatLng( x, y));
+
+                    if (t > 0.0 && t < 1.0) {
                         // Post again 16ms later.
                         handler.postDelayed(this, 16);
                     }
+
                 }
             });
-            mLocationMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+
         }else{
 
             Bitmap bm = BitmapFactory.decodeResource(this.getResources(),R.drawable.angry_thor_512px);
             mLocationMarker = mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()))
+                    .position(new LatLng(location.getLatitude(), location.getLongitude()))
                     .title("mLocationMarker")
                     .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm,64,64,false))));
         }
@@ -307,20 +317,20 @@ public class MapsActivity extends AppCompatActivity implements
 
 
                 if(marker != null){
-                mDataManager.mapScenetoMarker(temp, marker);
-                mDataManager.mapMarkerToScene(marker, temp);
+                    mDataManager.mapScenetoMarker(temp, marker);
+                    mDataManager.mapMarkerToScene(marker, temp);
                 }
 
                 Polyline line;
-                PolylineOptions options = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
+                PolylineOptions options = new PolylineOptions().width(20).color(Color.BLUE).geodesic(true);
 
                 for(LatLng ll: mDataManager.getPolyPoints(temp)){
                     options.add(ll);
                 }
                 line = mMap.addPolyline(options);
 
-				mDataManager.mapLineToScene(line, temp);
-				mDataManager.mapScenetoLine(temp, line);
+                mDataManager.mapLineToScene(line, temp);
+                mDataManager.mapScenetoLine(temp, line);
             }
         }
 
@@ -331,8 +341,8 @@ public class MapsActivity extends AppCompatActivity implements
         //mMap.setLatLngBoundsForCameraTarget(CHANIA);
 
     }
-	
-	private void buildIntentForActivity(int id){
+
+    private void buildIntentForActivity(int id){
         Intent intent = null;
         switch(id) {
             case R.id.action_profile:
@@ -344,7 +354,7 @@ public class MapsActivity extends AppCompatActivity implements
                 break;
         }
         if(intent!=null){
-             aSyncActivity(intent);
+            aSyncActivity(intent);
         }
 
     }
@@ -362,7 +372,7 @@ public class MapsActivity extends AppCompatActivity implements
         }, 200L);
     }
 
-   public void setCameraPosition(double latitude, double longitude, float zoomf) {
+    public void setCameraPosition(double latitude, double longitude, float zoomf) {
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(latitude, longitude)).zoom(zoomf).bearing(0).tilt(50).build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
@@ -417,34 +427,36 @@ public class MapsActivity extends AppCompatActivity implements
         super.onStop();
     }
 
-	@Override
+    @Override
     public void onMapClick(final LatLng point){
         mSelectedMarker = null;
     }
 
-    private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {
-
-            View customMarkerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.view_custom_marker, null);
-            ImageView markerImageView = (ImageView) customMarkerView.findViewById(R.id.profile_image);
-            markerImageView.setImageResource(resId);
-            customMarkerView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-            customMarkerView.layout(0, 0, customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight());
-            customMarkerView.buildDrawingCache();
-            Bitmap returnedBitmap = Bitmap.createBitmap(customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight(),
-                    Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(returnedBitmap);
-            canvas.drawColor(Color.WHITE, PorterDuff.Mode.SRC_IN);
-            Drawable drawable = customMarkerView.getBackground();
-            if (drawable != null)
-                drawable.draw(canvas);
-            customMarkerView.draw(canvas);
-            return returnedBitmap;
-        }
 
     public void handleNewLocation(Location location){
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
         moveMyLocationMarker(location);
+    }
+
+    public void drawGeoFences(String[] areaIds,int radius){
+        for(String key: circleMap.keySet()){
+                circleMap.get(key).remove();
+        }
+        circleMap.clear();
+        for(String areaID: areaIds){
+            Scene scene = mDataManager.getScene(areaID);
+
+            Circle circle = mMap.addCircle(new CircleOptions()
+                    .center(new LatLng(scene.getLatitude(),scene.getLongitude()))
+                    .radius(radius)
+                    .strokeWidth(2)
+                    .strokeColor(ContextCompat.getColor(this,R.color.circleStroke))
+                    .fillColor(ContextCompat.getColor(this,R.color.circleFill)));
+
+            circleMap.put(areaID,circle);
+        }
+        Toast.makeText(this, "GeoFences Drawn: " + areaIds.length, Toast.LENGTH_LONG).show();
     }
 
     public void userEnteredArea(String areaID){
@@ -453,14 +465,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
 
-        Circle circle = mMap.addCircle(new CircleOptions()
-                    .center(new LatLng(scene.getLatitude(),scene.getLongitude()))
-                    .radius(15)
-                    .strokeWidth(2)
-                    .strokeColor(ContextCompat.getColor(this,R.color.circleStroke))
-                    .fillColor(ContextCompat.getColor(this,R.color.circleFill)));
 
-        circleMap.put(areaID,circle);
     }
 
     public void userLeftArea(String areaID) {
@@ -472,6 +477,24 @@ public class MapsActivity extends AppCompatActivity implements
             circleMap.remove(areaID);
         }
 
+    }
+    private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {
+
+        View customMarkerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.view_custom_marker, null);
+        ImageView markerImageView = (ImageView) customMarkerView.findViewById(R.id.profile_image);
+        markerImageView.setImageResource(resId);
+        customMarkerView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        customMarkerView.layout(0, 0, customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight());
+        customMarkerView.buildDrawingCache();
+        Bitmap returnedBitmap = Bitmap.createBitmap(customMarkerView.getMeasuredWidth(), customMarkerView.getMeasuredHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(returnedBitmap);
+        canvas.drawColor(Color.WHITE, PorterDuff.Mode.SRC_IN);
+        Drawable drawable = customMarkerView.getBackground();
+        if (drawable != null)
+            drawable.draw(canvas);
+        customMarkerView.draw(canvas);
+        return returnedBitmap;
     }
 
 

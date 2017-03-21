@@ -12,6 +12,21 @@
         android:layout_height="match_parent"
         tools:context="tuc.christos.chaniacitywalk2.MapsActivity" />
 
+ <!--   <android.support.design.widget.AppBarLayout
+        android:id="@+id/app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:fitsSystemWindows="true"
+        android:background="@color/semiTransparent">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+    </android.support.design.widget.AppBarLayout>
+-->
 
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/bottom_navigation"

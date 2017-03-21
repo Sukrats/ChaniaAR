@@ -4,6 +4,7 @@
     <color name="colorPrimaryDark">#212121</color>
     <color name="colorAccent">#E0E0E0</color>
     <color name="transparent">#00FFFFFF</color>
+    <color name="semiTransparent">#2FFFFFFF</color>
 
     <color name="circleStroke">#00106FF3</color>
     <color name="circleFill">#1B106FF3</color>

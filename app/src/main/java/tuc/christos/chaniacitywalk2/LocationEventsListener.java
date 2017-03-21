@@ -9,6 +9,8 @@ import android.location.Location;
 
 public interface LocationEventsListener {
 
+    void drawGeoFences(String[] areaIds, int radius);
+
     void userEnteredArea(String areaID);
 
     void userLeftArea(String areaID);
