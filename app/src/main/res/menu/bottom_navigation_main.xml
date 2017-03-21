@@ -8,11 +8,24 @@
         android:title="@string/profile"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_pending"
+        android:enabled="true"
+        android:icon="@drawable/ic_filter_drama_white_48dp"
+        android:title="@string/pending"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_collection"
         android:enabled="true"
         android:icon="@drawable/ic_collections_white_48dp"
         android:title="@string/collection"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_global_settings"
+        android:enabled="true"
+        android:icon="@drawable/ic_settings_white_48dp"
+        android:title="@string/global_settings"
+        app:showAsAction="ifRoom" />
+
 </menu>
 <!--
     <item

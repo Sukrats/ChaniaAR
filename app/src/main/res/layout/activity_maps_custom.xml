@@ -33,11 +33,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal|bottom"
-        android:background="@color/bottomBarBlack"
+        android:background="@color/colorPrimaryDark"
         app:itemIconTint="@color/colorAccent"
         app:itemTextColor="@color/colorAccent"
         app:menu="@menu/bottom_navigation_main">
     </android.support.design.widget.BottomNavigationView>
+
+    <include layout="@layout/bottom_bar_custom"/>
 
     <ImageButton
         android:id ="@+id/push_button"

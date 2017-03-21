@@ -12,6 +12,8 @@
     <!-- Button Bar Labels  -->
     <string name="ar_view">camera</string>
     <string name="profile">profile</string>
+    <string name="pending">pending</string>
+    <string name="global_settings">settings</string>
     <string name="collection">collection</string>
 
     <string name="action_settings">Settings</string>

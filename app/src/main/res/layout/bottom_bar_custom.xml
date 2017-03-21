@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_gravity="bottom|center_horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:background="@color/colorPrimaryDark"
+    style="?attr/buttonBarStyle">
+
+    <Button
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:text="@string/profile"
+        android:src="@drawable/ic_person_white_48dp"
+        style="?attr/buttonBarButtonStyle"/>
+
+    <Button
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:text="@string/pending"
+        android:src="@drawable/ic_filter_drama_white_48dp"
+        style="?attr/buttonBarButtonStyle" />
+
+    <Button
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:text="@string/collection"
+        android:src="@drawable/ic_collections_white_48dp"
+        style="?attr/buttonBarButtonStyle" />
+
+    <Button
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:text="@string/global_settings"
+        android:src="@drawable/ic_settings_white_48dp"
+        style="?attr/buttonBarButtonStyle"/>
+</LinearLayout>

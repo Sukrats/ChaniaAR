@@ -481,9 +481,9 @@ public class MapsActivity extends AppCompatActivity implements
 
         if (circleMap.containsKey(areaID)){
             Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
-            Circle circle = circleMap.get(areaID);
-            circle.remove();
-            circleMap.remove(areaID);
+            //Circle circle = circleMap.get(areaID);
+            //circle.remove();
+            //circleMap.remove(areaID);
         }
 
     }
