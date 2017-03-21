@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
@@ -61,8 +63,8 @@ public class Collection extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-        //TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-        //tabLayout.setSelectedTabIndicatorColor(getResources().getColor(R.color.colorPrimary));
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+        tabLayout.setSelectedTabIndicatorColor(ContextCompat.getColor(this,R.color.colorPrimary));
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -84,7 +86,7 @@ public class Collection extends AppCompatActivity {
 
         CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
         if (appBarLayout != null) {
-            appBarLayout.setBackgroundResource(R.drawable.venice_flag);
+            //appBarLayout.setBackgroundResource(R.drawable.venice_flag);
         }
     }
 

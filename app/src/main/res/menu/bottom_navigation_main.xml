@@ -8,15 +8,17 @@
         android:title="@string/profile"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/action_camera"
-        android:enabled="true"
-        android:icon="@drawable/ic_party_mode_white_48dp"
-        android:title="@string/ar_view"
-        app:showAsAction="ifRoom" />
-    <item
         android:id="@+id/action_collection"
         android:enabled="true"
         android:icon="@drawable/ic_collections_white_48dp"
         android:title="@string/collection"
         app:showAsAction="ifRoom" />
 </menu>
+<!--
+    <item
+        android:id="@+id/action_camera"
+        android:enabled="true"
+        android:icon="@drawable/ic_party_mode_white_48dp"
+        android:title="@string/ar_view"
+        app:showAsAction="ifRoom" />
+-->

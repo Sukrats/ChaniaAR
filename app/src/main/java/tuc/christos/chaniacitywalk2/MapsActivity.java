@@ -120,8 +120,6 @@ public class MapsActivity extends AppCompatActivity implements
             mDataManager.init(this);
 
         mEventHandler = new LocationEventHandler(this);
-        //mEventHandler.setLocationEventListener(this);
-        //initiate location provider
         mLocationProvider = new LocationProvider(this);
 
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -254,6 +252,7 @@ public class MapsActivity extends AppCompatActivity implements
                     .title("mLocationMarker")
                     .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm,64,64,false))));
         }
+
     }
 
     public void setupMapOptions() {
@@ -322,7 +321,10 @@ public class MapsActivity extends AppCompatActivity implements
                 }
 
                 Polyline line;
-                PolylineOptions options = new PolylineOptions().width(20).color(Color.BLUE).geodesic(true);
+                PolylineOptions options = new PolylineOptions()
+                        .width(20)
+                        .color(ContextCompat.getColor(this,R.color.lineColor))
+                        .geodesic(true);
 
                 for(LatLng ll: mDataManager.getPolyPoints(temp)){
                     options.add(ll);
@@ -347,8 +349,8 @@ public class MapsActivity extends AppCompatActivity implements
         switch(id) {
             case R.id.action_profile:
                 break;
-            case R.id.action_camera:
-                break;
+            //case R.id.action_camera:
+              //  break;
             case R.id.action_collection:
                 intent = new Intent(this, Collection.class);
                 break;
@@ -380,6 +382,13 @@ public class MapsActivity extends AppCompatActivity implements
 
     }
 
+    public void setCameraPosition(double latitude, double longitude) {
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(new LatLng(latitude, longitude)).bearing(0).tilt(50).build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+
+    }
     /**
      * Enables the My Location layer if the fine location permission has been granted.
      */
