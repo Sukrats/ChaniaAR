@@ -19,18 +19,19 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
-
-        <activity android:name=".MapsActivity">
+        <activity
+            android:name=".MapsActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".collection.SceneListActivity"
-            android:label="@string/title_scene_list"
+            android:name=".collection.CollectionActivity"
+            android:label="@string/title_activity_collection_siblings"
             android:parentActivityName=".MapsActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -39,21 +40,13 @@
         <activity
             android:name=".collection.SceneDetailActivity"
             android:label="@string/title_scene_detail"
-            android:parentActivityName=".collection.SceneListActivity"
+            android:parentActivityName=".collection.CollectionActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="tuc.christos.chaniacitywalk2.collection.SceneListActivity" />
-        </activity>
-        <activity
-            android:name=".collection.Collection"
-            android:label="@string/title_activity_collection_siblings"
-            android:parentActivityName=".MapsActivity"
-            android:theme="@style/AppTheme">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
-        </activity>
+                android:value="tuc.christos.chaniacitywalk2.collection.CollectionActivity" />
+    </activity>
     </application>
 
 </manifest>

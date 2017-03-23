@@ -19,18 +19,13 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.support.design.widget.BottomNavigationView;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
-import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,9 +50,8 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 
-import tuc.christos.chaniacitywalk2.collection.Collection;
+import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.data.dataManager;
 import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
@@ -101,13 +95,13 @@ public class MapsActivity extends AppCompatActivity implements
 
     private Marker mLocationMarker = null;
 
-    BottomNavigationView.OnNavigationItemSelectedListener mItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
+    /*BottomNavigationView.OnNavigationItemSelectedListener mItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             buildIntentForActivity(item.getItemId());
             return true;
         }
-    };
+    };*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,8 +126,8 @@ public class MapsActivity extends AppCompatActivity implements
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
-        BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
-        bottomNavigationView.setOnNavigationItemSelectedListener(mItemSelectedListener);
+        //BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+        //bottomNavigationView.setOnNavigationItemSelectedListener(mItemSelectedListener);
 
         if (savedInstanceState == null) {
             mapFragment.setRetainInstance(true);
@@ -344,7 +338,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     }
 
-    private void buildIntentForActivity(int id){
+    /*private void buildIntentForActivity(int id){
         Intent intent = null;
         switch(id) {
             case R.id.action_profile:
@@ -352,13 +346,27 @@ public class MapsActivity extends AppCompatActivity implements
             //case R.id.action_camera:
               //  break;
             case R.id.action_collection:
-                intent = new Intent(this, Collection.class);
+                intent = new Intent(this, CollectionActivity.class);
                 break;
         }
         if(intent!=null){
             aSyncActivity(intent);
         }
 
+    }*/
+
+    public void handleBottomBarSelection(View view){
+        Intent intent = null;
+        switch(view.getId()) {
+            case R.id.profile_activity:
+                break;
+            case R.id.collection_activity:
+                intent = new Intent(this, CollectionActivity.class);
+                break;
+        }
+        if(intent!=null){
+            aSyncActivity(intent);
+        }
     }
 
     public void aSyncActivity(final Intent intent){

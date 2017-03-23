@@ -43,9 +43,7 @@ import static android.support.v4.app.NavUtils.navigateUpFromSameTask;
  * {@link android.support.v4.app.FragmentStatePagerAdapter}.
  */
 
-public class Collection extends AppCompatActivity {
-
-
+public class CollectionActivity extends AppCompatActivity {
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -116,7 +114,8 @@ public class Collection extends AppCompatActivity {
             //
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back
             //
-            navigateUpFromSameTask(this);
+            //navigateUpFromSameTask(this);
+            onBackPressed();
             return true;
         }
 
