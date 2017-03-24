@@ -28,6 +28,14 @@
         android:layout_gravity="center_horizontal|bottom"
         android:background="@drawable/round_shadow"/>
 
+<!--    <View
+        android:id="@+id/contrast_light"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="?attr/actionBarSize"
+        android:background="@drawable/highlight_shadow"/>-->
+
     <include layout="@layout/bottom_bar_custom"/>
 
     <ImageButton

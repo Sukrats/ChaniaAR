@@ -6,6 +6,7 @@
 
     <color name="colorPrimaryTransparent">#CC37474F</color>
     <color name="colorPrimaryDarkTransparent">#DF263238</color>
+    <color name="colorPrimaryDarkTint">#444E54</color>
 
 
     <!--<color name="colorPrimary">#424242</color>

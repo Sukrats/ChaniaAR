@@ -3,6 +3,7 @@ package tuc.christos.chaniacitywalk2;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -15,6 +16,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
@@ -95,6 +97,10 @@ public class MapsActivity extends AppCompatActivity implements
 
     private Marker mLocationMarker = null;
 
+    //PREFERENCES
+    private String mapType = "";
+    private boolean camFollow = false;
+
     /*BottomNavigationView.OnNavigationItemSelectedListener mItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -107,14 +113,23 @@ public class MapsActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps_custom);
-
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = dataManager.getInstance();
         if(!mDataManager.isInstantiated())
             mDataManager.init(this);
+        //decode preferences
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type,"");
+        Boolean follow = sharedPreferences.getBoolean(SettingsActivity.pref_key_camera_follow,false);
+        mapType = mapStyle;
+        camFollow = follow;
+
+        String locationInterval = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
+
 
         mEventHandler = new LocationEventHandler(this);
-        mLocationProvider = new LocationProvider(this);
+        mLocationProvider = new LocationProvider(this, locationInterval);
 
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -158,20 +173,6 @@ public class MapsActivity extends AppCompatActivity implements
 
         mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
 
-        try {
-            // Customise the styling of the base map using a JSON object defined
-            // in a raw resource file.
-            boolean success = mMap.setMapStyle(
-                    MapStyleOptions.loadRawResourceStyle(
-                            this, R.raw.normal_map_json));
-
-            if (!success) {
-                Log.i(TAG, "Style parsing failed.");
-            }
-        } catch (Resources.NotFoundException e) {
-            Log.i(TAG, "Can't find style. Error: ", e);
-        }
-
         //mMap.setOnCameraMoveCanceledListener(this);
         mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
             @Override
@@ -202,6 +203,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         });
 
+        setMapStyle();
         setupMapOptions();
         drawMap();
         //enableMyLocation();
@@ -212,6 +214,7 @@ public class MapsActivity extends AppCompatActivity implements
     public void moveMyLocationMarker(Location location){
         if(mLocationMarker != null) {
 
+            Location loc = latLngToLoc(mLocationMarker.getPosition());
             final Handler handler = new Handler();
             final long start = SystemClock.uptimeMillis();
             final long duration = 999;
@@ -238,6 +241,9 @@ public class MapsActivity extends AppCompatActivity implements
                 }
             });
 
+            if(loc.distanceTo(location) >= 5 && camFollow){
+                setCameraPosition(location.getLatitude(),location.getLongitude(),mMap.getCameraPosition().zoom);
+            }
         }else{
 
             Bitmap bm = BitmapFactory.decodeResource(this.getResources(),R.drawable.angry_thor_512px);
@@ -247,14 +253,51 @@ public class MapsActivity extends AppCompatActivity implements
                     .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm,64,64,false))));
         }
 
+
     }
 
+    public Location latLngToLoc(LatLng latLng){
+        Location location = new Location("");
+        location.setLatitude(latLng.latitude);
+        location.setLongitude(latLng.longitude);
+        return location;
+    }
     public void setupMapOptions() {
     }
 
     /**
      * INITIALISE MAP STATE BASED ON USER PROGRESS
      */
+
+    public void setMapStyle(){
+        // Customise the styling of the base map using a JSON object defined
+        // in a raw resource file.
+        if(mMap != null)
+            try {
+                boolean success;
+                switch (mapType){
+                    case "Night Mode":
+                        success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.night_map_json));
+                        break;
+                    case "Retro Mode":
+                        success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.retro_map_json));
+                        break;
+                    case "Simple Retro Mode":
+                        success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.retro_map_json_simple));
+                        break;
+
+                    default:
+                        success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.normal_map_json));
+                }
+
+                if (!success) {
+                    Log.i(TAG, "Style parsing failed.");
+                }
+            } catch (Resources.NotFoundException e) {
+                Log.i(TAG, "Can't find style. Error: ", e);
+            }
+    }
+
     private void drawMap() {
         mMap.clear();
         mDataManager.clearMaps();
@@ -357,8 +400,10 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void handleBottomBarSelection(View view){
         Intent intent = null;
+
         switch(view.getId()) {
-            case R.id.profile_activity:
+            case R.id.activity_settings:
+                intent = new Intent(this, SettingsActivity.class);
                 break;
             case R.id.collection_activity:
                 intent = new Intent(this, CollectionActivity.class);
@@ -370,16 +415,16 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     public void aSyncActivity(final Intent intent){
-        Handler mHandler = new Handler();
-        mHandler.postDelayed(new Runnable() {
+            Handler mHandler = new Handler();
+            mHandler.postDelayed(new Runnable() {
 
-            @Override
-            public void run() {
-                //start your activity here
-                startActivity(intent);
-            }
+                @Override
+                public void run() {
+                    //start your activity here
+                    startActivity(intent);
+                }
 
-        }, 200L);
+            }, 200L);
     }
 
     public void setCameraPosition(double latitude, double longitude, float zoomf) {
@@ -424,11 +469,20 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onResume() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type,"");
+        Boolean follow = sharedPreferences.getBoolean(SettingsActivity.pref_key_camera_follow,false);
+        if(!mapType.equals(mapStyle)){
+            mapType = mapStyle;
+            setMapStyle();
+        }
+        camFollow = follow;
         super.onResume();
+
     }
 
-
     protected void onStart() {
+
         mLocationProvider.connect();
         mLocationProvider.setLocationCallbackListener(this);
         mLocationProvider.setLocationCallbackListener(mEventHandler);
@@ -443,6 +497,7 @@ public class MapsActivity extends AppCompatActivity implements
         mEventHandler.removeLocationEventListener(this);
         super.onStop();
     }
+
 
     @Override
     public void onMapClick(final LatLng point){

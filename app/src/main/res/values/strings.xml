@@ -21,6 +21,44 @@
     <string name="title_scene_detail">Scene Detail</string>
     <string name="title_activity_collection_siblings">CollectionSiblings</string>
     <string name="section_format">Hello World from section: %1$s</string>
+    <!--   MAP PREFERENCES     -->
+    <string name="pref_maps">Map Settings</string>
+
+    <string name="pref_maps_camera_follow_title">Auto Follow Camera</string>
+    <string name="pref_maps_camera_follow_summary">Locks camera on user location</string>
+
+
+    <string name="pref_maps_map_style">Map Style</string>
+    <string-array name="pref_maps_map_style_titles">
+        <item>Google Default</item>
+        <item>Night Mode</item>
+        <item>Retro Mode</item>
+        <item>Simplified Retro Mode</item>
+    </string-array>
+    <string-array name="pref_maps_map_style_values">
+        <item>Default</item>
+        <item>Night Mode</item>
+        <item>Retro Mode</item>
+        <item>Simple Retro Mode</item>
+    </string-array>
+
+    <!-- LOCATION PROVIDER PREFERECES-->
+    <string name="pref_location">Location Settings</string>
+    <string name="pref_location_mode">Location Mode</string>
+    <string-array name="pref_location_mode_titles">
+        <item>High Accuracy</item>
+        <item>Balanced Power Accuracy</item>
+        <item>Battery Saver</item>
+    </string-array>
+    <string-array name="pref_location_mode_values">
+        <item>High Accuracy</item>
+        <item>Balanced Power Accuracy</item>
+        <item>Battery Saver</item>
+    </string-array>
+    <!-- GEO FENCE PREFERENCES -->
+    <string name="pref_geo_fence">Geo Fences</string>
+    <string name="pref_geo_fence_culling_distance">Draw Distance</string>
+    <string name="pref_geo_fence_culling_distance_summary">Set Max Drawing Distance</string>
 
 
 </resources>

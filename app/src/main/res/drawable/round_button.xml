@@ -7,8 +7,7 @@
             <item>
                 <shape android:shape="oval">
                     <stroke android:color="@color/colorAccent" android:width="2dp" />
-                    <gradient android:type="radial" android:gradientRadius="120"
-                        android:startColor="@color/colorPrimaryDark" android:endColor="@color/colorPrimary"/>
+                    <solid android:color="@color/colorPrimaryDarkTint"/>
                 </shape>
             </item>
             <item

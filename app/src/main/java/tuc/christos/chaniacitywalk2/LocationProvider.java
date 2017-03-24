@@ -5,6 +5,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -28,6 +29,14 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
     private static final long DEFAULT_FASTEST_INTERVAL = 1000;
     private static final int DEFAULT_PRIORITY = LocationRequest.PRIORITY_HIGH_ACCURACY;
 
+    private static final long MEDIUM_INTERVAL = 1000;
+    private static final long MEDIUM_FASTEST_INTERVAL = 1000;
+    private static final int MEDIUM_PRIORITY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
+
+    private static final long SLOW_INTERVAL = 1000;
+    private static final long SLOW_FASTEST_INTERVAL = 1000;
+    private static final int SLOW_PRIORITY = LocationRequest.PRIORITY_LOW_POWER;
+
     private ArrayList<LocationCallback> mLocationCallback = new ArrayList<>();
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest = new LocationRequest();
@@ -46,6 +55,27 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
                 .addApi(LocationServices.API)
                 .build();
         createLocationRequest(DEFAULT_INTERVAL,DEFAULT_FASTEST_INTERVAL,DEFAULT_PRIORITY);
+    }
+
+    public LocationProvider (Context context, String mode) {
+        this.mGoogleApiClient = new GoogleApiClient.Builder(context)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+
+        if (mode.equals("High Accuracy")) {
+            createLocationRequest(DEFAULT_INTERVAL, DEFAULT_FASTEST_INTERVAL, DEFAULT_PRIORITY);
+            Toast.makeText(context,"High Accuracy",Toast.LENGTH_SHORT).show();
+        }
+        else if (mode.equals("Balanced Power Accuracy")){
+            createLocationRequest(MEDIUM_INTERVAL, MEDIUM_FASTEST_INTERVAL, MEDIUM_PRIORITY);
+            Toast.makeText(context,"Balanced Accuracy",Toast.LENGTH_SHORT).show();
+        }
+        else if(mode.equals("Battery Saver")) {
+            createLocationRequest(SLOW_INTERVAL, SLOW_FASTEST_INTERVAL, SLOW_PRIORITY);
+            Toast.makeText(context,"Battery Saver",Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void setLocationCallbackListener(LocationCallback callback){
