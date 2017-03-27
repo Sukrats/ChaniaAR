@@ -463,6 +463,10 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onPause() {
+        mLocationProvider.disconnect();
+        mLocationProvider.removeLocationCallbackListener(this);
+        mLocationProvider.removeLocationCallbackListener(mEventHandler);
+        mEventHandler.removeLocationEventListener(this);
         super.onPause();
     }
 
@@ -477,24 +481,21 @@ public class MapsActivity extends AppCompatActivity implements
             setMapStyle();
         }
         camFollow = follow;
-        super.onResume();
 
-    }
-
-    protected void onStart() {
-
+        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
+        mLocationProvider.setLocationMode(mode);
         mLocationProvider.connect();
         mLocationProvider.setLocationCallbackListener(this);
         mLocationProvider.setLocationCallbackListener(mEventHandler);
         mEventHandler.setLocationEventListener(this);
+        super.onResume();
+    }
+
+    protected void onStart() {
         super.onStart();
     }
 
     protected void onStop() {
-        mLocationProvider.disconnect();
-        mLocationProvider.removeLocationCallbackListener(this);
-        mLocationProvider.removeLocationCallbackListener(mEventHandler);
-        mEventHandler.removeLocationEventListener(this);
         super.onStop();
     }
 
@@ -507,6 +508,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void handleNewLocation(Location location){
         mCurrentLocation = location;
+        //Toast.makeText(this,"Interval: "+ mLastUpdateTime +"\n"+ DateFormat.getTimeInstance().format(new Date()),Toast.LENGTH_SHORT).show();
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
         moveMyLocationMarker(location);
     }
