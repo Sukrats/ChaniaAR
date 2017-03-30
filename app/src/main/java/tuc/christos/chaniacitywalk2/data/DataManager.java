@@ -20,9 +20,9 @@ import tuc.christos.chaniacitywalk2.model.Scene;
  * Data Manager for local DB access and content providing
  */
 
- public class dataManager {
+ public class DataManager {
 
-    private static dataManager INSTANCE = null;
+    private static DataManager INSTANCE = null;
 
     private boolean initiated = false;
 
@@ -46,11 +46,11 @@ import tuc.christos.chaniacitywalk2.model.Scene;
     //private Context mContext;
     private mDBHelper mDBh;
 
-    private dataManager(){}
+    private DataManager(){}
 
-    public static dataManager getInstance() {
+    public static DataManager getInstance() {
         if(INSTANCE == null)
-            INSTANCE = new dataManager();
+            INSTANCE = new DataManager();
         /* mDBh = new mDBHelper(context);
         mContext = context;
         initDBhelper();
@@ -190,7 +190,6 @@ import tuc.christos.chaniacitywalk2.model.Scene;
     }
 
     public ArrayList<LatLng> getPolyPoints(Scene scene){
-
         return sceneToPointsMap.get(scene);
     }
 

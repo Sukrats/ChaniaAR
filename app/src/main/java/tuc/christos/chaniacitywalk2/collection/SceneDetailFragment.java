@@ -9,7 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import tuc.christos.chaniacitywalk2.data.dataManager;
+import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
@@ -31,7 +31,7 @@ public class SceneDetailFragment extends Fragment {
      */
     private Scene mItem;
 
-    private dataManager mDataManager;
+    private DataManager mDataManager;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -43,7 +43,7 @@ public class SceneDetailFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mDataManager = dataManager.getInstance();
+        mDataManager = DataManager.getInstance();
 
         if (getArguments().containsKey(ARG_ITEM_ID)) {
             // Load the dummy content specified by the fragment

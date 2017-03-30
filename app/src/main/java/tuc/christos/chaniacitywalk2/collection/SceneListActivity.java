@@ -19,7 +19,7 @@ import android.widget.TextView;
 import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
 
-import tuc.christos.chaniacitywalk2.data.dataManager;
+import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.R;
 
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -44,14 +44,14 @@ public class SceneListActivity extends AppCompatActivity {
      */
     private boolean mTwoPane;
 
-    private dataManager mDataManager;
+    private DataManager mDataManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scene_list);
 
-        mDataManager = dataManager.getInstance();
+        mDataManager = DataManager.getInstance();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 

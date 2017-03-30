@@ -27,12 +27,10 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import tuc.christos.chaniacitywalk2.data.dataManager;
+import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.utils.Tags;
 import tuc.christos.chaniacitywalk2.model.Scene;
-
-import static android.support.v4.app.NavUtils.navigateUpFromSameTask;
 
 /**
  * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -152,7 +150,7 @@ public class CollectionActivity extends AppCompatActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_collection_siblings, container, false);
             RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
-            recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(dataManager.getInstance().getScenesFromTag(getArguments().getString(ARG_SECTION_NUMBER))));
+            recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DataManager.getInstance().getScenesFromTag(getArguments().getString(ARG_SECTION_NUMBER))));
 
             return rootView;
         }

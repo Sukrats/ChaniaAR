@@ -7,7 +7,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-import tuc.christos.chaniacitywalk2.data.dataManager;
+import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
 /**
@@ -17,7 +17,7 @@ import tuc.christos.chaniacitywalk2.model.Scene;
 
 public class LocationEventHandler implements LocationCallback {
 
-    private dataManager mDataManager;
+    private DataManager mDataManager;
     private Location lastKnownLocation = new Location("");
     private ArrayList<LocationEventsListener> iLocationEventListener = new ArrayList<>();
     private Context mContext;
@@ -38,7 +38,7 @@ public class LocationEventHandler implements LocationCallback {
 
     public LocationEventHandler(Context context){
         this.mContext = context;
-        mDataManager = dataManager.getInstance();
+        mDataManager = DataManager.getInstance();
 
     }
 

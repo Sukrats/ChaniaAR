@@ -18,14 +18,11 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.support.design.widget.BottomNavigationView;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.ImageView;
@@ -55,7 +52,7 @@ import java.util.HashMap;
 
 import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
 import tuc.christos.chaniacitywalk2.model.Scene;
-import tuc.christos.chaniacitywalk2.data.dataManager;
+import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 
 
@@ -66,7 +63,7 @@ public class MapsActivity extends AppCompatActivity implements
         OnMapReadyCallback {
 
 
-    private dataManager mDataManager;
+    private DataManager mDataManager;
 
     private GoogleMap mMap;
 
@@ -115,7 +112,7 @@ public class MapsActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_maps_custom);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
-        mDataManager = dataManager.getInstance();
+        mDataManager = DataManager.getInstance();
         if(!mDataManager.isInstantiated())
             mDataManager.init(this);
 
