@@ -15,6 +15,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static final String pref_key_location_update_interval = "pref_key_location_update_interval";
 
+    public static final String pref_key_user_draw_radius = "pref_key_user_draw_radius";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

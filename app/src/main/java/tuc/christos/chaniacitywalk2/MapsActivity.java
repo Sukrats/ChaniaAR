@@ -118,18 +118,10 @@ public class MapsActivity extends AppCompatActivity implements
         mDataManager = dataManager.getInstance();
         if(!mDataManager.isInstantiated())
             mDataManager.init(this);
-        //decode preferences
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type,"");
-        Boolean follow = sharedPreferences.getBoolean(SettingsActivity.pref_key_camera_follow,false);
-        mapType = mapStyle;
-        camFollow = follow;
 
-        String locationInterval = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
-
-
+        //Registering this activity for locationProvider and Event listener
+        mLocationProvider = new LocationProvider(this);
         mEventHandler = new LocationEventHandler(this);
-        mLocationProvider = new LocationProvider(this, locationInterval);
 
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -202,8 +194,9 @@ public class MapsActivity extends AppCompatActivity implements
             }
 
         });
-
-        setMapStyle();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type,"");
+        setMapStyle(mapStyle);
         setupMapOptions();
         drawMap();
         //enableMyLocation();
@@ -262,20 +255,23 @@ public class MapsActivity extends AppCompatActivity implements
         location.setLongitude(latLng.longitude);
         return location;
     }
+
+    //EMPTY FOR THE MOMENT ?????
     public void setupMapOptions() {
     }
 
     /**
      * INITIALISE MAP STATE BASED ON USER PROGRESS
+     * And Preferences
      */
 
-    public void setMapStyle(){
+    public void setMapStyle( String mapStyle){
         // Customise the styling of the base map using a JSON object defined
         // in a raw resource file.
         if(mMap != null)
             try {
                 boolean success;
-                switch (mapType){
+                switch (mapStyle){
                     case "Night Mode":
                         success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.night_map_json));
                         break;
@@ -463,7 +459,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onPause() {
-        mLocationProvider.disconnect();
+        mLocationProvider.Stop();
         mLocationProvider.removeLocationCallbackListener(this);
         mLocationProvider.removeLocationCallbackListener(mEventHandler);
         mEventHandler.removeLocationEventListener(this);
@@ -473,18 +469,16 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onResume() {
+        //Check Preferences File and Update locally
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type,"");
         Boolean follow = sharedPreferences.getBoolean(SettingsActivity.pref_key_camera_follow,false);
-        if(!mapType.equals(mapStyle)){
-            mapType = mapStyle;
-            setMapStyle();
-        }
+        setMapStyle(mapStyle);
         camFollow = follow;
 
-        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
-        mLocationProvider.setLocationMode(mode);
-        mLocationProvider.connect();
+        //Resume Location Provider and register
+        //the Map activity for location and locationEvent updates
+        mLocationProvider.Resume(this);
         mLocationProvider.setLocationCallbackListener(this);
         mLocationProvider.setLocationCallbackListener(mEventHandler);
         mEventHandler.setLocationEventListener(this);

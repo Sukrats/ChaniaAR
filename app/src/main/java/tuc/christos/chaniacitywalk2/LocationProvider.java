@@ -1,8 +1,10 @@
 package tuc.christos.chaniacitywalk2;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
@@ -14,27 +16,23 @@ import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListe
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.LocationSource;
 
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 public class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListener, LocationListener  {
 
     private static final String TAG = "LocationProvider";
 
-    private static final long DEFAULT_INTERVAL = 1000;
-    private static final long DEFAULT_FASTEST_INTERVAL = 1000;
-    private static final int DEFAULT_PRIORITY = LocationRequest.PRIORITY_HIGH_ACCURACY;
+    private static final long HIGH_INTERVAL = 1000;
+    private static final long HIGH_FASTEST_INTERVAL = HIGH_INTERVAL /2;
+    private static final int HIGH_PRIORITY = LocationRequest.PRIORITY_HIGH_ACCURACY;
 
     private static final long MEDIUM_INTERVAL = 5000;
-    private static final long MEDIUM_FASTEST_INTERVAL = 5000;
+    private static final long MEDIUM_FASTEST_INTERVAL = MEDIUM_INTERVAL/2;
     private static final int MEDIUM_PRIORITY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
 
     private static final long SLOW_INTERVAL = 8000;
-    private static final long SLOW_FASTEST_INTERVAL = 8000;
+    private static final long SLOW_FASTEST_INTERVAL = SLOW_INTERVAL/2;
     private static final int SLOW_PRIORITY = LocationRequest.PRIORITY_LOW_POWER;
 
     private ArrayList<LocationCallback> mLocationCallback = new ArrayList<>();
@@ -55,16 +53,10 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
                 .addApi(LocationServices.API)
                 .build();
 
-        createLocationRequest(MEDIUM_INTERVAL,MEDIUM_FASTEST_INTERVAL,MEDIUM_PRIORITY);
-    }
-
-    public LocationProvider (Context context, String mode) {
-        this.mGoogleApiClient = new GoogleApiClient.Builder(context)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
         setLocationMode(mode);
+
     }
 
     public void setLocationCallbackListener(LocationCallback callback){
@@ -77,6 +69,20 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
         Log.i("Location Provider","Listeners Removed: " + callback );
     }
 
+    public void Stop(){
+        mGoogleApiClient.disconnect();
+    }
+
+    public void Resume(Context context){
+
+        //Change Location Provider Settings and then connect to the client
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
+        Toast.makeText(context,mode, Toast.LENGTH_SHORT).show();
+        setLocationMode(mode);
+        mGoogleApiClient.connect();
+
+    }
     /**
      * TODO
      * may return null loc
@@ -108,7 +114,7 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
     public void setLocationMode(String mode){
         switch(mode){
             case "High Accuracy":
-                createLocationRequest(DEFAULT_INTERVAL, DEFAULT_FASTEST_INTERVAL, DEFAULT_PRIORITY);
+                createLocationRequest(HIGH_INTERVAL, HIGH_FASTEST_INTERVAL, HIGH_PRIORITY);
                 break;
             case "Balanced Power Accuracy":
                 createLocationRequest(MEDIUM_INTERVAL, MEDIUM_FASTEST_INTERVAL, MEDIUM_PRIORITY);

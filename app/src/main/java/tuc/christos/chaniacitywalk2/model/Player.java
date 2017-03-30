@@ -2,6 +2,7 @@ package tuc.christos.chaniacitywalk2.model;
 
 /**
  * Created by Christos on 24/1/2017.
+ *
  */
 
 public class Player {
@@ -10,4 +11,7 @@ public class Player {
     private Long placesVenVisited;
     private Long placesOthVisited;
     private boolean completedRoute;
+
+
+
 }
