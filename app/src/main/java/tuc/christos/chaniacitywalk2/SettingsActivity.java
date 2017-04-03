@@ -1,11 +1,17 @@
 package tuc.christos.chaniacitywalk2;
 
 import android.content.SharedPreferences;
-import android.preference.Preference;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.preference.PreferenceManager;
+import android.support.v7.preference.Preference;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
+import android.view.View;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -20,13 +26,33 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_settings);
 
-        getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, new SettingsFragment())
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            //actionBar.setHomeAsUpIndicator(R.drawable.ic_settings_white);
+        }
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.content, new SettingsFragment())
                 .commit();
     }
 
-    public static class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+       if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    public static class SettingsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -43,11 +69,22 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         @Override
+        public void onViewCreated(View view, Bundle savedInstanceState) {
+            super.onViewCreated(view,savedInstanceState);
+            setDividerHeight(0);
+        }
+
+            @Override
+        public void onCreatePreferences(Bundle bundle, String key){
+        }
+
+        @Override
         public void onResume(){
             super.onResume();
             getPreferenceScreen().getSharedPreferences()
                     .registerOnSharedPreferenceChangeListener(this);
         }
+
         @Override
         public void onPause(){
             super.onPause();

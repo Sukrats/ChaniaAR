@@ -278,7 +278,6 @@ public class MapsActivity extends AppCompatActivity implements
                     case "Simple Retro Mode":
                         success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.retro_map_json_simple));
                         break;
-
                     default:
                         success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.normal_map_json));
                 }
@@ -521,7 +520,7 @@ public class MapsActivity extends AppCompatActivity implements
 
             circleMap.put(areaID,circle);
         }
-        Toast.makeText(this, "GeoFences Drawn: " + areaIds.length, Toast.LENGTH_LONG).show();
+        //Toast.makeText(this, "GeoFences Drawn: " + areaIds.length, Toast.LENGTH_LONG).show();
     }
 
     public void userEnteredArea(String areaID){

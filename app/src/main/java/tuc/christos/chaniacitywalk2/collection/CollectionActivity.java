@@ -57,6 +57,7 @@ public class CollectionActivity extends AppCompatActivity {
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
+            actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);

@@ -1,42 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory
+<android.support.v7.preference.PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <android.support.v7.preference.PreferenceCategory
         android:title="@string/pref_maps">
 
-        <SwitchPreference
+        <android.support.v7.preference.SwitchPreferenceCompat
             android:key="pref_key_camera_follow"
             android:summary="@string/pref_maps_camera_follow_summary"
             android:title="@string/pref_maps_camera_follow_title"
             android:defaultValue="false"/>
 
-        <ListPreference
+        <android.support.v7.preference.ListPreference
             android:key="pref_key_map_type"
             android:entries="@array/pref_maps_map_style_titles"
             android:entryValues="@array/pref_maps_map_style_values"
             android:title="@string/pref_maps_map_style"/>
-    </PreferenceCategory>
+    </android.support.v7.preference.PreferenceCategory>
 
-    <PreferenceCategory
+    <android.support.v7.preference.PreferenceCategory
         android:title="@string/pref_location">
 
-        <ListPreference
+        <android.support.v7.preference.ListPreference
             android:key="pref_key_location_update_interval"
             android:title="@string/pref_location_mode"
             android:entries="@array/pref_location_mode_titles"
             android:entryValues="@array/pref_location_mode_values"/>
-    </PreferenceCategory>
+    </android.support.v7.preference.PreferenceCategory>
 
-    <PreferenceCategory
+    <android.support.v7.preference.PreferenceCategory
         android:title="@string/pref_geo_fence">
-        <Preference
+
+        <android.support.v7.preference.SeekBarPreference
             android:key="pref_key_user_draw_radius"
             android:summary="@string/pref_geo_fence_culling_distance_summary"
             android:title="@string/pref_geo_fence_culling_distance"/>
 
-    </PreferenceCategory>
-
-    <PreferenceScreen
-        android:title="Test Screen">
-
-    </PreferenceScreen>
-</PreferenceScreen>
+    </android.support.v7.preference.PreferenceCategory>
+</android.support.v7.preference.PreferenceScreen>

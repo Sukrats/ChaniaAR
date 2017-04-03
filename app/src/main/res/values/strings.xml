@@ -19,6 +19,7 @@
     <string name="action_settings">Settings</string>
     <string name="title_scene_list">SceneCollection</string>
     <string name="title_scene_detail">Scene Detail</string>
+    <string name="title_settings">Settings</string>
     <string name="title_activity_collection_siblings">CollectionSiblings</string>
     <string name="section_format">Hello World from section: %1$s</string>
     <!--   MAP PREFERENCES     -->

@@ -50,7 +50,14 @@
                 android:value="tuc.christos.chaniacitywalk2.collection.CollectionActivity" />
         </activity>
         <activity
-            android:name=".SettingsActivity"/>
+            android:name=".SettingsActivity"
+            android:label="@string/title_settings"
+            android:theme="@style/PreferenceTheme"
+            android:parentActivityName=".MapsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
+        </activity>
     </application>
 
 </manifest>
