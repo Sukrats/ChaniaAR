@@ -89,16 +89,16 @@ import tuc.christos.chaniacitywalk2.model.Scene;
                 Cursor c = mDBh.getEntries();
                 while (c.moveToNext()) {
 
-                    String TAG = c.getString(c.getColumnIndexOrThrow(mDBHelper.FeedEntry.TABLE_COLUMN_TAG));
-                    String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.FeedEntry.TABLE_COLUMN_NAME));
-                    double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.FeedEntry.TABLE_COLUMN_LATITUDE));
-                    double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.FeedEntry.TABLE_COLUMN_LONGITUDE));
-                    int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.FeedEntry._ID));
-                    String descr = c.getString(c.getColumnIndexOrThrow(mDBHelper.FeedEntry.TABLE_COLUMN_DESCRIPTION));
+                    String TAG = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_TAG));
+                    String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_NAME));
+                    double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_LATITUDE));
+                    double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_LONGITUDE));
+                    int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry._ID));
+                    String descr = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_DESCRIPTION));
 
-                    boolean tVisible = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.FeedEntry.TABLE_COLUMN_VISIBLE)));
-                    boolean tHasAR = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.FeedEntry.TABLE_COLUMN_HASAR)));
-                    boolean tVisit = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.FeedEntry.TABLE_COLUMN_VISITED)));
+                    boolean tVisible = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_VISIBLE)));
+                    boolean tHasAR = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_HASAR)));
+                    boolean tVisit = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_VISITED)));
 
 
                     Scene temp = new Scene(lat, lon, id, name, tVisit, tVisible, tHasAR, descr, TAG);

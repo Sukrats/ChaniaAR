@@ -28,24 +28,25 @@ final class mDBHelper extends SQLiteOpenHelper {
     private static final int DB_VERSION = 1;
     private static String DB_PATH;// = "/data/data/tuc.christos.chaniacitywalk2/databases/";
     private static String DB_NAME = "scenesDBtest.db";
+    private static String DB_NAME_c = "ARAppDB.db";
     private SQLiteDatabase myDataBase;
 
     private final Context mContext;
 
     /*private static final String SQL_DELETE_ENTRIES =
-            "DROP TABLE IF EXISTS " + FeedEntry.TABLE_NAME;
+            "DROP TABLE IF EXISTS " + SceneEntry.TABLE_NAME;
 
     /*private static final String SQL_CREATE_ENTRIES =
-            "CREATE TABLE IF NOT EXISTS" + FeedEntry.TABLE_NAME + " (" +
-                    FeedEntry._ID + " INTEGER PRIMARY KEY," +
-                    FeedEntry.TABLE_COLUMN_NAME + " TEXT," +
-                    FeedEntry.TABLE_COLUMN_TAG + " TEXT,"+
-                    FeedEntry.TABLE_COLUMN_DESCRIPTION + "TEXT,"+
-                    FeedEntry.TABLE_COLUMN_LATITUDE + "REAL,"+
-                    FeedEntry.TABLE_COLUMN_LONGITUDE + "REAL,"+
-                    FeedEntry.TABLE_COLUMN_UNLOCKED + "BOOLEAN,"+
-                    FeedEntry.TABLE_COLUMN_VISIBLE + "BOOLEAN,"+
-                    FeedEntry.TABLE_COLUMN_HASAR + "BOOLEAN)";
+            "CREATE TABLE IF NOT EXISTS" + SceneEntry.TABLE_NAME + " (" +
+                    SceneEntry._ID + " INTEGER PRIMARY KEY," +
+                    SceneEntry.TABLE_COLUMN_NAME + " TEXT," +
+                    SceneEntry.TABLE_COLUMN_TAG + " TEXT,"+
+                    SceneEntry.TABLE_COLUMN_DESCRIPTION + "TEXT,"+
+                    SceneEntry.TABLE_COLUMN_LATITUDE + "REAL,"+
+                    SceneEntry.TABLE_COLUMN_LONGITUDE + "REAL,"+
+                    SceneEntry.TABLE_COLUMN_UNLOCKED + "BOOLEAN,"+
+                    SceneEntry.TABLE_COLUMN_VISIBLE + "BOOLEAN,"+
+                    SceneEntry.TABLE_COLUMN_HASAR + "BOOLEAN)";
     */
 
     mDBHelper(Context context){
@@ -154,7 +155,7 @@ final class mDBHelper extends SQLiteOpenHelper {
 
         String selectQ = "SELECT * FROM Scenes";
 
-        //return myDataBase.query(FeedEntry.TABLE_NAME, projection,null,null,null,null,null);
+        //return myDataBase.query(SceneEntry.TABLE_NAME, projection,null,null,null,null,null);
         return myDataBase.rawQuery(selectQ,null);
     }
 
@@ -163,15 +164,15 @@ final class mDBHelper extends SQLiteOpenHelper {
         String deleteQ = "DELETE * FROM Scenes";
         myDataBase.rawQuery(deleteQ, null);
 
-        String insertQ = "INSERT INTO Scenes (" + FeedEntry._ID + ","
-                + FeedEntry.TABLE_COLUMN_NAME + ","
-                + FeedEntry.TABLE_COLUMN_LATITUDE + ","
-                + FeedEntry.TABLE_COLUMN_LONGITUDE + ","
-                + FeedEntry.TABLE_COLUMN_VISITED + ","
-                + FeedEntry.TABLE_COLUMN_VISIBLE + ","
-                + FeedEntry.TABLE_COLUMN_HASAR + ","
-                + FeedEntry.TABLE_COLUMN_DESCRIPTION + ","
-                + FeedEntry.TABLE_COLUMN_TAG + ")";
+        String insertQ = "INSERT INTO Scenes (" + SceneEntry._ID + ","
+                + SceneEntry.TABLE_COLUMN_NAME + ","
+                + SceneEntry.TABLE_COLUMN_LATITUDE + ","
+                + SceneEntry.TABLE_COLUMN_LONGITUDE + ","
+                + SceneEntry.TABLE_COLUMN_VISITED + ","
+                + SceneEntry.TABLE_COLUMN_VISIBLE + ","
+                + SceneEntry.TABLE_COLUMN_HASAR + ","
+                + SceneEntry.TABLE_COLUMN_DESCRIPTION + ","
+                + SceneEntry.TABLE_COLUMN_TAG + ")";
 
         for (Scene temp: Scenes) {
 
@@ -188,7 +189,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         }
     }
 
-    static class FeedEntry implements BaseColumns{
+    static class SceneEntry implements BaseColumns{
         //public static final String TABLE_NAME="Scenes";
         static final String TABLE_COLUMN_NAME="name";
         static final String TABLE_COLUMN_LATITUDE="latitude";

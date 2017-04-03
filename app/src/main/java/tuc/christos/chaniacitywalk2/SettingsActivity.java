@@ -19,6 +19,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static final String pref_key_map_type = "pref_key_map_type";
 
+    public static final String pref_key_auto_sign_in = "pref_key_auto_sign_in";
+
     public static final String pref_key_location_update_interval = "pref_key_location_update_interval";
 
     public static final String pref_key_user_draw_radius = "pref_key_user_draw_radius";

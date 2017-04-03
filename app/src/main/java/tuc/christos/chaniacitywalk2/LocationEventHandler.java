@@ -2,6 +2,7 @@ package tuc.christos.chaniacitywalk2;
 
 import android.content.Context;
 import android.location.Location;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -125,7 +126,7 @@ public class LocationEventHandler implements LocationCallback {
          * If no fence is active we show the corresponding message
          */
         if(GeoFences.isEmpty()){
-            Toast.makeText(mContext,"NO GEO FENCE ACTIVE ", Toast.LENGTH_LONG).show();
+            //Toast.makeText(mContext,"NO GEO FENCE ACTIVE ", Toast.LENGTH_LONG).show();
 
         }
         else{
@@ -141,7 +142,7 @@ public class LocationEventHandler implements LocationCallback {
                 i++;
             }
             triggerDrawGeoFences(areaIds);
-            Toast.makeText(mContext,"GEO FENCES ACTIVE: " + GeoFences.size(), Toast.LENGTH_LONG).show();
+            //Toast.makeText(mContext,"GEO FENCES ACTIVE: " + GeoFences.size(), Toast.LENGTH_LONG).show();
         }
 
     }

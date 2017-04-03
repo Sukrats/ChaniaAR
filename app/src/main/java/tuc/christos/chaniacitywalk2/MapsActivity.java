@@ -110,7 +110,7 @@ public class MapsActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps_custom);
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
         if(!mDataManager.isInstantiated())
@@ -525,7 +525,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void userEnteredArea(String areaID){
         Scene scene = mDataManager.getScene(areaID);
-        Toast.makeText(this,"User Entered Area: "+ scene.getName(), Toast.LENGTH_LONG).show();
+        //Toast.makeText(this,"User Entered Area: "+ scene.getName(), Toast.LENGTH_LONG).show();
 
         setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
 
@@ -535,7 +535,7 @@ public class MapsActivity extends AppCompatActivity implements
     public void userLeftArea(String areaID) {
 
         if (circleMap.containsKey(areaID)){
-            Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
             //Circle circle = circleMap.get(areaID);
             //circle.remove();
             //circleMap.remove(areaID);

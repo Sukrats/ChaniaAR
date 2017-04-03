@@ -21,13 +21,17 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MapsActivity"
-            android:screenOrientation="portrait">
+            android:name=".LoginActivity"
+            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".MapsActivity"
+            android:screenOrientation="portrait">
         </activity>
         <activity
             android:name=".collection.CollectionActivity"
@@ -52,8 +56,8 @@
         <activity
             android:name=".SettingsActivity"
             android:label="@string/title_settings"
-            android:theme="@style/PreferenceTheme"
-            android:parentActivityName=".MapsActivity">
+            android:parentActivityName=".MapsActivity"
+            android:theme="@style/PreferenceTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />

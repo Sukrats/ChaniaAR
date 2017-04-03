@@ -78,7 +78,6 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
         //Change Location Provider Settings and then connect to the client
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
-        Toast.makeText(context,mode, Toast.LENGTH_SHORT).show();
         setLocationMode(mode);
         mGoogleApiClient.connect();
 
