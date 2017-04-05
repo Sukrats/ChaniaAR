@@ -5,11 +5,12 @@ import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,7 +21,6 @@ public class LoginActivity extends AppCompatActivity {
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
-
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
@@ -48,6 +48,14 @@ public class LoginActivity extends AppCompatActivity {
             // Set up the login form.
             mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
             mPasswordView = (EditText) findViewById(R.id.password);
+
+            //add emails to autocomplete
+
+            String[] pieces = DUMMY_CREDENTIALS[0].split(":");
+            pieces[1] = "";
+            ArrayAdapter<String> adapter =new ArrayAdapter<>(LoginActivity.this,
+                            android.R.layout.simple_dropdown_item_1line, pieces);
+            mEmailView.setAdapter(adapter);
 
             Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
             mEmailSignInButton.setOnClickListener(new View.OnClickListener() {

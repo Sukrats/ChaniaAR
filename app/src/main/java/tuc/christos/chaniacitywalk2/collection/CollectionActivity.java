@@ -29,7 +29,6 @@ import java.util.List;
 
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.R;
-import tuc.christos.chaniacitywalk2.utils.Tags;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
 /**
@@ -46,6 +45,7 @@ public class CollectionActivity extends AppCompatActivity {
     /**
      * The {@link ViewPager} that will host the section contents.
      */
+    DataManager mDataManager = DataManager.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,28 +97,45 @@ public class CollectionActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }else if (id == android.R.id.home) {
-            // This ID represents the Home or Up button. In the case of this
-            // activity, the Up button is shown. Use NavUtils to allow users
-            // to navigate up one level in the application structure. For
-            // more details, see the Navigation pattern on Android Design:
-            //
-            // http://developer.android.com/design/patterns/navigation.html#up-vs-back
-            //
-            //navigateUpFromSameTask(this);
             onBackPressed();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+    /**
+     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
+     * one of the sections/tabs/pages.
+     */
+    private class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        private SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            // getItem is called to instantiate the fragment for the given page.
+            // Return a PlaceholderFragment (defined as a static inner class below).
+            String page = mDataManager.getPeriod(position);
+            return PlaceholderFragment.newInstance(page);
+        }
+
+        @Override
+        public int getCount() {
+            // Show total pages depending on Periods
+            return mDataManager.getPeriodCount();
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mDataManager.getPeriod(position);
+        }
     }
 
     /**
@@ -160,54 +177,6 @@ public class CollectionActivity extends AppCompatActivity {
 
     }
 
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
-     */
-    private class SectionsPagerAdapter extends FragmentPagerAdapter {
-
-        private SectionsPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            String page = "";
-            switch (position) {
-                case 0:
-                    page = Tags.VENETIAN.toString();
-                    break;
-                case 1:
-                    page = Tags.OTTOMAN.toString();
-                    break;
-                case 2:
-                    page = Tags.MODERN.toString();
-                    break;
-            }
-            return PlaceholderFragment.newInstance(page);
-        }
-
-        @Override
-        public int getCount() {
-            // Show 3 total pages.
-            return 3;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            switch (position) {
-                case 0:
-                    return Tags.VENETIAN.toString();
-                case 1:
-                    return Tags.OTTOMAN.toString();
-                case 2:
-                    return Tags.MODERN.toString();
-            }
-            return null;
-        }
-    }
 
     static class SimpleItemRecyclerViewAdapter extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
 
@@ -226,8 +195,8 @@ public class CollectionActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
-            holder.mItem = mValues.get(position);
-            holder.mIdView.setText(mValues.get(position).getName());
+            final Scene item = mValues.get(position);
+            holder.mIdView.setText(item.getName());
             //holder.mContentView.setText(mValues.get(position).getTAG());
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -236,7 +205,7 @@ public class CollectionActivity extends AppCompatActivity {
 
                         Context context = v.getContext();
                         Intent intent = new Intent(context, SceneDetailActivity.class);
-                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Integer.toString(holder.mItem.getId()));
+                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Integer.toString(item.getId()));
 
                         context.startActivity(intent);
 
@@ -249,17 +218,15 @@ public class CollectionActivity extends AppCompatActivity {
             return mValues.size();
         }
 
+
         class ViewHolder extends RecyclerView.ViewHolder {
             final View mView;
             final TextView mIdView;
-            //public final TextView mContentView;
-            Scene mItem;
 
             ViewHolder(View view) {
                 super(view);
                 mView = view;
                 mIdView = (TextView) view.findViewById(R.id.id);
-                //mContentView = (TextView) view.findViewById(R.id.content);
             }
 
             @Override

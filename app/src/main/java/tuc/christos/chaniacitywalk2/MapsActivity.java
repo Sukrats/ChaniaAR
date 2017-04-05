@@ -62,49 +62,29 @@ public class MapsActivity extends AppCompatActivity implements
         GoogleMap.OnMapClickListener,
         OnMapReadyCallback {
 
+    protected static final String TAG = "MAPS ACTIVITY";
 
     private DataManager mDataManager;
-
     private GoogleMap mMap;
-
     private UiSettings mUiSettings;
-
     private LocationProvider mLocationProvider;
-
     private LocationEventHandler mEventHandler;
 
     private Marker mSelectedMarker = null;
 
-    protected static final String TAG = "MAPS ACTIVITY";
-
-    private final float DEFAULT_ZOOM_LEVEL = 17.0f;
-
     protected Location mCurrentLocation;
-
     protected String mLastUpdateTime;
-
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private Marker mLocationMarker = null;
 
     private HashMap<String,Circle> circleMap =new HashMap<>();
 
+    private boolean camToStart = false;
+    private boolean camFollow = false;
+    private final float DEFAULT_ZOOM_LEVEL = 17.0f;
     private CameraPosition defaultCameraPosition = new CameraPosition.Builder()
             .target(new LatLng(35.514388, 24.020335)).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
 
-    private boolean camToStart = false;
 
-    private Marker mLocationMarker = null;
-
-    //PREFERENCES
-    private String mapType = "";
-    private boolean camFollow = false;
-
-    /*BottomNavigationView.OnNavigationItemSelectedListener mItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            buildIntentForActivity(item.getItemId());
-            return true;
-        }
-    };*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -434,32 +414,15 @@ public class MapsActivity extends AppCompatActivity implements
 
 
     }
-    /**
-     * Enables the My Location layer if the fine location permission has been granted.
-     */
-    private void enableMyLocation() {
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            // Permission to access the location is missing.
-            PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
-                    Manifest.permission.ACCESS_FINE_LOCATION, true);
-        } else if (mMap != null) {
-
-            mMap.setMyLocationEnabled(true);
-            mUiSettings.setMyLocationButtonEnabled(true);
-            //mUiSettings.setMapToolbarEnabled(true);
-        }
-    }
-
 
     @Override
     public void onPause() {
-        mLocationProvider.Stop();
+        mLocationProvider.disconnect();
         mLocationProvider.removeLocationCallbackListener(this);
         mLocationProvider.removeLocationCallbackListener(mEventHandler);
         mEventHandler.removeLocationEventListener(this);
         super.onPause();
+
     }
 
 
@@ -474,7 +437,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         //Resume Location Provider and register
         //the Map activity for location and locationEvent updates
-        mLocationProvider.Resume(this);
+        mLocationProvider.connect(this);
         mLocationProvider.setLocationCallbackListener(this);
         mLocationProvider.setLocationCallbackListener(mEventHandler);
         mEventHandler.setLocationEventListener(this);
@@ -515,8 +478,8 @@ public class MapsActivity extends AppCompatActivity implements
                     .center(new LatLng(scene.getLatitude(),scene.getLongitude()))
                     .radius(radius)
                     .strokeWidth(2)
-                    .strokeColor(ContextCompat.getColor(this,R.color.circleStroke))
-                    .fillColor(ContextCompat.getColor(this,R.color.circleFill)));
+                    .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
+                    .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
 
             circleMap.put(areaID,circle);
         }

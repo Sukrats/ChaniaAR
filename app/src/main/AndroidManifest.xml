@@ -25,7 +25,6 @@
             android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -56,7 +55,7 @@
         <activity
             android:name=".SettingsActivity"
             android:label="@string/title_settings"
-            android:parentActivityName=".MapsActivity"
+            android:parentActivityName="tuc.christos.chaniacitywalk2.MapsActivity"
             android:theme="@style/PreferenceTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

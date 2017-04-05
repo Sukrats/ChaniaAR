@@ -201,29 +201,13 @@ import tuc.christos.chaniacitywalk2.model.Scene;
 
         polyListRocco.add(new LatLng(35.5164899,24.021208));//stRocco
         polyListRocco.add(new LatLng(35.51711,24.020557));//ByzWall
-        /*polyListRocco.add(new LatLng(35.516470,24.021102));//stRocco
-        polyListRocco.add(new LatLng(35.517112,24.020858));//stRocco
-        polyListRocco.add(new LatLng(35.517092,24.020705));//stRocco
-        */
+
         polyListByz.add(new LatLng(35.51711,24.020557));//ByzWall
         polyListByz.add(new LatLng(35.5171461,24.019581));//kasteli
-
-        /* polyListByz.add(new LatLng(35.517092,24.020705));//ByzWall
-        polyListByz.add(new LatLng(35.517253,24.020791));//ByzWall
-        polyListByz.add(new LatLng(35.517443,24.020788));//ByzWall
-        polyListByz.add(new LatLng(35.517369,24.020397));//ByzWall
-        polyListByz.add(new LatLng(35.517076,24.019614));//ByzWall
-        */
 
         polyListKast.add(new LatLng(35.5171461,24.019581));//kasteli
         polyListKast.add(new LatLng(35.517398,24.01779));//Glass Mosque
 
-        /*polyListKast.add(new LatLng(35.517076,24.019614));//kasteli
-        polyListKast.add(new LatLng(35.516653,24.018527));//kasteli
-        polyListKast.add(new LatLng(35.516522,24.017910));//kasteli
-        polyListKast.add(new LatLng(35.516729,24.017768));//kasteli
-        polyListKast.add(new LatLng(35.517356,24.017637));//kasteli
-        */
         polyListGlass.add(new LatLng(35.517398,24.01779));//Glass Mosque
 
         for(Scene temp: Route){
@@ -248,6 +232,47 @@ import tuc.christos.chaniacitywalk2.model.Scene;
     }
     private boolean intToBool(int i){
         return (i != 0);
+    }
+
+
+    public String getPeriod(int position){
+        String page = "";
+        switch (position) {
+            case 0:
+                page = Tags.HELLENISTIC.toString();
+                break;
+            case 1:
+                page = Tags.BYZANTINE.toString();
+                break;
+            case 2:
+                page = Tags.VENETIAN.toString();
+                break;
+            case 3:
+                page = Tags.OTTOMAN.toString();
+                break;
+            case 4:
+                page = Tags.MODERN.toString();
+                break;
+        }
+        return page;
+    }
+
+    public int getPeriodCount(){
+        return Tags.values().length;
+    }
+
+    private enum Tags {
+
+        OTTOMAN,
+
+        VENETIAN,
+
+        MODERN,
+
+        HELLENISTIC,
+
+        BYZANTINE
+
     }
 
 }
