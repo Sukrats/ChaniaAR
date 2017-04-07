@@ -142,12 +142,10 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
                     case LocationSettingsStatusCodes.SUCCESS:
                         // All location settings are satisfied. The client can
                         // initialize location requests here.
-                        Toast.makeText(mContext," NO PROB MATEY",Toast.LENGTH_SHORT).show();
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                         // Location settings are not satisfied, but this can be fixed
                         // by showing the user a dialog.
-                        Toast.makeText(mContext," DIALOG SHOULD SHOW",Toast.LENGTH_SHORT).show();
                         try {
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
@@ -161,7 +159,6 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                         // Location settings are not satisfied. However, we have no way
                         // to fix the settings so we won't show the dialog.
-                        Toast.makeText(mContext,"BALLOCKS",Toast.LENGTH_SHORT).show();
                         break;
                 }
             }

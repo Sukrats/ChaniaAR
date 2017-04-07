@@ -31,7 +31,7 @@
     <string name="action_sign_in_successful">Sign in Successful Welcome</string>
     <string name="action_sign_in_wrong">Something went wrong check the form above</string>
     <string name="action_sign_in">Sign in or Register</string>
-    <string name="action_sign_in_server_error">Something went wrong on our part :(</string>
+    <string name="action_sign_in_server_error">Something went wrong on our side :(</string>
     <string name="error_invalid_password">Password is too short</string>
     <string name="error_incorrect_password">The password you entered is incorrect</string>
     <string name="error_field_required">This Field is required</string>

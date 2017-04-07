@@ -113,7 +113,7 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                Log.i("GET Players", "GET FAILED");
+                Log.i("GET Players", "GET failed, Server probably offline");
             }
         });
     }
@@ -211,6 +211,7 @@ public class LoginActivity extends AppCompatActivity {
                 AUTO_COMPLETE_LIST.add(mailToAutoComplete);
                 Intent intent = new Intent( getApplicationContext(), MapsActivity.class);
                 startActivity(intent);
+                cancel = false;
                 break;
             case "202":
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
@@ -219,9 +220,12 @@ public class LoginActivity extends AppCompatActivity {
                 focusView = mPasswordView;
                 cancel = true;
                 break;
+
             case "301":
                 resultsView.setText(R.string.action_sign_in_server_error);
                 AUTO_COMPLETE_LIST.add(mailToAutoComplete);
+                Intent intent2 = new Intent( getApplicationContext(), MapsActivity.class);
+                startActivity(intent2);
                 cancel = false;
                 break;
         }
