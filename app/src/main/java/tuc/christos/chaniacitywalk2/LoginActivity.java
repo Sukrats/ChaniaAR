@@ -82,7 +82,7 @@ public class LoginActivity extends AppCompatActivity {
             mLoginFormView.setVisibility(View.GONE);
             //TODO:READ DATABASE, GET LOGIN INFO, ACCESS REMOTE SERVER AND VALIDATE
             //see alse Auth Task implementation
-            invokeWSGet();
+            invokeWSLogin("cautionfail@gmail.com", "hello");
             //mAuthTask = new UserLoginTask("cautionfail@gmail.com", "hello");
             //mAuthTask.execute((Void) null);
         }
@@ -126,26 +126,17 @@ public class LoginActivity extends AppCompatActivity {
                         }
                         items = items +temp;
                     }
-                    handleResponse(true, items);
+                    //handleResponse(true, items);
                 }catch(JSONException e){
-                    handleResponse(true, e.getMessage());
+                   // handleResponse(true, e.getMessage());
                 }
             }
 
             @Override
             public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                handleResponse(false,throwable.getMessage());
+               // handleResponse(false,throwable.getMessage());
             }
         });
-    }
-
-    public void handleResponse(boolean state,String e){
-        if(state){
-            resultsView.setText(e);
-            Toast.makeText(this,"Success:",Toast.LENGTH_SHORT).show();
-        }else{
-            Toast.makeText(this,"Nope:",Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void attemptLogin(){
@@ -189,11 +180,64 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
-            mAuthTask.execute((Void) null);
+            invokeWSLogin(email,password);
+            //mAuthTask = new UserLoginTask(email, password);
+            //mAuthTask.execute((Void) null);
         }
 
+
+    }
+
+    private void invokeWSLogin(String email,String password){
+        showProgress(true);
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get("http://10.0.25.102:8080/Jersey/rest/players/login&"+email+"&"+password, null , new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                String code = "";
+                for(byte b:bytes){
+                    code = code + ((char)b);
+                }
+                handleResponse(code);
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                String code ="301";
+                    handleResponse(code);
+            }
+        });
+
+    }
+    public void handleResponse(String response){
+        showProgress(false);
+        // Reset errors.
+        mEmailView.setError(null);
+        mPasswordView.setError(null);
+        boolean cancel = false;
+        View focusView = null;
+
+        switch(response){
+            case "102":
+                mEmailView.setError(getString(R.string.error_incorrect_email));
+                resultsView.setText(R.string.action_sign_in_wrong);
+                focusView = mEmailView;
+                cancel = true;
+                break;
+            case "201":
+                resultsView.setText(R.string.action_sign_in_successful);
+                Intent intent = new Intent( getApplicationContext(), MapsActivity.class);
+                startActivity(intent);
+                break;
+            case "202":
+                mPasswordView.setError(getString(R.string.error_incorrect_password));
+                resultsView.setText(R.string.action_sign_in_wrong);
+                focusView = mPasswordView;
+                cancel = true;
+                break;
+        }
+        if(cancel)
+            focusView.requestFocus();
 
     }
 
@@ -234,7 +278,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+    private class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
         private final String mEmail;
         private final String mPassword;
