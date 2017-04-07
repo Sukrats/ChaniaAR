@@ -16,7 +16,7 @@ import tuc.christos.chaniacitywalk2.R;
  * An activity representing a single Scene detail screen. This
  * activity is only used narrow width devices. On tablet-size devices,
  * item details are presented side-by-side with a list of items
- * in a {@link SceneListActivity}.
+ * in a {@link CollectionActivity}.
  */
 public class SceneDetailActivity extends AppCompatActivity {
 
@@ -75,7 +75,7 @@ public class SceneDetailActivity extends AppCompatActivity {
             //
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back
             //
-            navigateUpTo(new Intent(this, SceneListActivity.class));
+            navigateUpTo(new Intent(this, CollectionActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);

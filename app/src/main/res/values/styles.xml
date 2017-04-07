@@ -30,7 +30,7 @@
         <item name="preferenceScreenStyle">@style/Preference.PreferenceScreen.Material</item>
         <item name="preferenceFragmentStyle">@style/PreferenceFragment.Material</item>
 
-        <item name="preferenceCategoryStyle">@style/preferenceCategoryCustom</item>
+        <item name="preferenceCategoryStyle">@style/Preference.Category.Material</item>
 
         <item name="preferenceStyle">@style/Preference.Material</item>
         <item name="preferenceInformationStyle">@style/Preference.Information.Material</item>

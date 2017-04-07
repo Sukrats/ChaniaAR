@@ -14,7 +14,19 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
+import com.loopj.android.http.*;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import cz.msebera.android.httpclient.Header;
+
 
 public class LoginActivity extends AppCompatActivity {
     /**
@@ -26,6 +38,8 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+
+    private TextView resultsView;
 
     private final String[] DUMMY_CREDENTIALS = new String[]{
             "cautionfail@gmail.com:hello"
@@ -43,35 +57,94 @@ public class LoginActivity extends AppCompatActivity {
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+        resultsView = (TextView)findViewById(R.id.results);
 
-        if(!autoSignIn) {
-            // Set up the login form.
-            mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
-            mPasswordView = (EditText) findViewById(R.id.password);
+        // Set up the login form.
+        mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        mPasswordView = (EditText) findViewById(R.id.password);
 
-            //add emails to autocomplete
+        //add emails to autocomplete
+        String[] pieces = DUMMY_CREDENTIALS[0].split(":");
+        pieces[1] = "";
+        ArrayAdapter<String> adapter =new ArrayAdapter<>(LoginActivity.this,
+                        android.R.layout.simple_dropdown_item_1line, pieces);
+        mEmailView.setAdapter(adapter);
 
-            String[] pieces = DUMMY_CREDENTIALS[0].split(":");
-            pieces[1] = "";
-            ArrayAdapter<String> adapter =new ArrayAdapter<>(LoginActivity.this,
-                            android.R.layout.simple_dropdown_item_1line, pieces);
-            mEmailView.setAdapter(adapter);
-
-            Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
-            mEmailSignInButton.setOnClickListener(new View.OnClickListener() {
+        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+        mEmailSignInButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    attemptLogin();
-                }
+                attemptLogin();
+            }
             });
-        }
-        else{
+
+        if(autoSignIn){
             mLoginFormView.setVisibility(View.GONE);
             //TODO:READ DATABASE, GET LOGIN INFO, ACCESS REMOTE SERVER AND VALIDATE
             //see alse Auth Task implementation
-            showProgress(true);
-            mAuthTask = new UserLoginTask("cautionfail@gmail.com", "hello");
-            mAuthTask.execute((Void) null);
+            invokeWSGet();
+            //mAuthTask = new UserLoginTask("cautionfail@gmail.com", "hello");
+            //mAuthTask.execute((Void) null);
+        }
+    }
+
+    public void invokeWSGet(){
+        showProgress(true);
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get("http://10.0.25.102:8080/Jersey/rest/contacts", null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                String response = "";
+                for(byte b: bytes){
+                    response = response +((char) b);
+                }
+                try{
+                    JSONObject json = new JSONObject(response);
+                    JSONArray contacts = json.getJSONArray("contact");
+
+                    String items = "";
+                    for(int j = 0; j < contacts.length(); j++) {
+                        //Decode contacts
+                        JSONObject contact = contacts.getJSONObject(j);
+                        String id = contact.getString("id");
+                        String name = contact.getString("name");
+                        int z = j+1;
+                        String temp= "\n\ncontact:"+z+"\n"+"name: "+ name+"\n"+"id: "+id;
+
+                        if( !contact.isNull("address") ) {
+                            //Decode Addresses
+                            JSONArray addresses = contact.getJSONArray("address");
+                            temp = temp +"\n"+"Addresses:";
+                            for (int y = 0; y < addresses.length(); y++) {
+                                JSONObject address = addresses.getJSONObject(y);
+                                String city = address.getString("city");
+                                String street = address.getString("street");
+                                int o = y + 1;
+                                String add = "\n\t" + o + ":" + city + "\t" + street;
+                                temp = temp + add;
+                            }
+                        }
+                        items = items +temp;
+                    }
+                    handleResponse(true, items);
+                }catch(JSONException e){
+                    handleResponse(true, e.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                handleResponse(false,throwable.getMessage());
+            }
+        });
+    }
+
+    public void handleResponse(boolean state,String e){
+        if(state){
+            resultsView.setText(e);
+            Toast.makeText(this,"Success:",Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(this,"Nope:",Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -125,8 +198,12 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private boolean isEmailValid(String email) {
-        //TODO: Replace this with your own logic
-        return email.contains("@");
+        final String EMAIL_PATTERN ="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+
+        Pattern pattern = Pattern.compile(EMAIL_PATTERN);
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
     }
 
     private boolean isPasswordValid(String password) {
