@@ -27,16 +27,21 @@
     <!-- LOGIN -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
+    <string name="prompt_username">Username</string>
     <string name="action_sign_in_short">Sign in</string>
     <string name="action_sign_in_successful">Sign in Successful Welcome</string>
+    <string name="action_register_successful">Successfully registered new Account Welcome</string>
     <string name="action_sign_in_wrong">Something went wrong check the form above</string>
-    <string name="action_sign_in">Sign in or Register</string>
+    <string name="action_register_email_exists">Email is already registered, try logging in or check the form</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_register">Register</string>
     <string name="action_sign_in_server_error">Something went wrong on our side :(</string>
     <string name="error_invalid_password">Password is too short</string>
     <string name="error_incorrect_password">The password you entered is incorrect</string>
     <string name="error_field_required">This Field is required</string>
     <string name="error_invalid_email">The email address is invalid</string>
     <string name="error_incorrect_email">The email address is not recognised</string>
+    <string name="error_invalid_username">The username field is not valid</string>
 
     <!--   MAP PREFERENCES     -->
     <string name="pref_maps">Map Settings</string>

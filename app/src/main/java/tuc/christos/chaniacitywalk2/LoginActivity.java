@@ -14,6 +14,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.loopj.android.http.*;
@@ -22,11 +23,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.entity.ByteArrayEntity;
+import cz.msebera.android.httpclient.entity.StringEntity;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -39,6 +43,11 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private View mRegisterFormView;
+    private LinearLayout formsContainer;
+
+    private String mActiveView;
+    private Button mSwapButton;
 
     private TextView resultsView;
 
@@ -53,15 +62,21 @@ public class LoginActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         boolean autoSignIn = sharedPreferences.getBoolean(SettingsActivity.pref_key_auto_sign_in,false);
 
+        formsContainer = (LinearLayout) findViewById(R.id.forms_container);
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
         resultsView = (TextView)findViewById(R.id.results);
+        mSwapButton = (Button)findViewById(R.id.swap_button);
 
+        mRegisterFormView = findViewById(R.id.register_form);
+        mRegisterFormView.setVisibility(View.GONE);
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
 
+        mActiveView = "login";
+        mSwapButton.setText(R.string.action_register);
         //add emails to autocomplete
         invokeWSGetAutoComplete();
 
@@ -82,6 +97,21 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    public void swapForms(View view){
+        switch(mActiveView)
+        {
+            case "login":
+                mActiveView = "register";
+                mSwapButton.setText(R.string.action_sign_in);
+                swapViews(mLoginFormView,mRegisterFormView);
+                break;
+            case "register":
+                mActiveView = "login";
+                mSwapButton.setText(R.string.action_register);
+                swapViews(mRegisterFormView,mLoginFormView);
+                break;
+        }
+    }
     public void invokeWSGetAutoComplete(){
 
         AsyncHttpClient client = new AsyncHttpClient();
@@ -174,7 +204,6 @@ public class LoginActivity extends AppCompatActivity {
         client.get("http://10.0.25.102:8080/Jersey/rest/players/login&"+email+"&"+password, null , new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                showProgress(false);
                 String code = "";
                 for(byte b:bytes){
                     code = code + ((char)b);
@@ -199,9 +228,10 @@ public class LoginActivity extends AppCompatActivity {
         View focusView = null;
         Log.i("Login Code:",response);
         switch(response){
-            case "102":
+            case "200":
                 mEmailView.setError(getString(R.string.error_incorrect_email));
                 resultsView.setText(R.string.action_sign_in_wrong);
+                showProgress(false);
                 AUTO_COMPLETE_LIST.remove(mailToAutoComplete);
                 focusView = mEmailView;
                 cancel = true;
@@ -216,6 +246,7 @@ public class LoginActivity extends AppCompatActivity {
             case "202":
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 resultsView.setText(R.string.action_sign_in_wrong);
+                showProgress(false);
                 AUTO_COMPLETE_LIST.add(mailToAutoComplete);
                 focusView = mPasswordView;
                 cancel = true;
@@ -224,8 +255,25 @@ public class LoginActivity extends AppCompatActivity {
             case "301":
                 resultsView.setText(R.string.action_sign_in_server_error);
                 AUTO_COMPLETE_LIST.add(mailToAutoComplete);
+                showProgress(false);
                 Intent intent2 = new Intent( getApplicationContext(), MapsActivity.class);
                 startActivity(intent2);
+                cancel = false;
+                break;
+
+            case "101":
+                resultsView.setText(R.string.action_register_email_exists);
+                showProgress(false);
+                AUTO_COMPLETE_LIST.add(mailToAutoComplete);
+                cancel = true;
+                focusView = mEmailView;
+                break;
+
+            case "102":
+                resultsView.setText(R.string.action_register_successful);
+                AUTO_COMPLETE_LIST.add(mailToAutoComplete);
+                Intent intent3 = new Intent( getApplicationContext(), MapsActivity.class);
+                startActivity(intent3);
                 cancel = false;
                 break;
         }
@@ -234,6 +282,116 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
+    public void attemptRegister(View view){
+        AutoCompleteTextView emailView =(AutoCompleteTextView) findViewById(R.id.reg_email);
+        EditText usernameView =(EditText) findViewById(R.id.reg_username);
+        EditText passwordView =(EditText) findViewById(R.id.reg_password);
+
+        // Reset errors.
+        emailView.setError(null);
+        usernameView.setError(null);
+        passwordView.setError(null);
+
+        // Store values at the time of the login attempt.
+        String email = emailView.getText().toString();
+        String password = passwordView.getText().toString();
+        String username = usernameView.getText().toString();
+
+        boolean cancel = false;
+        View focusView = null;
+
+        // Check for a valid password, if the user entered one.
+        if (TextUtils.isEmpty(password) ) {
+            passwordView.setError(getString(R.string.error_field_required));
+            focusView = passwordView;
+            cancel = true;
+        }else if(!isPasswordValid(password)){
+            passwordView.setError(getString(R.string.error_invalid_password));
+            focusView = passwordView;
+            cancel = true;
+        }
+
+        // Check for a valid email address.
+        if (TextUtils.isEmpty(email)) {
+            emailView.setError(getString(R.string.error_field_required));
+            focusView = emailView;
+            cancel = true;
+        } else if (!isEmailValid(email)) {
+            emailView.setError(getString(R.string.error_invalid_email));
+            focusView = emailView;
+            cancel = true;
+        }
+
+        // Check for a valid username
+        if (TextUtils.isEmpty(username)) {
+            usernameView.setError(getString(R.string.error_field_required));
+            focusView = usernameView;
+            cancel = true;
+        } else if (!isUsernameValid(username)) {
+            usernameView.setError(getString(R.string.error_invalid_username));
+            focusView = usernameView;
+            cancel = true;
+        }
+
+        if (cancel) {
+            // There was an error; don't attempt login and focus the first
+            // form field with an error.
+            focusView.requestFocus();
+        } else {
+            // Show a progress spinner, and kick off a background task to
+            // perform the user login attempt.
+            mailToAutoComplete = email;
+            try {
+                JSONObject json = new JSONObject();
+                json.put("name", username);
+                json.put("email", email);
+                json.put("password", password);
+                Log.i("Object Sent:",json.toString());
+                invokeWSRegister(json);
+            }catch(JSONException e){
+                e.printStackTrace();
+            }//mAuthTask = new UserLoginTask(email, password);
+            //mAuthTask.execute((Void) null);
+        }
+
+
+    }
+    private void invokeWSRegister(JSONObject jsonObject){
+        try {
+            ByteArrayEntity entity = new ByteArrayEntity(jsonObject.toString().getBytes("UTF-8"));
+            showProgress(true);
+            AsyncHttpClient client = new AsyncHttpClient();
+            client.post(this,"http://10.0.25.102:8080/Jersey/rest/players/register", entity,"application/json" , new AsyncHttpResponseHandler() {
+                @Override
+                public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                    String code = "";
+                    for(byte b:bytes){
+                        code = code + ((char)b);
+                    }
+                    handleResponse(code);
+                }
+
+                @Override
+                public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                    showProgress(false);
+                    String code ="301";
+                    handleResponse(code);
+                }
+            });
+
+        }catch(UnsupportedEncodingException e){
+            e.printStackTrace();
+        }
+
+    }
+
+    private boolean isUsernameValid(String username){
+        final String USERNAME_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*";
+
+        Pattern pattern = Pattern.compile(USERNAME_PATTERN);
+        Matcher matcher = pattern.matcher(username);
+        return matcher.matches();
+    }
     private boolean isEmailValid(String email) {
         final String EMAIL_PATTERN ="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
                 + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
@@ -251,12 +409,12 @@ public class LoginActivity extends AppCompatActivity {
     private void showProgress(final boolean show) {
         int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-        mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-        mLoginFormView.animate().setDuration(shortAnimTime).alpha(
+        formsContainer.setVisibility(show ? View.GONE : View.VISIBLE);
+        formsContainer.animate().setDuration(shortAnimTime).alpha(
                 show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+                    formsContainer.setVisibility(show ? View.GONE : View.VISIBLE);
             }
             });
 
@@ -266,6 +424,27 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onAnimationEnd(Animator animation) {
                 mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+        });
+
+    }
+
+    private void swapViews(final View from,final View to) {
+        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+
+        from.setVisibility(View.GONE );
+        from.animate().setDuration(shortAnimTime).alpha(0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                from.setVisibility(View.GONE );
+            }
+        });
+
+        to.setVisibility(View.VISIBLE );
+        to.animate().setDuration(shortAnimTime).alpha(1).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                to.setVisibility(View.VISIBLE);
             }
         });
 
