@@ -20,6 +20,7 @@
     <string name="title_scene_list">SceneCollection</string>
     <string name="title_scene_detail">Scene Detail</string>
     <string name="title_settings">Settings</string>
+    <string name="title_profile">Profile</string>
     <string name="title_activity_collection_siblings">CollectionSiblings</string>
     <string name="section_format">Hello World from section: %1$s</string>
 
@@ -43,6 +44,8 @@
     <string name="error_incorrect_email">The email address is not recognised</string>
     <string name="error_invalid_username">The username field is not valid</string>
 
+    <string name="text_login">Don\'t have an account?</string>
+    <string name="text_register">Already have an account?</string>
     <!--   MAP PREFERENCES     -->
     <string name="pref_maps">Map Settings</string>
 

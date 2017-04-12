@@ -2,12 +2,21 @@ package tuc.christos.chaniacitywalk2;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiConfiguration;
+import android.provider.Settings;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.JsonReader;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -15,7 +24,9 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.loopj.android.http.*;
 
@@ -30,7 +41,7 @@ import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
-import cz.msebera.android.httpclient.entity.StringEntity;
+import tuc.christos.chaniacitywalk2.utils.Constants;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -40,14 +51,16 @@ public class LoginActivity extends AppCompatActivity {
     // UI references.
     private String mailToAutoComplete;
     private AutoCompleteTextView mEmailView;
+    private TextView panel_text;
+    private TextView panel_swap;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
     private View mRegisterFormView;
     private LinearLayout formsContainer;
+    private LinearLayout btnPanel;
 
-    private String mActiveView;
-    private Button mSwapButton;
+    private String mActiveView="login";
 
     private TextView resultsView;
 
@@ -63,30 +76,39 @@ public class LoginActivity extends AppCompatActivity {
         boolean autoSignIn = sharedPreferences.getBoolean(SettingsActivity.pref_key_auto_sign_in,false);
 
         formsContainer = (LinearLayout) findViewById(R.id.forms_container);
+        btnPanel = (LinearLayout) findViewById(R.id.btn_panel);
+        mProgressView = findViewById(R.id.login_progress);
+
+        resultsView = (TextView)findViewById(R.id.results);
 
         mLoginFormView = findViewById(R.id.login_form);
-        mProgressView = findViewById(R.id.login_progress);
-        resultsView = (TextView)findViewById(R.id.results);
-        mSwapButton = (Button)findViewById(R.id.swap_button);
-
         mRegisterFormView = findViewById(R.id.register_form);
         mRegisterFormView.setVisibility(View.GONE);
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
 
-        mActiveView = "login";
-        mSwapButton.setText(R.string.action_register);
-        //add emails to autocomplete
-        invokeWSGetAutoComplete();
-
-        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
-        mEmailSignInButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                attemptLogin();
+        //swap Views pannel
+        panel_text = (TextView)findViewById(R.id.panel_text);
+        panel_swap = (TextView)findViewById(R.id.panel_swap);
+        panel_swap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                swapForms(v);
             }
-            });
+        });
+
+
+        ConnectivityManager cm =(ConnectivityManager)getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+
+        if(isConnected){
+            //add emails to autocomplete
+            invokeWSGetAutoComplete();
+        }else
+            showNoConnectionDialog(this);
 
         if(autoSignIn){
             //TODO:READ DATABASE, GET LOGIN INFO, ACCESS REMOTE SERVER AND VALIDATE
@@ -102,20 +124,26 @@ public class LoginActivity extends AppCompatActivity {
         {
             case "login":
                 mActiveView = "register";
-                mSwapButton.setText(R.string.action_sign_in);
+                panel_swap.setText(R.string.action_sign_in);
+                panel_text.setText(R.string.text_register);
                 swapViews(mLoginFormView,mRegisterFormView);
+                mEmailView = (AutoCompleteTextView) findViewById(R.id.reg_email);
+                mPasswordView = (EditText) findViewById(R.id.reg_password);
                 break;
             case "register":
                 mActiveView = "login";
-                mSwapButton.setText(R.string.action_register);
+                panel_swap.setText(R.string.action_register);
+                panel_text.setText(R.string.text_login);
                 swapViews(mRegisterFormView,mLoginFormView);
+                mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+                mPasswordView = (EditText) findViewById(R.id.password);
                 break;
         }
     }
     public void invokeWSGetAutoComplete(){
 
         AsyncHttpClient client = new AsyncHttpClient();
-        client.get("http://10.0.25.102:8080/Jersey/rest/players", null, new AsyncHttpResponseHandler() {
+        client.get(Constants.URL_USERS, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
                 String response = "";
@@ -148,60 +176,69 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void attemptLogin(){
-        // Reset errors.
-        mEmailView.setError(null);
-        mPasswordView.setError(null);
+    public void attemptLogin(View view){
 
-        // Store values at the time of the login attempt.
-        String email = mEmailView.getText().toString();
-        String password = mPasswordView.getText().toString();
+        ConnectivityManager cm =(ConnectivityManager)getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
 
-        boolean cancel = false;
-        View focusView = null;
+        if(isConnected) {
+            // Reset errors.
+            mEmailView.setError(null);
+            mPasswordView.setError(null);
 
-        // Check for a valid password, if the user entered one.
-        if (TextUtils.isEmpty(password) ) {
-            mPasswordView.setError(getString(R.string.error_field_required));
-            focusView = mPasswordView;
-            cancel = true;
-        }else if(!isPasswordValid(password)){
-            mPasswordView.setError(getString(R.string.error_invalid_password));
-            focusView = mPasswordView;
-            cancel = true;
+            // Store values at the time of the login attempt.
+            String email = mEmailView.getText().toString();
+            String password = mPasswordView.getText().toString();
+
+            boolean cancel = false;
+            View focusView = null;
+
+            // Check for a valid password, if the user entered one.
+            if (TextUtils.isEmpty(password)) {
+                mPasswordView.setError(getString(R.string.error_field_required));
+                focusView = mPasswordView;
+                cancel = true;
+            } else if (!isPasswordValid(password)) {
+                mPasswordView.setError(getString(R.string.error_invalid_password));
+                focusView = mPasswordView;
+                cancel = true;
+            }
+
+            // Check for a valid email address.
+            if (TextUtils.isEmpty(email)) {
+                mEmailView.setError(getString(R.string.error_field_required));
+                focusView = mEmailView;
+                cancel = true;
+            } else if (!isEmailValid(email)) {
+                mEmailView.setError(getString(R.string.error_invalid_email));
+                focusView = mEmailView;
+                cancel = true;
+            }
+
+            if (cancel) {
+                // There was an error; don't attempt login and focus the first
+                // form field with an error.
+                focusView.requestFocus();
+            } else {
+                // Show a progress spinner, and kick off a background task to
+                // perform the user login attempt.
+                mailToAutoComplete = email;
+                invokeWSLogin(email, password);
+                //mAuthTask = new UserLoginTask(email, password);
+                //mAuthTask.execute((Void) null);
+            }
+
+        }else{
+            Snackbar.make(view,"You need an internet connection to continue", Snackbar.LENGTH_LONG).show();
         }
-
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(email)) {
-            mEmailView.setError(getString(R.string.error_field_required));
-            focusView = mEmailView;
-            cancel = true;
-        } else if (!isEmailValid(email)) {
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            focusView = mEmailView;
-            cancel = true;
-        }
-
-        if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
-            focusView.requestFocus();
-        } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            mailToAutoComplete = email;
-            invokeWSLogin(email,password);
-            //mAuthTask = new UserLoginTask(email, password);
-            //mAuthTask.execute((Void) null);
-        }
-
-
     }
 
     private void invokeWSLogin(String email,String password){
         showProgress(true);
         AsyncHttpClient client = new AsyncHttpClient();
-        client.get("http://10.0.25.102:8080/Jersey/rest/players/login&"+email+"&"+password, null , new AsyncHttpResponseHandler() {
+        client.setMaxRetriesAndTimeout(2,2000);
+        client.get(Constants.URL_LOGIN_USER +"&"+email+"&"+password, null , new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
                 String code = "";
@@ -236,6 +273,7 @@ public class LoginActivity extends AppCompatActivity {
                 focusView = mEmailView;
                 cancel = true;
                 break;
+
             case "201":
                 resultsView.setText(R.string.action_sign_in_successful);
                 AUTO_COMPLETE_LIST.add(mailToAutoComplete);
@@ -243,6 +281,7 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(intent);
                 cancel = false;
                 break;
+
             case "202":
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 resultsView.setText(R.string.action_sign_in_wrong);
@@ -263,6 +302,7 @@ public class LoginActivity extends AppCompatActivity {
 
             case "101":
                 resultsView.setText(R.string.action_register_email_exists);
+                mEmailView.setError("Already Exists");
                 showProgress(false);
                 AUTO_COMPLETE_LIST.add(mailToAutoComplete);
                 cancel = true;
@@ -283,85 +323,92 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void attemptRegister(View view){
-        AutoCompleteTextView emailView =(AutoCompleteTextView) findViewById(R.id.reg_email);
-        EditText usernameView =(EditText) findViewById(R.id.reg_username);
-        EditText passwordView =(EditText) findViewById(R.id.reg_password);
 
-        // Reset errors.
-        emailView.setError(null);
-        usernameView.setError(null);
-        passwordView.setError(null);
+        ConnectivityManager cm =(ConnectivityManager)getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
 
-        // Store values at the time of the login attempt.
-        String email = emailView.getText().toString();
-        String password = passwordView.getText().toString();
-        String username = usernameView.getText().toString();
+        if(isConnected) {
+            AutoCompleteTextView emailView = (AutoCompleteTextView) findViewById(R.id.reg_email);
+            EditText usernameView = (EditText) findViewById(R.id.reg_username);
+            EditText passwordView = (EditText) findViewById(R.id.reg_password);
 
-        boolean cancel = false;
-        View focusView = null;
+            // Reset errors.
+            emailView.setError(null);
+            usernameView.setError(null);
+            passwordView.setError(null);
 
-        // Check for a valid password, if the user entered one.
-        if (TextUtils.isEmpty(password) ) {
-            passwordView.setError(getString(R.string.error_field_required));
-            focusView = passwordView;
-            cancel = true;
-        }else if(!isPasswordValid(password)){
-            passwordView.setError(getString(R.string.error_invalid_password));
-            focusView = passwordView;
-            cancel = true;
-        }
+            // Store values at the time of the login attempt.
+            String email = emailView.getText().toString();
+            String password = passwordView.getText().toString();
+            String username = usernameView.getText().toString();
 
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(email)) {
-            emailView.setError(getString(R.string.error_field_required));
-            focusView = emailView;
-            cancel = true;
-        } else if (!isEmailValid(email)) {
-            emailView.setError(getString(R.string.error_invalid_email));
-            focusView = emailView;
-            cancel = true;
-        }
+            boolean cancel = false;
+            View focusView = null;
 
-        // Check for a valid username
-        if (TextUtils.isEmpty(username)) {
-            usernameView.setError(getString(R.string.error_field_required));
-            focusView = usernameView;
-            cancel = true;
-        } else if (!isUsernameValid(username)) {
-            usernameView.setError(getString(R.string.error_invalid_username));
-            focusView = usernameView;
-            cancel = true;
-        }
+            // Check for a valid password, if the user entered one.
+            if (TextUtils.isEmpty(password)) {
+                passwordView.setError(getString(R.string.error_field_required));
+                focusView = passwordView;
+                cancel = true;
+            } else if (!isPasswordValid(password)) {
+                passwordView.setError(getString(R.string.error_invalid_password));
+                focusView = passwordView;
+                cancel = true;
+            }
 
-        if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
-            focusView.requestFocus();
-        } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            mailToAutoComplete = email;
-            try {
-                JSONObject json = new JSONObject();
-                json.put("name", username);
-                json.put("email", email);
-                json.put("password", password);
-                Log.i("Object Sent:",json.toString());
-                invokeWSRegister(json);
-            }catch(JSONException e){
-                e.printStackTrace();
-            }//mAuthTask = new UserLoginTask(email, password);
-            //mAuthTask.execute((Void) null);
-        }
+            // Check for a valid email address.
+            if (TextUtils.isEmpty(email)) {
+                emailView.setError(getString(R.string.error_field_required));
+                focusView = emailView;
+                cancel = true;
+            } else if (!isEmailValid(email)) {
+                emailView.setError(getString(R.string.error_invalid_email));
+                focusView = emailView;
+                cancel = true;
+            }
 
+            // Check for a valid username
+            if (TextUtils.isEmpty(username)) {
+                usernameView.setError(getString(R.string.error_field_required));
+                focusView = usernameView;
+                cancel = true;
+            } else if (!isUsernameValid(username)) {
+                usernameView.setError(getString(R.string.error_invalid_username));
+                focusView = usernameView;
+                cancel = true;
+            }
 
+            if (cancel) {
+                // There was an error; don't attempt login and focus the first
+                // form field with an error.
+                focusView.requestFocus();
+            } else {
+                // Show a progress spinner, and kick off a background task to
+                // perform the user login attempt.
+                mailToAutoComplete = email;
+                try {
+                    JSONObject json = new JSONObject();
+                    json.put("name", username);
+                    json.put("email", email);
+                    json.put("password", password);
+                    Log.i("Object Sent:", json.toString());
+                    invokeWSRegister(json);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }//mAuthTask = new UserLoginTask(email, password);
+                //mAuthTask.execute((Void) null);
+            }
+        }else
+            Snackbar.make(view,"You need an internet connection to continue", Snackbar.LENGTH_LONG).show();
     }
     private void invokeWSRegister(JSONObject jsonObject){
         try {
             ByteArrayEntity entity = new ByteArrayEntity(jsonObject.toString().getBytes("UTF-8"));
             showProgress(true);
             AsyncHttpClient client = new AsyncHttpClient();
-            client.post(this,"http://10.0.25.102:8080/Jersey/rest/players/register", entity,"application/json" , new AsyncHttpResponseHandler() {
+            client.setMaxRetriesAndTimeout(1,2);
+            client.post(this, Constants.URL_REGISTER_USER, entity, "application/json" , new AsyncHttpResponseHandler() {
                 @Override
                 public void onSuccess(int i, Header[] headers, byte[] bytes) {
                     String code = "";
@@ -386,17 +433,12 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private boolean isUsernameValid(String username){
-        final String USERNAME_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*";
-
-        Pattern pattern = Pattern.compile(USERNAME_PATTERN);
+        Pattern pattern = Pattern.compile(Constants.USERNAME_PATTERN);
         Matcher matcher = pattern.matcher(username);
         return matcher.matches();
     }
     private boolean isEmailValid(String email) {
-        final String EMAIL_PATTERN ="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
-                + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
-
-        Pattern pattern = Pattern.compile(EMAIL_PATTERN);
+        Pattern pattern = Pattern.compile(Constants.EMAIL_PATTERN);
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();
     }
@@ -415,6 +457,15 @@ public class LoginActivity extends AppCompatActivity {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     formsContainer.setVisibility(show ? View.GONE : View.VISIBLE);
+            }
+            });
+
+        btnPanel.setVisibility(show ? View.GONE : View.VISIBLE);
+        btnPanel.animate().setDuration(shortAnimTime).alpha(
+                show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    btnPanel.setVisibility(show ? View.GONE : View.VISIBLE);
             }
             });
 
@@ -448,6 +499,28 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+    }
+    public static void showNoConnectionDialog(final Context ctx)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+        builder.setCancelable(true);
+        builder.setMessage("No Internet Connection");
+        builder.setTitle("Title: No Internet Connection");
+        builder.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which)
+            {
+                ctx.startActivity(new Intent(Settings.ACTION_SETTINGS));
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+        {
+            public void onClick(DialogInterface dialog, int which)
+            {
+
+            }
+        });
+
+        builder.show();
     }
 
 }

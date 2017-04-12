@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
@@ -374,6 +375,9 @@ public class MapsActivity extends AppCompatActivity implements
         Intent intent = null;
 
         switch(view.getId()) {
+            case R.id.profile_activity:
+                intent = new Intent(this, ProfileActivity.class);
+                break;
             case R.id.activity_settings:
                 intent = new Intent(this, SettingsActivity.class);
                 break;
@@ -497,12 +501,12 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void userLeftArea(String areaID) {
 
-        if (circleMap.containsKey(areaID)){
+        //if (circleMap.containsKey(areaID)){
             //Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
             //Circle circle = circleMap.get(areaID);
             //circle.remove();
             //circleMap.remove(areaID);
-        }
+        //}
 
     }
     private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {
