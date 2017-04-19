@@ -8,39 +8,36 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.wifi.WifiConfiguration;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.AppCompatCheckBox;
 import android.text.TextUtils;
-import android.util.JsonReader;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.loopj.android.http.*;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
+import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.utils.Constants;
 
 
@@ -48,8 +45,11 @@ public class LoginActivity extends AppCompatActivity {
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
+    private DataManager mDataManager;
     // UI references.
     private String mailToAutoComplete;
+    private String passwordToAutoComlete;
+
     private AutoCompleteTextView mEmailView;
     private TextView panel_text;
     private TextView panel_swap;
@@ -59,12 +59,14 @@ public class LoginActivity extends AppCompatActivity {
     private View mRegisterFormView;
     private LinearLayout formsContainer;
     private LinearLayout btnPanel;
+    private AppCompatCheckBox remember;
 
     private String mActiveView="login";
 
     private TextView resultsView;
 
     private ArrayList<String> AUTO_COMPLETE_LIST = new ArrayList<>();
+    private AsyncHttpClient mClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,8 +74,16 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
+
+        remember =(AppCompatCheckBox) findViewById(R.id.remember);
+
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         boolean autoSignIn = sharedPreferences.getBoolean(SettingsActivity.pref_key_auto_sign_in,false);
+        remember.setChecked(autoSignIn);
+
+        mDataManager = DataManager.getInstance();
+        if(!mDataManager.isInstantiated())
+            mDataManager.init(this);
 
         formsContainer = (LinearLayout) findViewById(R.id.forms_container);
         btnPanel = (LinearLayout) findViewById(R.id.btn_panel);
@@ -84,10 +94,10 @@ public class LoginActivity extends AppCompatActivity {
         mLoginFormView = findViewById(R.id.login_form);
         mRegisterFormView = findViewById(R.id.register_form);
         mRegisterFormView.setVisibility(View.GONE);
+
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
-
         //swap Views pannel
         panel_text = (TextView)findViewById(R.id.panel_text);
         panel_swap = (TextView)findViewById(R.id.panel_swap);
@@ -106,17 +116,22 @@ public class LoginActivity extends AppCompatActivity {
 
         if(isConnected){
             //add emails to autocomplete
-            invokeWSGetAutoComplete();
+            getAutoCompleteList();
         }else
             showNoConnectionDialog(this);
 
         if(autoSignIn){
-            //TODO:READ DATABASE, GET LOGIN INFO, ACCESS REMOTE SERVER AND VALIDATE
-            //see alse Auth Task implementation
-            invokeWSLogin("cautionfail@gmail.com", "hello");
-            //mAuthTask = new UserLoginTask("cautionfail@gmail.com", "hello");
-            //mAuthTask.execute((Void) null);
+            String credentials = mDataManager.getAutoLoginCredentials();
+            String[] tokens = credentials.split(":");
+            invokeWSLogin(tokens[0], tokens[1]);
         }
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        if(mClient!=null)
+            mClient.cancelAllRequests(true);
     }
 
     public void swapForms(View view){
@@ -140,40 +155,18 @@ public class LoginActivity extends AppCompatActivity {
                 break;
         }
     }
-    public void invokeWSGetAutoComplete(){
-
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.get(Constants.URL_USERS, null, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                String response = "";
-                for(byte b: bytes){
-                    response = response +((char) b);
-                }
-                try{
-                    JSONObject json = new JSONObject(response);
-                    JSONArray players = json.getJSONArray("player");
-                    for(int j = 0; j < players.length(); j++) {
-                        //Decode contacts
-                        JSONObject player = players.getJSONObject(j);
-                        String email = player.getString("email");
-                        AUTO_COMPLETE_LIST.add(email);
-                    }
-                    Log.i("JSONParse", "Parse Successful");
-                }catch(JSONException e){
-                    Log.i("JSONParse", e.getMessage());
-                }
-
-                ArrayAdapter<String> adapter =new ArrayAdapter<>(LoginActivity.this,
-                        android.R.layout.simple_dropdown_item_1line, AUTO_COMPLETE_LIST);
-                mEmailView.setAdapter(adapter);
+    public void getAutoCompleteList(){
+        List<String> emails = mDataManager.getEmails();
+        if(!emails.isEmpty()) {
+            for (String email : emails) {
+                AUTO_COMPLETE_LIST.add(email);
             }
+        }
 
-            @Override
-            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                Log.i("GET Players", "GET failed, Server probably offline");
-            }
-        });
+        ArrayAdapter<String> adapter =new ArrayAdapter<>(LoginActivity.this,
+                android.R.layout.simple_dropdown_item_1line, AUTO_COMPLETE_LIST);
+        mEmailView.setAdapter(adapter);
+
     }
 
     public void attemptLogin(View view){
@@ -223,7 +216,13 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 // Show a progress spinner, and kick off a background task to
                 // perform the user login attempt.
-                mailToAutoComplete = email;
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+                if(remember.isChecked()){
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putBoolean(SettingsActivity.pref_key_auto_sign_in,true);
+                    editor.apply();
+                }
                 invokeWSLogin(email, password);
                 //mAuthTask = new UserLoginTask(email, password);
                 //mAuthTask.execute((Void) null);
@@ -236,7 +235,11 @@ public class LoginActivity extends AppCompatActivity {
 
     private void invokeWSLogin(String email,String password){
         showProgress(true);
+        mailToAutoComplete = email;
+        passwordToAutoComlete = password;
+
         AsyncHttpClient client = new AsyncHttpClient();
+        mClient = client;
         client.setMaxRetriesAndTimeout(2,2000);
         client.get(Constants.URL_LOGIN_USER +"&"+email+"&"+password, null , new AsyncHttpResponseHandler() {
             @Override
@@ -269,14 +272,12 @@ public class LoginActivity extends AppCompatActivity {
                 mEmailView.setError(getString(R.string.error_incorrect_email));
                 resultsView.setText(R.string.action_sign_in_wrong);
                 showProgress(false);
-                AUTO_COMPLETE_LIST.remove(mailToAutoComplete);
                 focusView = mEmailView;
                 cancel = true;
                 break;
 
             case "201":
                 resultsView.setText(R.string.action_sign_in_successful);
-                AUTO_COMPLETE_LIST.add(mailToAutoComplete);
                 Intent intent = new Intent( getApplicationContext(), MapsActivity.class);
                 startActivity(intent);
                 cancel = false;
@@ -286,14 +287,12 @@ public class LoginActivity extends AppCompatActivity {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 resultsView.setText(R.string.action_sign_in_wrong);
                 showProgress(false);
-                AUTO_COMPLETE_LIST.add(mailToAutoComplete);
                 focusView = mPasswordView;
                 cancel = true;
                 break;
 
             case "301":
                 resultsView.setText(R.string.action_sign_in_server_error);
-                AUTO_COMPLETE_LIST.add(mailToAutoComplete);
                 showProgress(false);
                 Intent intent2 = new Intent( getApplicationContext(), MapsActivity.class);
                 startActivity(intent2);
@@ -304,14 +303,12 @@ public class LoginActivity extends AppCompatActivity {
                 resultsView.setText(R.string.action_register_email_exists);
                 mEmailView.setError("Already Exists");
                 showProgress(false);
-                AUTO_COMPLETE_LIST.add(mailToAutoComplete);
                 cancel = true;
                 focusView = mEmailView;
                 break;
 
             case "102":
                 resultsView.setText(R.string.action_register_successful);
-                AUTO_COMPLETE_LIST.add(mailToAutoComplete);
                 Intent intent3 = new Intent( getApplicationContext(), MapsActivity.class);
                 startActivity(intent3);
                 cancel = false;
@@ -319,7 +316,9 @@ public class LoginActivity extends AppCompatActivity {
         }
         if(cancel)
             focusView.requestFocus();
-
+        else if( !response.equals("301") ) {
+                mDataManager.insertCredentials(mailToAutoComplete, passwordToAutoComlete);
+        }
     }
 
     public void attemptRegister(View view){
@@ -386,8 +385,9 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 // Show a progress spinner, and kick off a background task to
                 // perform the user login attempt.
-                mailToAutoComplete = email;
                 try {
+                    mailToAutoComplete = email;
+                    passwordToAutoComlete = password;
                     JSONObject json = new JSONObject();
                     json.put("name", username);
                     json.put("email", email);
@@ -407,6 +407,7 @@ public class LoginActivity extends AppCompatActivity {
             ByteArrayEntity entity = new ByteArrayEntity(jsonObject.toString().getBytes("UTF-8"));
             showProgress(true);
             AsyncHttpClient client = new AsyncHttpClient();
+            mClient = client;
             client.setMaxRetriesAndTimeout(1,2);
             client.post(this, Constants.URL_REGISTER_USER, entity, "application/json" , new AsyncHttpResponseHandler() {
                 @Override

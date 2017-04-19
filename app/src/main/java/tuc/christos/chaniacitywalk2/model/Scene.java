@@ -2,6 +2,8 @@ package tuc.christos.chaniacitywalk2.model;
 
 /**
  * Created by Christos on 28-Jan-17.
+ *
+ *
  */
 
 public class Scene {

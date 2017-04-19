@@ -20,27 +20,7 @@ public class Player {
     private ArrayList<Scene> hasSeen = new ArrayList<>();
     private boolean completedRoute;
 
-    private static Player player = new Player();
-
-    private Player(){}
-
-    public Player getInstance() {
-        if (player == null){
-            //Check if Player table exists in Database
-            if(checkPlayerData()){
-                //if it exists
-                //Create Player instance from table
-                //return player
-                return player;
-            }else{
-                //if not( First the Applications is executed)
-                //Create new Player with given credentials
-                //return player instance
-                return player;
-            }
-        }else
-         return player;
-    }
+    public Player(){}
 
     private boolean checkPlayerData(){
         return true;

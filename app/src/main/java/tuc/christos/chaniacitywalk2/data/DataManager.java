@@ -12,7 +12,9 @@ import com.google.android.gms.maps.model.Polyline;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
+import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
 /**
@@ -23,6 +25,7 @@ import tuc.christos.chaniacitywalk2.model.Scene;
  public class DataManager {
 
     private static DataManager INSTANCE = null;
+    private Player mPlayer;
 
     private boolean initiated = false;
 
@@ -86,19 +89,19 @@ import tuc.christos.chaniacitywalk2.model.Scene;
 
     private void instantiate(){
 
-                Cursor c = mDBh.getEntries();
+                Cursor c = mDBh.getScenes();
                 while (c.moveToNext()) {
 
-                    String TAG = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_TAG));
-                    String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_NAME));
-                    double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_LATITUDE));
-                    double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_LONGITUDE));
+                    String TAG = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_TAG));
+                    String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
+                    double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
+                    double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
                     int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry._ID));
-                    String descr = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_DESCRIPTION));
+                    String descr = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
 
-                    boolean tVisible = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_VISIBLE)));
-                    boolean tHasAR = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_HASAR)));
-                    boolean tVisit = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.TABLE_COLUMN_VISITED)));
+                    boolean tVisible = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_VISIBLE)));
+                    boolean tHasAR = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_HASAR)));
+                    boolean tVisit = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_VISITED)));
 
 
                     Scene temp = new Scene(lat, lon, id, name, tVisit, tVisible, tHasAR, descr, TAG);
@@ -114,8 +117,51 @@ import tuc.christos.chaniacitywalk2.model.Scene;
                 setPolyPoints();
     }
 
+    public List<String> getEmails(){
+        List<String> emails = new ArrayList<>();
+        Cursor c = mDBh.getEmails();
+        if(c.getCount() > 0){
+            while(c.moveToNext()){
+                emails.add(c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_EMAIL)));
+            }
+        }
+        String ems = "Emails: ";
+        for(String temp: emails)
+            ems += temp + "\n";
+        Log.i(TAG,ems);
+        return emails;
+    }
 
-	public boolean mapMarkerToScene(Marker marker, Scene scene){
+    public Player getPlayer(){
+        Player player = new Player();
+        Cursor c = mDBh.getActivePlayer();
+        while(c.moveToNext()){
+            player.setEmail(c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_EMAIL)));
+            player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_PASSWORD)));
+        }
+        mPlayer = player;
+
+        return player;
+    }
+
+    public String getAutoLoginCredentials(){
+        String credentials;
+        String email;
+        String password;
+
+        Cursor c = mDBh.getAutoLoginEmail();
+        c.moveToNext();
+        email = c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_EMAIL));
+        password = c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_PASSWORD));
+        credentials = email + ":" + password;
+        return credentials;
+    }
+
+    public void insertCredentials(String email, String password){
+        mDBh.insertCredentials(email,password);
+    }
+
+    public boolean mapMarkerToScene(Marker marker, Scene scene){
         markerSceneMap.put(marker,scene);
         return true;
     }

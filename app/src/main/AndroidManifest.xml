@@ -30,8 +30,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MapsActivity"
-            android:screenOrientation="portrait"/>
+            android:name=".MapsActivity"/>
         <activity
             android:name=".collection.CollectionActivity"
             android:label="@string/title_activity_collection_siblings"

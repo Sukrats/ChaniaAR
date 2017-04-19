@@ -466,6 +466,7 @@ public class MapsActivity extends AppCompatActivity implements
     public void handleNewLocation(Location location){
         mCurrentLocation = location;
         //Toast.makeText(this,"Interval: "+ mLastUpdateTime +"\n"+ DateFormat.getTimeInstance().format(new Date()),Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this,"Latitude:"+location.getLatitude()+"\nLongitude:"+location.getLongitude(),Toast.LENGTH_SHORT).show();
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
         moveMyLocationMarker(location);
     }

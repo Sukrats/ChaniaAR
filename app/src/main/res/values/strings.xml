@@ -27,6 +27,7 @@
 
     <!-- LOGIN -->
     <string name="prompt_email">Email</string>
+    <string name="remember_me">Remember me </string>
     <string name="prompt_password">Password</string>
     <string name="prompt_username">Username</string>
     <string name="action_sign_in_short">Sign in</string>
