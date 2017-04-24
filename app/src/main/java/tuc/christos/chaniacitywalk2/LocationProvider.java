@@ -72,12 +72,12 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
         setLocationMode(mode);
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+        /*if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             // Permission to access the location is missing.
             PermissionUtils.requestPermission((AppCompatActivity) context, LOCATION_PERMISSION_REQUEST_CODE,
                     Manifest.permission.ACCESS_FINE_LOCATION, true);
-        }
+        }*/
         mGoogleApiClient.connect();
 
     }

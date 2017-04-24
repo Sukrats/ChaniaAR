@@ -25,7 +25,6 @@ import tuc.christos.chaniacitywalk2.model.Scene;
  public class DataManager {
 
     private static DataManager INSTANCE = null;
-    private Player mPlayer;
 
     private boolean initiated = false;
 
@@ -132,17 +131,16 @@ import tuc.christos.chaniacitywalk2.model.Scene;
         return emails;
     }
 
-    public Player getPlayer(){
+    /*public Player getPlayer(){
         Player player = new Player();
         Cursor c = mDBh.getActivePlayer();
         while(c.moveToNext()){
             player.setEmail(c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_EMAIL)));
             player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_PASSWORD)));
         }
-        mPlayer = player;
 
         return player;
-    }
+    }*/
 
     public String getAutoLoginCredentials(){
         String credentials;

@@ -94,9 +94,9 @@ public class MapsActivity extends AppCompatActivity implements
         //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
-        if(!mDataManager.isInstantiated())
+        if(!mDataManager.isInstantiated()) {
             mDataManager.init(this);
-
+        }
         //Registering this activity for locationProvider and Event listener
         mLocationProvider = new LocationProvider(this);
         mEventHandler = new LocationEventHandler(this);

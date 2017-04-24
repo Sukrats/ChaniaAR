@@ -1,5 +1,7 @@
 package tuc.christos.chaniacitywalk2.model;
 
+import android.util.SparseArray;
+
 import java.util.ArrayList;
 
 /**
@@ -9,28 +11,61 @@ import java.util.ArrayList;
 
 public class Player {
 
-    private String id;          //used only in coherence with the server db
+    private static Player INSTANCE = null;
+    private boolean instantiated = false;
+
+    private long id;          //used only in coherence with the server db
     private String email;
     private String password;
     private String username;
+
     private Long placesUnlocked;
     private Long placesVisited;
     private Scene isAtScene;
-    private ArrayList<Scene> hasCompleted = new ArrayList<>();
-    private ArrayList<Scene> hasSeen = new ArrayList<>();
     private boolean completedRoute;
 
-    public Player(){}
+    private SparseArray<Scene> visited = new SparseArray<>();
+
+    private Player(){}
+
+    public Player(long id, String email, String password, String username) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.username = username;
+    }
+
+    /**
+     * Player Instance
+     * @return
+     * Always check for null return to know if it is instantiated
+     */
+
+    public static Player getInstance(){
+        return INSTANCE;
+    }
+
+    public void initPlayer(long id, String email, String password, String username ){
+        INSTANCE = new Player(id,email,password,username);
+        instantiated = true;
+    }
+
+    public void resetPlayer(){
+        INSTANCE = null;
+        instantiated = false;
+    }
+
+    public boolean isInstantiated(){return instantiated;}
 
     private boolean checkPlayerData(){
         return true;
     }
 
-    public String getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -82,21 +117,14 @@ public class Player {
         this.isAtScene = isAtScene;
     }
 
-    public ArrayList<Scene> getHasCompleted() {
-        return hasCompleted;
+    public SparseArray<Scene> getVisited() {
+        return visited;
     }
 
-    public void setHasCompleted(ArrayList<Scene> hasCompleted) {
-        this.hasCompleted = hasCompleted;
+    public void setVisited(SparseArray<Scene> visited) {
+        this.visited = visited;
     }
 
-    public ArrayList<Scene> getHasSeen() {
-        return hasSeen;
-    }
-
-    public void setHasSeen(ArrayList<Scene> hasSeen) {
-        this.hasSeen = hasSeen;
-    }
 
     public boolean isCompletedRoute() {
         return completedRoute;

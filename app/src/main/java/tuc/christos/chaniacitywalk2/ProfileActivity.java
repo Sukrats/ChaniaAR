@@ -10,7 +10,6 @@ import tuc.christos.chaniacitywalk2.model.Player;
 public class ProfileActivity extends AppCompatActivity {
 
     DataManager mDataManager;
-    Player mPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,9 +20,6 @@ public class ProfileActivity extends AppCompatActivity {
         if(!mDataManager.isInstantiated())
             mDataManager.init(this);
 
-        mPlayer = mDataManager.getPlayer();
-
         TextView tx = (TextView) findViewById(R.id.user_profile_name);
-        tx.setText(mPlayer.getEmail());
     }
 }

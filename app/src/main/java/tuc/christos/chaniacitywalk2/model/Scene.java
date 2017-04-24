@@ -8,6 +8,7 @@ package tuc.christos.chaniacitywalk2.model;
 
 public class Scene {
     private int id;
+    private String name;
     private double latitude;
     private double longitude;
     private boolean visited;
@@ -15,8 +16,8 @@ public class Scene {
     private boolean hasAR;
     private boolean unlocked;
     private String briefDesc;
+    private String description;
     private String TAG;
-    private String name;
 
     public boolean isHasAR() {
         return hasAR;
@@ -24,6 +25,14 @@ public class Scene {
 
     public void setHasAR(boolean hasAR) {
         this.hasAR = hasAR;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getTAG() {
