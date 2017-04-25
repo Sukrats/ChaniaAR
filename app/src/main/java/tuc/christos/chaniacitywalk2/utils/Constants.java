@@ -7,8 +7,8 @@ package tuc.christos.chaniacitywalk2.utils;
 
 public class Constants {
 
-    public static final String URL_REGISTER_USER = "http://10.0.25.102:8080/Jersey/rest/players/register";
-    public static final String URL_LOGIN_USER = "http://10.0.25.102:8080/Jersey/rest/players/login";
+    public static final String URL_REGISTER_USER = "http://10.0.25.132:8080/citywalk/arapp/users/";
+    public static final String URL_LOGIN_USER = "http://10.0.25.132:8080/citywalk/arapp/users/";
     public static final String URL_USERS = "http://10.0.25.102:8080/Jersey/rest/players";
     public static final String URL_SCENES = "";
 

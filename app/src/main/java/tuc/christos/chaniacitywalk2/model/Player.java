@@ -16,8 +16,8 @@ public class Player {
 
     private long id;          //used only in coherence with the server db
     private String email;
-    private String password;
     private String username;
+    private String password;
 
     private Long placesUnlocked;
     private Long placesVisited;

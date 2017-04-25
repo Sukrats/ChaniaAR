@@ -122,8 +122,10 @@ public class LoginActivity extends AppCompatActivity {
 
         if(autoSignIn){
             String credentials = mDataManager.getAutoLoginCredentials();
-            String[] tokens = credentials.split(":");
-            invokeWSLogin(tokens[0], tokens[1]);
+            if(credentials !=null ) {
+                String[] tokens = credentials.split(":");
+                invokeWSLogin(tokens[0], tokens[1]);
+            }
         }
     }
 
@@ -240,7 +242,7 @@ public class LoginActivity extends AppCompatActivity {
 
         AsyncHttpClient client = new AsyncHttpClient();
         mClient = client;
-        client.setMaxRetriesAndTimeout(2,2000);
+        client.setMaxRetriesAndTimeout(0,200);
         client.get(Constants.URL_LOGIN_USER +"&"+email+"&"+password, null , new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
@@ -266,7 +268,7 @@ public class LoginActivity extends AppCompatActivity {
         mPasswordView.setError(null);
         boolean cancel = false;
         View focusView = null;
-        Log.i("Login Code:",response);
+        Log.i("Response Body",response);
         switch(response){
             case "200":
                 mEmailView.setError(getString(R.string.error_incorrect_email));
@@ -316,8 +318,8 @@ public class LoginActivity extends AppCompatActivity {
         }
         if(cancel)
             focusView.requestFocus();
-        else if( !response.equals("301") ) {
-                mDataManager.insertCredentials(mailToAutoComplete, passwordToAutoComlete);
+        else {
+            mDataManager.insertCredentials(mailToAutoComplete, passwordToAutoComlete);
         }
     }
 
@@ -331,16 +333,25 @@ public class LoginActivity extends AppCompatActivity {
             AutoCompleteTextView emailView = (AutoCompleteTextView) findViewById(R.id.reg_email);
             EditText usernameView = (EditText) findViewById(R.id.reg_username);
             EditText passwordView = (EditText) findViewById(R.id.reg_password);
+            EditText cPasswordView = (EditText) findViewById(R.id.reg_password_conf);
+            EditText fNameView = (EditText) findViewById(R.id.reg_fname);
+            EditText lNameView = (EditText) findViewById(R.id.reg_lname);
 
             // Reset errors.
             emailView.setError(null);
             usernameView.setError(null);
             passwordView.setError(null);
+            cPasswordView.setError(null);
+            fNameView.setError(null);
+            lNameView.setError(null);
 
             // Store values at the time of the login attempt.
             String email = emailView.getText().toString();
             String password = passwordView.getText().toString();
+            String cPassword = cPasswordView.getText().toString();
             String username = usernameView.getText().toString();
+            String fName = fNameView.getText().toString();
+            String lName = lNameView.getText().toString();
 
             boolean cancel = false;
             View focusView = null;
@@ -350,7 +361,11 @@ public class LoginActivity extends AppCompatActivity {
                 passwordView.setError(getString(R.string.error_field_required));
                 focusView = passwordView;
                 cancel = true;
-            } else if (!isPasswordValid(password)) {
+            } else if (!password.equals(cPassword)) {
+                passwordView.setError(getString(R.string.error_password_match));
+                focusView = cPasswordView;
+                cancel = true;
+            }else if (!isPasswordValid(password)) {
                 passwordView.setError(getString(R.string.error_invalid_password));
                 focusView = passwordView;
                 cancel = true;
@@ -389,9 +404,11 @@ public class LoginActivity extends AppCompatActivity {
                     mailToAutoComplete = email;
                     passwordToAutoComlete = password;
                     JSONObject json = new JSONObject();
-                    json.put("name", username);
+                    json.put("username", username);
                     json.put("email", email);
                     json.put("password", password);
+                    json.put("firstname", fName);
+                    json.put("lastname", lName);
                     Log.i("Object Sent:", json.toString());
                     invokeWSRegister(json);
                 } catch (JSONException e) {
@@ -408,15 +425,18 @@ public class LoginActivity extends AppCompatActivity {
             showProgress(true);
             AsyncHttpClient client = new AsyncHttpClient();
             mClient = client;
-            client.setMaxRetriesAndTimeout(1,2);
+            client.setMaxRetriesAndTimeout(1,20);
             client.post(this, Constants.URL_REGISTER_USER, entity, "application/json" , new AsyncHttpResponseHandler() {
                 @Override
                 public void onSuccess(int i, Header[] headers, byte[] bytes) {
                     String code = "";
+                    for(Header head: headers){
+                        Log.i("Response Headers: ", head.getName()+"->"+head.getValue()+"\n");
+                    }
                     for(byte b:bytes){
                         code = code + ((char)b);
                     }
-                    handleResponse(code);
+                    handleResponse(code+"\n"+i);
                 }
 
                 @Override

@@ -6,7 +6,7 @@
         <layer-list>
             <item>
                 <shape android:shape="oval">
-                    <stroke android:color="@color/colorAccent" android:width="2dp" />
+                    <stroke android:color="@color/text_icon" android:width="2dp" />
                     <solid android:color="@color/colorPrimaryDarkTint"/>
                 </shape>
             </item>
@@ -24,7 +24,7 @@
         <layer-list>
             <item>
                 <shape android:shape="oval">
-                    <stroke android:color="@color/colorAccent" android:width="4dp" />
+                    <stroke android:color="@color/text_icon" android:width="4dp" />
                     <solid android:color="@color/colorPrimaryDark"/>
                     <size android:width="72dp" android:height="72dp"/>
                 </shape>

@@ -148,11 +148,13 @@ import tuc.christos.chaniacitywalk2.model.Scene;
         String password;
 
         Cursor c = mDBh.getAutoLoginEmail();
-        c.moveToNext();
-        email = c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_EMAIL));
-        password = c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_PASSWORD));
-        credentials = email + ":" + password;
-        return credentials;
+        if(c.moveToNext()){
+            email = c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_EMAIL));
+            password = c.getString(c.getColumnIndexOrThrow(mDBHelper.EmailsEntry.EMAIL_COLUMN_PASSWORD));
+            credentials = email + ":" + password;
+            return credentials;
+        }
+        return null;
     }
 
     public void insertCredentials(String email, String password){
