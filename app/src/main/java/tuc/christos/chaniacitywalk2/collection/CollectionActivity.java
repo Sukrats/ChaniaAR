@@ -2,7 +2,6 @@ package tuc.christos.chaniacitywalk2.collection;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
@@ -81,10 +80,10 @@ public class CollectionActivity extends AppCompatActivity {
             }
         });
 
-        CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
-        if (appBarLayout != null) {
+       // CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
+       // if (appBarLayout != null) {
             //appBarLayout.setBackgroundResource(R.drawable.venice_flag);
-        }
+       // }
     }
 
 
@@ -205,7 +204,7 @@ public class CollectionActivity extends AppCompatActivity {
 
                         Context context = v.getContext();
                         Intent intent = new Intent(context, SceneDetailActivity.class);
-                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Integer.toString(item.getId()));
+                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
 
                         context.startActivity(intent);
 

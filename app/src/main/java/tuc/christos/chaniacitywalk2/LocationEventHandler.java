@@ -113,7 +113,7 @@ public class LocationEventHandler implements LocationCallback {
          *      A Fence is made for each scene in the database acquired from the data Manager
          */
         for(Scene scene: mDataManager.getScenes()){
-            String id = Integer.toString(scene.getId());
+            String id = Long.toString(scene.getId());
             Location loc = new Location("");
             loc.setLatitude(scene.getLatitude());
             loc.setLongitude(scene.getLongitude());

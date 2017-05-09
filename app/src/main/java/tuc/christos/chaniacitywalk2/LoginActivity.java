@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -16,7 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.AppCompatCheckBox;
 import android.text.TextUtils;
-import android.util.Log;
+import android.util.*;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -26,11 +27,11 @@ import android.widget.TextView;
 
 import com.loopj.android.http.*;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +39,7 @@ import java.util.regex.Pattern;
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.data.DataManager;
+import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
 
 
@@ -46,9 +48,8 @@ public class LoginActivity extends AppCompatActivity {
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private DataManager mDataManager;
+    private Player mPlayer = Player.getInstance();
     // UI references.
-    private String mailToAutoComplete;
-    private String passwordToAutoComlete;
 
     private AutoCompleteTextView mEmailView;
     private TextView panel_text;
@@ -61,11 +62,10 @@ public class LoginActivity extends AppCompatActivity {
     private LinearLayout btnPanel;
     private AppCompatCheckBox remember;
 
-    private String mActiveView="login";
+    private String mActiveView = "login";
 
     private TextView resultsView;
 
-    private ArrayList<String> AUTO_COMPLETE_LIST = new ArrayList<>();
     private AsyncHttpClient mClient;
 
     @Override
@@ -74,22 +74,19 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
-
-        remember =(AppCompatCheckBox) findViewById(R.id.remember);
-
+        remember = (AppCompatCheckBox) findViewById(R.id.remember);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean autoSignIn = sharedPreferences.getBoolean(SettingsActivity.pref_key_auto_sign_in,false);
+        boolean autoSignIn = sharedPreferences.getBoolean(SettingsActivity.pref_key_auto_sign_in, false);
         remember.setChecked(autoSignIn);
 
         mDataManager = DataManager.getInstance();
-        if(!mDataManager.isInstantiated())
-            mDataManager.init(this);
+        mDataManager.init(this);
 
         formsContainer = (LinearLayout) findViewById(R.id.forms_container);
         btnPanel = (LinearLayout) findViewById(R.id.btn_panel);
         mProgressView = findViewById(R.id.login_progress);
 
-        resultsView = (TextView)findViewById(R.id.results);
+        resultsView = (TextView) findViewById(R.id.results);
 
         mLoginFormView = findViewById(R.id.login_form);
         mRegisterFormView = findViewById(R.id.register_form);
@@ -99,8 +96,8 @@ public class LoginActivity extends AppCompatActivity {
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
         //swap Views pannel
-        panel_text = (TextView)findViewById(R.id.panel_text);
-        panel_swap = (TextView)findViewById(R.id.panel_swap);
+        panel_text = (TextView) findViewById(R.id.panel_text);
+        panel_swap = (TextView) findViewById(R.id.panel_swap);
         panel_swap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -109,75 +106,47 @@ public class LoginActivity extends AppCompatActivity {
         });
 
 
-        ConnectivityManager cm =(ConnectivityManager)getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
         boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
 
-        if(isConnected){
-            //add emails to autocomplete
-            getAutoCompleteList();
-        }else
+        if (!isConnected)
             showNoConnectionDialog(this);
 
-        if(autoSignIn){
+        if (autoSignIn) {
             String credentials = mDataManager.getAutoLoginCredentials();
-            if(credentials !=null ) {
-                String[] tokens = credentials.split(":");
+            if (credentials != null) {
+                String[] tokens = credentials.split(":");// 0 -> email, 1->password, 2-> username
                 invokeWSLogin(tokens[0], tokens[1]);
             }
+        }else{
+            getAutoCompleteList();
         }
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy() {
         super.onDestroy();
-        if(mClient!=null)
+        if (mClient != null)
             mClient.cancelAllRequests(true);
     }
 
-    public void swapForms(View view){
-        switch(mActiveView)
-        {
-            case "login":
-                mActiveView = "register";
-                panel_swap.setText(R.string.action_sign_in);
-                panel_text.setText(R.string.text_register);
-                swapViews(mLoginFormView,mRegisterFormView);
-                mEmailView = (AutoCompleteTextView) findViewById(R.id.reg_email);
-                mPasswordView = (EditText) findViewById(R.id.reg_password);
-                break;
-            case "register":
-                mActiveView = "login";
-                panel_swap.setText(R.string.action_register);
-                panel_text.setText(R.string.text_login);
-                swapViews(mRegisterFormView,mLoginFormView);
-                mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
-                mPasswordView = (EditText) findViewById(R.id.password);
-                break;
-        }
-    }
-    public void getAutoCompleteList(){
+    public void getAutoCompleteList() {
         List<String> emails = mDataManager.getEmails();
-        if(!emails.isEmpty()) {
-            for (String email : emails) {
-                AUTO_COMPLETE_LIST.add(email);
-            }
+        if (!emails.isEmpty()) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(LoginActivity.this,
+                android.R.layout.simple_dropdown_item_1line, emails);
+            mEmailView.setAdapter(adapter);
         }
-
-        ArrayAdapter<String> adapter =new ArrayAdapter<>(LoginActivity.this,
-                android.R.layout.simple_dropdown_item_1line, AUTO_COMPLETE_LIST);
-        mEmailView.setAdapter(adapter);
-
     }
 
-    public void attemptLogin(View view){
+    public void attemptLogin(View view) {
 
-        ConnectivityManager cm =(ConnectivityManager)getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-
-        if(isConnected) {
+        if (isConnected) {
             // Reset errors.
             mEmailView.setError(null);
             mPasswordView.setError(null);
@@ -205,7 +174,7 @@ public class LoginActivity extends AppCompatActivity {
                 mEmailView.setError(getString(R.string.error_field_required));
                 focusView = mEmailView;
                 cancel = true;
-            } else if (!isEmailValid(email)) {
+            } else if (!isEmailValid(email) && !isUsernameValid(email)) {
                 mEmailView.setError(getString(R.string.error_invalid_email));
                 focusView = mEmailView;
                 cancel = true;
@@ -220,9 +189,9 @@ public class LoginActivity extends AppCompatActivity {
                 // perform the user login attempt.
                 SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-                if(remember.isChecked()){
+                if (remember.isChecked()) {
                     SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putBoolean(SettingsActivity.pref_key_auto_sign_in,true);
+                    editor.putBoolean(SettingsActivity.pref_key_auto_sign_in, true);
                     editor.apply();
                 }
                 invokeWSLogin(email, password);
@@ -230,106 +199,19 @@ public class LoginActivity extends AppCompatActivity {
                 //mAuthTask.execute((Void) null);
             }
 
-        }else{
-            Snackbar.make(view,"You need an internet connection to continue", Snackbar.LENGTH_LONG).show();
+        } else {
+            Snackbar.make(view, "You need an internet connection to continue", Snackbar.LENGTH_LONG).show();
         }
     }
 
-    private void invokeWSLogin(String email,String password){
-        showProgress(true);
-        mailToAutoComplete = email;
-        passwordToAutoComlete = password;
 
-        AsyncHttpClient client = new AsyncHttpClient();
-        mClient = client;
-        client.setMaxRetriesAndTimeout(0,200);
-        client.get(Constants.URL_LOGIN_USER +"&"+email+"&"+password, null , new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                String code = "";
-                for(byte b:bytes){
-                    code = code + ((char)b);
-                }
-                handleResponse(code);
-            }
+    public void attemptRegister(View view) {
 
-            @Override
-            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                showProgress(false);
-                String code ="301";
-                    handleResponse(code);
-            }
-        });
-
-    }
-    public void handleResponse(String response){
-        // Reset errors.
-        mEmailView.setError(null);
-        mPasswordView.setError(null);
-        boolean cancel = false;
-        View focusView = null;
-        Log.i("Response Body",response);
-        switch(response){
-            case "200":
-                mEmailView.setError(getString(R.string.error_incorrect_email));
-                resultsView.setText(R.string.action_sign_in_wrong);
-                showProgress(false);
-                focusView = mEmailView;
-                cancel = true;
-                break;
-
-            case "201":
-                resultsView.setText(R.string.action_sign_in_successful);
-                Intent intent = new Intent( getApplicationContext(), MapsActivity.class);
-                startActivity(intent);
-                cancel = false;
-                break;
-
-            case "202":
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                resultsView.setText(R.string.action_sign_in_wrong);
-                showProgress(false);
-                focusView = mPasswordView;
-                cancel = true;
-                break;
-
-            case "301":
-                resultsView.setText(R.string.action_sign_in_server_error);
-                showProgress(false);
-                Intent intent2 = new Intent( getApplicationContext(), MapsActivity.class);
-                startActivity(intent2);
-                cancel = false;
-                break;
-
-            case "101":
-                resultsView.setText(R.string.action_register_email_exists);
-                mEmailView.setError("Already Exists");
-                showProgress(false);
-                cancel = true;
-                focusView = mEmailView;
-                break;
-
-            case "102":
-                resultsView.setText(R.string.action_register_successful);
-                Intent intent3 = new Intent( getApplicationContext(), MapsActivity.class);
-                startActivity(intent3);
-                cancel = false;
-                break;
-        }
-        if(cancel)
-            focusView.requestFocus();
-        else {
-            mDataManager.insertCredentials(mailToAutoComplete, passwordToAutoComlete);
-        }
-    }
-
-    public void attemptRegister(View view){
-
-        ConnectivityManager cm =(ConnectivityManager)getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
 
-        if(isConnected) {
+        if (isConnected) {
             AutoCompleteTextView emailView = (AutoCompleteTextView) findViewById(R.id.reg_email);
             EditText usernameView = (EditText) findViewById(R.id.reg_username);
             EditText passwordView = (EditText) findViewById(R.id.reg_password);
@@ -365,7 +247,7 @@ public class LoginActivity extends AppCompatActivity {
                 passwordView.setError(getString(R.string.error_password_match));
                 focusView = cPasswordView;
                 cancel = true;
-            }else if (!isPasswordValid(password)) {
+            } else if (!isPasswordValid(password)) {
                 passwordView.setError(getString(R.string.error_invalid_password));
                 focusView = passwordView;
                 cancel = true;
@@ -401,8 +283,6 @@ public class LoginActivity extends AppCompatActivity {
                 // Show a progress spinner, and kick off a background task to
                 // perform the user login attempt.
                 try {
-                    mailToAutoComplete = email;
-                    passwordToAutoComlete = password;
                     JSONObject json = new JSONObject();
                     json.put("username", username);
                     json.put("email", email);
@@ -416,79 +296,270 @@ public class LoginActivity extends AppCompatActivity {
                 }//mAuthTask = new UserLoginTask(email, password);
                 //mAuthTask.execute((Void) null);
             }
-        }else
-            Snackbar.make(view,"You need an internet connection to continue", Snackbar.LENGTH_LONG).show();
+        } else
+            Snackbar.make(view, "You need an internet connection to continue", Snackbar.LENGTH_LONG).show();
     }
-    private void invokeWSRegister(JSONObject jsonObject){
+
+
+    public void handleResponse(int responseCode, String message) {
+        // Reset errors.
+        mEmailView.setError(null);
+        mPasswordView.setError(null);
+        boolean cancel;
+        View focusView = null;
+        switch (responseCode) {
+            case 200:
+                resultsView.setText(R.string.action_sign_in_successful);
+                Intent intent3 = new Intent(getApplicationContext(), MapsActivity.class);
+                startActivity(intent3);
+                cancel = false;
+                break;
+            case 204:
+                resultsView.setText(R.string.action_register_successful);
+                Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                startActivity(intent);
+                cancel = false;
+                break;
+            case 401:
+                mPasswordView.setError(getString(R.string.error_incorrect_password));
+                resultsView.setText(message);
+                focusView = mPasswordView;
+                cancel = true;
+                break;
+            case 403:
+                resultsView.setText(message);
+                cancel = true;
+                break;
+            case 404:
+                mEmailView.setError(getString(R.string.error_incorrect_email));
+                resultsView.setText(message);
+                focusView = mEmailView;
+                cancel = true;
+                break;
+            case 409:
+                resultsView.setText(message);
+                cancel = true;
+                focusView = mEmailView;
+                break;
+            case 500:
+                resultsView.setText(R.string.action_sign_in_server_error);
+                cancel = true;
+                break;
+            default:
+                resultsView.setText(message);
+                cancel = true;
+                break;
+        }
+        if (cancel) {
+            showProgress(false);
+            if (focusView != null) focusView.requestFocus();
+        } else {
+            mDataManager.insertUser(mPlayer);
+        }
+    }
+
+    private void invokeWSLogin(String cred, String password) {
+        showProgress(true);
+        AsyncHttpClient client = new AsyncHttpClient();
+        mClient = client;
+        final String login_url = Constants.URL_LOGIN_USER +"?auth="+cred;
+        client.setBasicAuth(cred, password);
+        client.setMaxRetriesAndTimeout(0, 200);
+        client.get(login_url, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                //Print Out response
+                String code = "";
+                Log.i("Success Response code: ", " code: " + i);
+                for (Header head : headers) {
+                    Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
+                }
+                for (byte b : bytes) {
+                    code = code + ((char) b);
+                }
+                Log.i("Response Body: ", code);
+
+                try {
+                    initPlayer(new JSONObject(code));
+                    handleResponse(i, "ok");
+                } catch (JSONException e) {
+                    Log.i("JSON EXCEPTION: ", e.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                //Print Out response
+                String code = "";
+                Log.i("Failure Response code: ", " code: " + i);
+                if (i == 0) {
+                    final String result = throwable.getMessage();
+                    handleResponse(i, result);
+                    return;
+                }
+
+                if (headers != null)
+                    for (Header head : headers) {
+                        Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
+                    }
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    final String result = errorMessage.getString("message");
+                    handleResponse(i, result);
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                }
+            }
+        });
+
+    }
+
+    private void invokeWSRegister(JSONObject jsonObject) {
         try {
             ByteArrayEntity entity = new ByteArrayEntity(jsonObject.toString().getBytes("UTF-8"));
             showProgress(true);
             AsyncHttpClient client = new AsyncHttpClient();
             mClient = client;
-            client.setMaxRetriesAndTimeout(1,20);
-            client.post(this, Constants.URL_REGISTER_USER, entity, "application/json" , new AsyncHttpResponseHandler() {
+            client.setMaxRetriesAndTimeout(1, 20);
+            client.post(this, Constants.URL_REGISTER_USER, entity, "application/json", new AsyncHttpResponseHandler() {
                 @Override
                 public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                    //Print Out response
                     String code = "";
-                    for(Header head: headers){
-                        Log.i("Response Headers: ", head.getName()+"->"+head.getValue()+"\n");
+                    Log.i("Success Response code: ", " code: " + i);
+                    for (Header head : headers) {
+                        Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
                     }
-                    for(byte b:bytes){
-                        code = code + ((char)b);
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
                     }
-                    handleResponse(code+"\n"+i);
+                    Log.i("Response Body: ", code);
+
+                    try {
+                        initPlayer(new JSONObject(code));
+                        handleResponse(i, "ok");
+                    } catch (JSONException e) {
+                        Log.i("JSON EXCEPTION: ", e.getMessage());
+                    }
                 }
 
                 @Override
                 public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                    showProgress(false);
-                    String code ="301";
-                    handleResponse(code);
+                    //Print Out response
+                    String code = "";
+                    Log.i("Failure Response code: ", " code: " + i);
+                    if (i == 0) {
+                        final String result = throwable.getMessage();
+                        handleResponse(i, result);
+                        return;
+                    }
+
+                    if (headers != null)
+                        for (Header head : headers) {
+                            Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
+                        }
+                    if (bytes != null) {
+                        for (byte b : bytes) {
+                            code = code + ((char) b);
+                        }
+                        Log.i("Response Body: ", code);
+                    }
+                    try {
+                        JSONObject errorMessage = new JSONObject(code);
+                        final String result = errorMessage.getString("message");
+                        handleResponse(i, result);
+                    } catch (JSONException ex) {
+                        Log.i("JSON EXCEPTION: ", ex.getMessage());
+                    }
                 }
             });
 
-        }catch(UnsupportedEncodingException e){
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 
     }
 
-    private boolean isUsernameValid(String username){
-        Pattern pattern = Pattern.compile(Constants.USERNAME_PATTERN);
+    private void initPlayer(JSONObject json) {
+        Log.i("JSON PARSING COMMENCE: ", json.toString());
+        try {
+            mPlayer.setEmail(json.getString("email"));
+            mPlayer.setUsername(json.getString("username"));
+            mPlayer.setPassword(json.getString("password"));
+            mPlayer.setFirstname(json.getString("firstname"));
+            mPlayer.setLastname(json.getString("lastname"));
+            mPlayer.setCreated(json.getString("created"));
+            JSONArray links = json.getJSONArray("links");
+            for (int i = 0; i < links.length(); i++) {
+                JSONObject obj = new JSONObject(links.get(i).toString());
+                mPlayer.addLink(obj.getString("rel"), obj.getString("url"));
+            }
+        } catch (JSONException e) {
+            Log.i("JSON EXCEPTION", e.getMessage());
+        }
+        Log.i("JSONParsed", "User info:\n Email:" + mPlayer.getEmail() + "\n" +
+                "Username:" + mPlayer.getUsername() + "\n" +
+                "Password:" + mPlayer.getPassword() + "\n" +
+                "Firstname:" + mPlayer.getFirstname() + "\n" +
+                "Lastname:" + mPlayer.getLastname() + "\n" +
+                "Created:" + mPlayer.getCreated() + "\n");
+        for (String str : mPlayer.getLinks().keySet()) {
+            Log.i("Parsed Links", "key: " + str + "\tvalue: " + mPlayer.getLinks().get(str));
+        }
+    }
+
+    private boolean isUsernameValid(String username) {
+        final String USERNAME_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*";
+        Pattern pattern = Pattern.compile(USERNAME_PATTERN);
         Matcher matcher = pattern.matcher(username);
         return matcher.matches();
     }
+
     private boolean isEmailValid(String email) {
-        Pattern pattern = Pattern.compile(Constants.EMAIL_PATTERN);
+        final String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+            + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+        Pattern pattern = Pattern.compile(EMAIL_PATTERN);
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();
     }
 
     private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
-        return password.length() > 4;
+        final String USERNAME_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*";
+        Pattern pattern = Pattern.compile(USERNAME_PATTERN);
+        Matcher matcher = pattern.matcher(password);
+        return password.length() > 4 && matcher.matches() ;
     }
 
     private void showProgress(final boolean show) {
         int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        if (show) {
+            final String connecting = "Connecting...";
+            resultsView.setText(connecting);
+        }
 
         formsContainer.setVisibility(show ? View.GONE : View.VISIBLE);
         formsContainer.animate().setDuration(shortAnimTime).alpha(
                 show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    formsContainer.setVisibility(show ? View.GONE : View.VISIBLE);
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                formsContainer.setVisibility(show ? View.GONE : View.VISIBLE);
             }
-            });
+        });
 
         btnPanel.setVisibility(show ? View.GONE : View.VISIBLE);
         btnPanel.animate().setDuration(shortAnimTime).alpha(
                 show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    btnPanel.setVisibility(show ? View.GONE : View.VISIBLE);
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                btnPanel.setVisibility(show ? View.GONE : View.VISIBLE);
             }
-            });
+        });
 
         mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
         mProgressView.animate().setDuration(shortAnimTime).alpha(
@@ -501,18 +572,18 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    private void swapViews(final View from,final View to) {
+    private void swapViews(final View from, final View to) {
         int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-        from.setVisibility(View.GONE );
+        from.setVisibility(View.GONE);
         from.animate().setDuration(shortAnimTime).alpha(0).setListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                from.setVisibility(View.GONE );
+                from.setVisibility(View.GONE);
             }
         });
 
-        to.setVisibility(View.VISIBLE );
+        to.setVisibility(View.VISIBLE);
         to.animate().setDuration(shortAnimTime).alpha(1).setListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -521,22 +592,41 @@ public class LoginActivity extends AppCompatActivity {
         });
 
     }
-    public static void showNoConnectionDialog(final Context ctx)
-    {
+
+    public void swapForms(View view) {
+        switch (mActiveView) {
+            case "login":
+                mActiveView = "register";
+                panel_swap.setText(R.string.action_sign_in);
+                panel_text.setText(R.string.text_register);
+                swapViews(mLoginFormView, mRegisterFormView);
+                mEmailView = (AutoCompleteTextView) findViewById(R.id.reg_email);
+                mPasswordView = (EditText) findViewById(R.id.reg_password);
+                break;
+            case "register":
+                mActiveView = "login";
+                panel_swap.setText(R.string.action_register);
+                panel_text.setText(R.string.text_login);
+                swapViews(mRegisterFormView, mLoginFormView);
+                mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+                mPasswordView = (EditText) findViewById(R.id.password);
+                break;
+        }
+    }
+
+
+    public static void showNoConnectionDialog(final Context ctx) {
         AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
         builder.setCancelable(true);
         builder.setMessage("No Internet Connection");
         builder.setTitle("Title: No Internet Connection");
         builder.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which)
-            {
+            public void onClick(DialogInterface dialog, int which) {
                 ctx.startActivity(new Intent(Settings.ACTION_SETTINGS));
             }
         });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
-        {
-            public void onClick(DialogInterface dialog, int which)
-            {
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
 
             }
         });

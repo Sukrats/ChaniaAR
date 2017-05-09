@@ -7,7 +7,8 @@ package tuc.christos.chaniacitywalk2.model;
  */
 
 public class Scene {
-    private int id;
+    private long id;
+    private long period_id;
     private String name;
     private double latitude;
     private double longitude;
@@ -51,14 +52,16 @@ public class Scene {
 
     }
 
-    public Scene( double latitude, double longitude, int id, String name) {
+    public Scene( double latitude, double longitude, int id,int periodid, String name, String description) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
         this.name = name;
+        this.period_id = periodid;
+        this.description = description;
     }
 
-    public Scene( double latitude, double longitude, int id, String name, boolean visited, boolean visible, boolean hasAR, String description, String TAG) {
+    public Scene( double latitude, double longitude, long id, String name, boolean visited, boolean visible, boolean hasAR, String description, String TAG) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -70,12 +73,19 @@ public class Scene {
         this.TAG = TAG;
     }
 
+    public long getPeriod_id() {
+        return period_id;
+    }
 
-    public int getId() {
+    public void setPeriod_id(long period_id) {
+        this.period_id = period_id;
+    }
+
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

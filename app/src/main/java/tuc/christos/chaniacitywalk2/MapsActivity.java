@@ -26,6 +26,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Interpolator;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -60,6 +61,7 @@ import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 public class MapsActivity extends AppCompatActivity implements
         LocationCallback,
         LocationEventsListener,
+        ContentListener,
         GoogleMap.OnMapClickListener,
         OnMapReadyCallback {
 
@@ -70,6 +72,7 @@ public class MapsActivity extends AppCompatActivity implements
     private UiSettings mUiSettings;
     private LocationProvider mLocationProvider;
     private LocationEventHandler mEventHandler;
+    private ImageButton camButton;
 
     private Marker mSelectedMarker = null;
 
@@ -94,9 +97,7 @@ public class MapsActivity extends AppCompatActivity implements
         //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
-        if(!mDataManager.isInstantiated()) {
-            mDataManager.init(this);
-        }
+        mDataManager.downloadScenes(this);
         //Registering this activity for locationProvider and Event listener
         mLocationProvider = new LocationProvider(this);
         mEventHandler = new LocationEventHandler(this);
@@ -269,6 +270,10 @@ public class MapsActivity extends AppCompatActivity implements
             } catch (Resources.NotFoundException e) {
                 Log.i(TAG, "Can't find style. Error: ", e);
             }
+    }
+
+    public void downloadComplete(){
+        drawMap();
     }
 
     private void drawMap() {

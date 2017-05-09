@@ -7,15 +7,12 @@ package tuc.christos.chaniacitywalk2.utils;
 
 public class Constants {
 
-    public static final String URL_REGISTER_USER = "http://10.0.25.132:8080/citywalk/arapp/users/";
-    public static final String URL_LOGIN_USER = "http://10.0.25.132:8080/citywalk/arapp/users/";
-    public static final String URL_USERS = "http://10.0.25.102:8080/Jersey/rest/players";
-    public static final String URL_SCENES = "";
+    public static final String URL_APP = "http://10.0.25.199:8080/citywalk/arapp/";
+    public static final String URL_SCENES = "http://10.0.25.199:8080/citywalk/arapp/scenes";
+    public static final String URL_PERIODS = "http://10.0.25.199:8080/citywalk/arapp/periods";
+    public static final String URL_REGISTER_USER = "http://10.0.25.199:8080/citywalk/arapp/users/";
+
+    public static final String URL_LOGIN_USER = "http://10.0.25.199:8080/citywalk/arapp/users/secure/login";
 
 
-
-    public static final String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
-            + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
-
-    public static final String USERNAME_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*";
 }

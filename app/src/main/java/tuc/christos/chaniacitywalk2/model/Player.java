@@ -2,7 +2,9 @@ package tuc.christos.chaniacitywalk2.model;
 
 import android.util.SparseArray;
 
-import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Christos on 24/1/2017.
@@ -10,29 +12,32 @@ import java.util.ArrayList;
  */
 
 public class Player {
-
-    private static Player INSTANCE = null;
-    private boolean instantiated = false;
-
-    private long id;          //used only in coherence with the server db
     private String email;
     private String username;
     private String password;
+    private String firstname;
+    private String lastname;
+    private String created;
+    private Long numOfPlaces;
+    private Long numOfVisits;
 
-    private Long placesUnlocked;
-    private Long placesVisited;
     private Scene isAtScene;
     private boolean completedRoute;
 
+    private Map<String,String> links = new HashMap<>();
+
     private SparseArray<Scene> visited = new SparseArray<>();
+    private SparseArray<Scene> places = new SparseArray<>();
+
+    public static Player INSTANCE = null;
 
     private Player(){}
 
-    public Player(long id, String email, String password, String username) {
-        this.id = id;
-        this.email = email;
-        this.password = password;
-        this.username = username;
+    public static Player getInstance() {
+        if(INSTANCE == null )
+            INSTANCE = new Player();
+
+        return INSTANCE;
     }
 
     /**
@@ -40,34 +45,6 @@ public class Player {
      * @return
      * Always check for null return to know if it is instantiated
      */
-
-    public static Player getInstance(){
-        return INSTANCE;
-    }
-
-    public void initPlayer(long id, String email, String password, String username ){
-        INSTANCE = new Player(id,email,password,username);
-        instantiated = true;
-    }
-
-    public void resetPlayer(){
-        INSTANCE = null;
-        instantiated = false;
-    }
-
-    public boolean isInstantiated(){return instantiated;}
-
-    private boolean checkPlayerData(){
-        return true;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public String getEmail() {
         return email;
@@ -93,20 +70,20 @@ public class Player {
         this.username = username;
     }
 
-    public Long getPlacesUnlocked() {
-        return placesUnlocked;
+    public Long getNumOfPlaces() {
+        return numOfPlaces;
     }
 
-    public void setPlacesUnlocked(Long placesUnlocked) {
-        this.placesUnlocked = placesUnlocked;
+    public void setNumOfPlaces(Long numOfPlaces) {
+        this.numOfPlaces = numOfPlaces;
     }
 
-    public Long getPlacesVisited() {
-        return placesVisited;
+    public Long getNumOfVisits() {
+        return numOfVisits;
     }
 
-    public void setPlacesVisited(Long placesVisited) {
-        this.placesVisited = placesVisited;
+    public void setNumOfVisits(Long numOfVisits) {
+        this.numOfVisits = numOfVisits;
     }
 
     public Scene getIsAtScene() {
@@ -133,4 +110,50 @@ public class Player {
     public void setCompletedRoute(boolean completedRoute) {
         this.completedRoute = completedRoute;
     }
+
+    public SparseArray<Scene> getPlaces() {
+        return places;
+    }
+
+    public void setPlaces(SparseArray<Scene> places) {
+        this.places = places;
+    }
+
+
+    public String getCreated() {
+        return created;
+    }
+
+    public void setCreated(String created) {
+        this.created = created;
+    }
+
+    public String getFirstname() {
+        return firstname;
+    }
+
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
+    }
+
+    public String getLastname() {
+        return lastname;
+    }
+
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
+    }
+
+    public Map<String, String> getLinks() {
+        return links;
+    }
+
+    public void setLinks(Map<String, String> links) {
+        this.links = links;
+    }
+
+    public void addLink(String rel, String url){
+        this.links.put(rel, url);
+    }
+
 }
