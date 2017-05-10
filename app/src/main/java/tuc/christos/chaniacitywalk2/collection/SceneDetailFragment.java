@@ -15,7 +15,7 @@ import tuc.christos.chaniacitywalk2.model.Scene;
 
 /**
  * A fragment representing a single Scene detail screen.
- * This fragment is either contained in a {@link SceneListActivity}
+ * This fragment is either contained in a {@link CollectionActivity}
  * in two-pane mode (on tablets) or a {@link SceneDetailActivity}
  * on handsets.
  */
@@ -57,7 +57,7 @@ public class SceneDetailFragment extends Fragment {
             CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
             if (appBarLayout != null) {
                 appBarLayout.setTitle(mItem.getName());
-                appBarLayout.setBackgroundResource(R.drawable.unknown);
+                //appBarLayout.setBackgroundResource(R.drawable.unknown);
             }
         }
     }

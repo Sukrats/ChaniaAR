@@ -7,12 +7,12 @@ package tuc.christos.chaniacitywalk2.utils;
 
 public class Constants {
 
-    public static final String URL_APP = "http://10.0.25.199:8080/citywalk/arapp/";
-    public static final String URL_SCENES = "http://10.0.25.199:8080/citywalk/arapp/scenes";
-    public static final String URL_PERIODS = "http://10.0.25.199:8080/citywalk/arapp/periods";
-    public static final String URL_REGISTER_USER = "http://10.0.25.199:8080/citywalk/arapp/users/";
+    private static final String URL_APP = "http://10.0.25.61:8080/citywalk/arapp/";
+    public static final String URL_SCENES = URL_APP +"scenes";
 
-    public static final String URL_LOGIN_USER = "http://10.0.25.199:8080/citywalk/arapp/users/secure/login";
+    public static final String URL_PERIODS =  URL_APP +"periods";
+    public static final String URL_REGISTER_USER =  URL_APP +"users/";
+    public static final String URL_LOGIN_USER =  URL_APP +"users/secure/login";
 
 
 }

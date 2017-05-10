@@ -8,6 +8,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 
@@ -16,16 +17,21 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.util.List;
 
+import tuc.christos.chaniacitywalk2.ContentListener;
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -64,11 +70,9 @@ public class CollectionActivity extends AppCompatActivity {
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-
+        final SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the ViewPager with the sections adapter.
-        ViewPager mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
+        final ViewPager mViewPager = (ViewPager) findViewById(R.id.container);
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -77,6 +81,14 @@ public class CollectionActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+            }
+        });
+        final ProgressBar progressbar = (ProgressBar) findViewById(R.id.progress);
+        mDataManager.downloadPeriods(new ContentListener() {
+            @Override
+            public void downloadComplete() {
+                progressbar.setVisibility(View.GONE);
+                mViewPager.setAdapter(mSectionsPagerAdapter);
             }
         });
 
@@ -121,7 +133,7 @@ public class CollectionActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            String page = mDataManager.getPeriod(position);
+            String page = mDataManager.getPeriod(position).getName();
             return PlaceholderFragment.newInstance(page);
         }
 
@@ -133,7 +145,7 @@ public class CollectionActivity extends AppCompatActivity {
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return mDataManager.getPeriod(position);
+            return mDataManager.getPeriod(position).getName();
         }
     }
 
@@ -166,8 +178,14 @@ public class CollectionActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_collection_siblings, container, false);
+            //TextView title = (TextView) rootView.findViewById(R.id.title);
+            TextView body = (AppCompatTextView) rootView.findViewById(R.id.body);
+
+            //title.setText(DataManager.getInstance().getPeriod(getArguments().getString(ARG_SECTION_NUMBER)).getName());
+            body.setText(DataManager.getInstance().getPeriod(getArguments().getString(ARG_SECTION_NUMBER)).getDescription());
+
             RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
-            recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DataManager.getInstance().getScenesFromTag(getArguments().getString(ARG_SECTION_NUMBER))));
+            recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DataManager.getInstance().getScenesFromPeriod(getArguments().getString(ARG_SECTION_NUMBER))));
 
             return rootView;
         }
@@ -195,7 +213,8 @@ public class CollectionActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             final Scene item = mValues.get(position);
-            holder.mIdView.setText(item.getName());
+            holder.mView.setText(item.getName());
+            holder.mIdView.setText(String.valueOf(position+1));
             //holder.mContentView.setText(mValues.get(position).getTAG());
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -219,13 +238,13 @@ public class CollectionActivity extends AppCompatActivity {
 
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            final View mView;
+            final TextView mView;
             final TextView mIdView;
 
             ViewHolder(View view) {
                 super(view);
-                mView = view;
                 mIdView = (TextView) view.findViewById(R.id.id);
+                mView = (TextView)view.findViewById(R.id.content);
             }
 
             @Override

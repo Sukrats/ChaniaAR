@@ -72,7 +72,9 @@ public class MapsActivity extends AppCompatActivity implements
     private UiSettings mUiSettings;
     private LocationProvider mLocationProvider;
     private LocationEventHandler mEventHandler;
-    private ImageButton camButton;
+
+    private HashMap<Scene,Marker> sceneToMarkerMap = new HashMap<>();
+    private HashMap<Marker,Scene> markerToSceneMap = new HashMap<>();
 
     private Marker mSelectedMarker = null;
 
@@ -88,6 +90,7 @@ public class MapsActivity extends AppCompatActivity implements
     private CameraPosition defaultCameraPosition = new CameraPosition.Builder()
             .target(new LatLng(35.514388, 24.020335)).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
 
+    private ImageButton pushButton;
 
 
     @Override
@@ -97,11 +100,19 @@ public class MapsActivity extends AppCompatActivity implements
         //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
-        mDataManager.downloadScenes(this);
         //Registering this activity for locationProvider and Event listener
         mLocationProvider = new LocationProvider(this);
         mEventHandler = new LocationEventHandler(this);
 
+        final ContentListener cl = this;
+        pushButton = (ImageButton) findViewById(R.id.push_button);
+        pushButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDataManager.downloadScenes(cl);
+                mDataManager.downloadPeriods(cl);
+            }
+        });
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -152,7 +163,7 @@ public class MapsActivity extends AppCompatActivity implements
                 // Since we return true, we have to show the info window manually
                 //marker.showInfoWindow();
                 if(!marker.equals(mLocationMarker)) {
-                    Scene scene = mDataManager.getSceneFromMarker(marker);
+                    Scene scene = markerToSceneMap.get(marker);
                     if (scene.isHasAR()) {
                         Polyline line = mDataManager.getLineFromScene(scene);
                         if (line.getColor() == Color.BLUE) {
@@ -184,8 +195,15 @@ public class MapsActivity extends AppCompatActivity implements
 
 
     public void moveMyLocationMarker(Location location){
-        if(mLocationMarker != null) {
+        if(mLocationMarker == null || !mLocationMarker.isVisible()){
 
+            Bitmap bm = BitmapFactory.decodeResource(this.getResources(),R.drawable.angry_thor_512px);
+            mLocationMarker = mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(location.getLatitude(), location.getLongitude()))
+                    .title("mLocationMarker")
+                    .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm,64,64,false))));
+        }else
+            {
             Location loc = latLngToLoc(mLocationMarker.getPosition());
             final Handler handler = new Handler();
             final long start = SystemClock.uptimeMillis();
@@ -216,16 +234,7 @@ public class MapsActivity extends AppCompatActivity implements
             if(loc.distanceTo(location) >= 5 && camFollow){
                 setCameraPosition(location.getLatitude(),location.getLongitude(),mMap.getCameraPosition().zoom);
             }
-        }else{
-
-            Bitmap bm = BitmapFactory.decodeResource(this.getResources(),R.drawable.angry_thor_512px);
-            mLocationMarker = mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(location.getLatitude(), location.getLongitude()))
-                    .title("mLocationMarker")
-                    .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm,64,64,false))));
         }
-
-
     }
 
     public Location latLngToLoc(LatLng latLng){
@@ -278,7 +287,9 @@ public class MapsActivity extends AppCompatActivity implements
 
     private void drawMap() {
         mMap.clear();
-        mDataManager.clearMaps();
+        sceneToMarkerMap.clear();
+        markerToSceneMap.clear();
+        if (mLocationMarker !=null) mLocationMarker.setVisible(false);
 
         for (Scene temp : mDataManager.getScenes()) {
 
@@ -307,8 +318,8 @@ public class MapsActivity extends AppCompatActivity implements
                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.unknown_32));
                 }
 
-                mDataManager.mapScenetoMarker(temp, marker);
-                mDataManager.mapMarkerToScene(marker, temp);
+                sceneToMarkerMap.put(temp, marker);
+                markerToSceneMap.put(marker, temp);
             }else if (temp.isHasAR()){
                 Marker marker;
 
@@ -331,8 +342,8 @@ public class MapsActivity extends AppCompatActivity implements
 
 
                 if(marker != null){
-                    mDataManager.mapScenetoMarker(temp, marker);
-                    mDataManager.mapMarkerToScene(marker, temp);
+                    sceneToMarkerMap.put(temp, marker);
+                    markerToSceneMap.put(marker, temp);
                 }
 
                 Polyline line;
@@ -426,17 +437,18 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onPause() {
-        mLocationProvider.disconnect();
+        super.onPause();
         mLocationProvider.removeLocationCallbackListener(this);
         mLocationProvider.removeLocationCallbackListener(mEventHandler);
+        mLocationProvider.disconnect();
         mEventHandler.removeLocationEventListener(this);
-        super.onPause();
 
     }
 
 
     @Override
     public void onResume() {
+        super.onResume();
         //Check Preferences File and Update locally
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type,"");
@@ -450,7 +462,6 @@ public class MapsActivity extends AppCompatActivity implements
         mLocationProvider.setLocationCallbackListener(this);
         mLocationProvider.setLocationCallbackListener(mEventHandler);
         mEventHandler.setLocationEventListener(this);
-        super.onResume();
     }
 
     protected void onStart() {
@@ -552,7 +563,7 @@ public class MapsActivity extends AppCompatActivity implements
         @Override
         public View getInfoContents(Marker marker) {
 
-            Scene scene = mDataManager.getSceneFromMarker(marker);
+            Scene scene = markerToSceneMap.get(marker);
             if (scene.getId() == 1)
                 ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(R.drawable.giali_thumb);
             else if (scene.getId() == 2)

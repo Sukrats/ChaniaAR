@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
@@ -128,6 +129,14 @@ final class mDBHelper extends SQLiteOpenHelper {
         db.insertWithOnConflict(PlayerEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
+    Cursor getScenes(){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        String selectQ = "SELECT * FROM " + SceneEntry.TABLE_NAME ;
+
+        return db.rawQuery(selectQ,null);
+    }
+
     boolean insertScene(Scene scene){
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -144,13 +153,6 @@ final class mDBHelper extends SQLiteOpenHelper {
 
     }
 
-    Cursor getScenes(){
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        String selectQ = "SELECT * FROM " + SceneEntry.TABLE_NAME ;
-
-        return db.rawQuery(selectQ,null);
-    }
 
     void clearScenes(){
         SQLiteDatabase db = this.getWritableDatabase();
@@ -158,8 +160,40 @@ final class mDBHelper extends SQLiteOpenHelper {
         db.rawQuery(deleteQ,null);
     }
 
+    Cursor getPeriods(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selectQ = "SELECT * FROM " + PeriodEntry.TABLE_NAME ;
+        return db.rawQuery(selectQ,null);
+    }
+
+    Cursor getPeriod(String name){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selectQ = "SELECT * FROM " + PeriodEntry.TABLE_NAME + " WHERE " +PeriodEntry.PERIODS_COLUMN_NAME+" = '"+name+"'" ;
+        return db.rawQuery(selectQ,null);
+    }
+
+    boolean insertPeriod(Period period){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(PeriodEntry.PERIODS_COLUMN_ID, period.getId());
+        values.put(PeriodEntry.PERIODS_COLUMN_DESCRIPTION, period.getDescription());
+        values.put(PeriodEntry.PERIODS_COLUMN_NAME, period.getName());
+
+        long count = db.insertWithOnConflict(PeriodEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        return count != -1 ;
+    }
+
+    void clearPeriods(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        String deleteQ = "DELETE FROM "+PeriodEntry.TABLE_NAME;
+        db.rawQuery(deleteQ,null);
+    }
+
+
     static class SceneEntry implements BaseColumns{
         static final String TABLE_NAME="Scenes";
+
         static final String SCENES_COLUMN_ID ="id";
         static final String SCENES_COLUMN_PERIOD_ID ="period_id";
         static final String SCENES_COLUMN_NAME ="name";
@@ -172,6 +206,7 @@ final class mDBHelper extends SQLiteOpenHelper {
 
     static class PeriodEntry implements BaseColumns{
         static final String TABLE_NAME="Periods";
+
         static final String PERIODS_COLUMN_ID ="id";
         static final String PERIODS_COLUMN_NAME="name";
         static final String PERIODS_COLUMN_DESCRIPTION="description";
@@ -179,6 +214,7 @@ final class mDBHelper extends SQLiteOpenHelper {
 
     static class PlayerEntry implements BaseColumns{
         static final String TABLE_NAME="Player";
+
         static final String COLUMN_EMAIL = "email";
         static final String COLUMN_USERNAME = "username";
         static final String COLUMN_PASSWORD = "password";

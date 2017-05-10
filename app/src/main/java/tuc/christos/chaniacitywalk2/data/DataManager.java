@@ -4,10 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.view.View;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polyline;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -23,6 +21,7 @@ import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 import tuc.christos.chaniacitywalk2.ContentListener;
+import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.utils.Constants;
@@ -40,12 +39,8 @@ public class DataManager {
     private ArrayList<Scene> Route = new ArrayList<>();
     private HashMap<String, Scene> routeMap = new HashMap<>();
 
-    private ArrayList<Scene> Scenes = new ArrayList<>();
-    private HashMap<String, Scene> scenesMap = new HashMap<>();
-
-
-    private HashMap<Marker, Scene> markerSceneMap = new HashMap<>();
-    private HashMap<Scene, Marker> sceneMarkerMap = new HashMap<>();
+    private HashMap<String, Scene> scenes= new HashMap<>();
+    private HashMap<String, Period> periods= new HashMap<>();
 
     private HashMap<Polyline, Scene> lineToSceneMap = new HashMap<>();
     private HashMap<Scene, Polyline> sceneToLineMap = new HashMap<>();
@@ -72,17 +67,24 @@ public class DataManager {
         }
     }
 
+
+    public boolean mapLineToScene(Polyline line, Scene scene) {
+        lineToSceneMap.put(line, scene);
+        return true;
+    }
+    public boolean mapScenetoLine(Scene scene, Polyline line) {
+        sceneToLineMap.put(scene, line);
+        return true;
+    }
+    public Scene getSceneFromLine(Polyline line) {
+        return lineToSceneMap.get(line);
+    }
+
+    public Polyline getLineFromScene(Scene scene) {
+        return sceneToLineMap.get(scene);
+    }
+
     /*
-    public static DataManager getInstance() {
-        if(INSTANCE == null)
-            INSTANCE = new DataManager();
-        return INSTANCE;
-    }
-
-    public boolean isInstantiated(){
-        return (initiated);
-    }
-
 	public void init(Context context){
         this.initiated = true;
         mContext = context;
@@ -105,52 +107,7 @@ public class DataManager {
         }
 
     }
-
-    private void instantiate(){
-
-                Cursor c = mDBh.getScenes();
-                while (c.moveToNext()) {
-
-                    String TAG = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_TAG));
-                    String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
-                    double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
-                    double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
-                    int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry._ID));
-                    String descr = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
-
-                    boolean tVisible = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_VISIBLE)));
-                    boolean tHasAR = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_HASAR)));
-                    boolean tVisit = intToBool(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_VISITED)));
-
-
-                    Scene temp = new Scene(lat, lon, id, name, tVisit, tVisible, tHasAR, descr, TAG);
-
-                    this.Scenes.add(temp);
-                    this.scenesMap.put(Integer.toString(id),temp);
-                    if(temp.isHasAR()){
-                        this.Route.add(temp);
-                        this.routeMap.put(Integer.toString(id),temp);
-                    }
-
-                }
-                setPolyPoints();
-    }
 */
-    public List<String> getEmails() {
-        List<String> emails = new ArrayList<>();
-        Cursor c = mDBh.getEmails();
-        if (c.getCount() > 0) {
-            while (c.moveToNext()) {
-                emails.add(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
-                emails.add(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_USERNAME)));
-            }
-        }
-        String ems = "Emails: ";
-        for (String temp : emails)
-            ems += temp + "\n";
-        Log.i(TAG, ems);
-        return emails;
-    }
 
     /*public Player getPlayer(){
         Player player = new Player();
@@ -163,76 +120,7 @@ public class DataManager {
         return player;
     }*/
 
-    /*
-    public void populateServerDB(){
-        Cursor c = mDBh.getScenesTemp();
-
-        JSONObject tempScene = new JSONObject();
-        JSONArray scenes = new JSONArray();
-        try {
-            while(c.moveToNext()){
-                JSONObject sc = new JSONObject();
-                String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
-                String description =  c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
-                double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
-                double longi = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
-
-                String period = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_TAG));
-                long p_id = 1;
-                switch(period){
-                    case "Hellenistic" : p_id = 1; break;
-                    case "Byzantine" :  p_id = 2; break;
-                    case "Venetian" : p_id = 3; break;
-                    case "Ottoman" : p_id = 4; break;
-                    case "Modern" : p_id = 5; break;
-                }
-                if(name.equals("Municipal Garden's clock"))
-                    name = "Municipal Garden\\'s clock";
-
-                sc.put("name", name);
-                sc.put("description", description);
-                sc.put("latitude", lat);
-                sc.put("longitude", longi);
-                sc.put("periodId", p_id);
-                scenes.put(sc);
-            }
-            tempScene.put("scenes",scenes);
-            Log.i("REST FULL JSON: ", tempScene.toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        InvokeRestfullScenes(tempScene);
-    }
-
-    private void InvokeRestfullScenes(JSONObject json){
-        try {
-            ByteArrayEntity entity = new ByteArrayEntity(json.toString().getBytes("UTF-8"));
-            AsyncHttpClient client = new AsyncHttpClient();
-            client.setMaxRetriesAndTimeout(0,20);
-            client.post(mContext, Constants.URL_TEMP_SCENES, entity, "application/json" , new AsyncHttpResponseHandler() {
-                @Override
-                public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                    if(i == 201){
-                        Toast.makeText(mContext,"SUCCESS",Toast.LENGTH_SHORT).show();
-                    }else if (i == 500){
-                        Toast.makeText(mContext,"FUCK ME SOMETHING'S FISHY",Toast.LENGTH_SHORT).show();
-                    }
-                    else{
-                        Toast.makeText(mContext,"FUCK ME SOMETHING'S FISHY: "+i,Toast.LENGTH_SHORT).show();
-                    }
-                }
-                @Override
-                public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                    Toast.makeText(mContext,"FUCK ME SOMETHING'S FISHY: "+i,Toast.LENGTH_SHORT).show();
-                }
-            });
-
-        }catch(UnsupportedEncodingException e){
-            e.printStackTrace();
-        }
-    }
-
-    */
+    /**********************************************************PLAYER METHODS*****************************************************************/
 
     public String getAutoLoginCredentials() {
         String credentials;
@@ -251,64 +139,115 @@ public class DataManager {
         return null;
     }
 
+    public List<String> getEmails() {
+        List<String> emails = new ArrayList<>();
+        Cursor c = mDBh.getEmails();
+        if (c.getCount() > 0) {
+            while (c.moveToNext()) {
+                emails.add(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
+                emails.add(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_USERNAME)));
+            }
+        }
+        String ems = "Emails: ";
+        for (String temp : emails)
+            ems += temp + "\n";
+        Log.i(TAG, ems);
+        return emails;
+    }
+
     public void insertUser(Player player) {
         mDBh.insertUser(player);
     }
 
-    public boolean mapMarkerToScene(Marker marker, Scene scene) {
-        markerSceneMap.put(marker, scene);
-        return true;
+    /**********************************************************PERIOD METHODS*****************************************************************/
+
+    public List<Period> getPeriods() {
+        Cursor c = mDBh.getPeriods();
+        List<Period> periodsGet = new ArrayList<>();
+        int i = 0;
+        Log.i(TAG,"Fetching Periods from local db");
+        while(c.moveToNext()){
+            i++;
+            String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_NAME));
+            long id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ID));
+            String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_DESCRIPTION));
+            Period temp = new Period(id, name, description);
+            periodsGet.add(temp);
+            //periods.put(name,temp);
+        }
+        Log.i(TAG,"Fetched: "+i+" Periods");
+        return periodsGet;
     }
 
-    public boolean mapScenetoMarker(Scene scene, Marker marker) {
-        sceneMarkerMap.put(scene, marker);
-        return true;
+    public Period getPeriod(String name){
+        Cursor c = mDBh.getPeriod(name);
+        Period p = new Period();
+        if(c.moveToNext()){
+            p.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ID)));
+            p.setName(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_NAME)));
+            p.setDescription(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_DESCRIPTION)));
+        }
+        return p;
+    }
+    public Period getPeriod(int position){
+        Period period;
+        Log.i(TAG,"Fragment position: "+position);
+        switch(position){
+            case 0:
+                period =  periods.get("HELLENISTIC");
+                Log.i(TAG,"Period: "+period.getName());
+                break;
+            case 1:
+                period = periods.get("BYZANTINE");
+                Log.i(TAG,"Period: "+period.getName());
+                break;
+            case 2:
+                period =  periods.get("VENETIAN");
+                Log.i(TAG,"Period: "+period.getName());
+                break;
+            case 3:
+                period =  periods.get("OTTOMAN");
+                Log.i(TAG,"Period: "+period.getName());
+                break;
+            case 4:
+                period =  periods.get("MODERN");
+                Log.i(TAG,"Period: "+period.getName());
+                break;
+            default:
+                period =  new Period();
+        }
+        return period;
     }
 
-    public Scene getSceneFromMarker(Marker marker) {
-        return markerSceneMap.get(marker);
+    public int getPeriodCount(){
+        return periods.values().size();
     }
 
-    public Marker getMarkerFromScene(Scene scene) {
-        return sceneMarkerMap.get(scene);
+    public List<Scene> getScenesFromPeriod(String page){
+        List<Scene> pScenes = new ArrayList<>();
+        Period period = periods.get(page);
+        if(period == null)
+            return pScenes;
+        for(Scene temp : scenes.values()){
+           if(temp.getPeriod_id() == period.getId())
+               pScenes.add(temp);
+        }
+        return pScenes;
     }
 
+    /**********************************************************SCENE METHODS*****************************************************************/
 
-    public boolean mapLineToScene(Polyline line, Scene scene) {
-        lineToSceneMap.put(line, scene);
-        return true;
-    }
-
-    public boolean mapScenetoLine(Scene scene, Polyline line) {
-        sceneToLineMap.put(scene, line);
-        return true;
-    }
-
-    public Scene getSceneFromLine(Polyline line) {
-        return lineToSceneMap.get(line);
-    }
-
-    public Polyline getLineFromScene(Scene scene) {
-        return sceneToLineMap.get(scene);
-    }
-
-
-    public boolean clearMaps() {
-        sceneToLineMap.clear();
-        lineToSceneMap.clear();
-        sceneMarkerMap.clear();
-        markerSceneMap.clear();
-        return true;
-    }
 
     public Scene getScene(String id) {
-        return scenesMap.get(id);
+        return scenes.get(id);
     }
 
-    public ArrayList<Scene> getScenes() {
-        ArrayList<Scene> allScenes = new ArrayList<>();
+    public List<Scene> getScenes() {
         Cursor c = mDBh.getScenes();
+        int i = 0;
+        Log.i(TAG,"Fetching Scenes from local db");
         while(c.moveToNext()){
+            i++;
             String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
             double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
             double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
@@ -320,24 +259,12 @@ public class DataManager {
             temp.setVisible(true);
             temp.setHasAR(false);
             temp.setVisited(false);
-            allScenes.add(temp);
+            scenes.put(String.valueOf(id),temp);
         }
-        return allScenes;
+        Log.i(TAG,"Fetched: "+i+" Scenes");
+        return new ArrayList<>(scenes.values());
     }
 
-    public ArrayList<Scene> getScenesFromTag(String tag) {
-        ArrayList<Scene> result = new ArrayList<>();
-        for (Scene temp : Scenes) {
-            if (temp.getTAG().equalsIgnoreCase(tag)) {
-                result.add(temp);
-            }
-        }
-        return result;
-    }
-
-    public ArrayList<Scene> getRoute() {
-        return Route;
-    }
 
     public ArrayList<LatLng> getPolyPoints(Scene scene) {
         return sceneToPointsMap.get(scene);
@@ -381,60 +308,17 @@ public class DataManager {
 
     }
 
+    /**********************************************************DOWNLOAD*************************************************************************/
 
-    private boolean intToBool(int i) {
-        return (i != 0);
-    }
-
-
-    public String getPeriod(int position) {
-        String page = "";
-        switch (position) {
-            case 0:
-                page = Tags.HELLENISTIC.toString();
-                break;
-            case 1:
-                page = Tags.BYZANTINE.toString();
-                break;
-            case 2:
-                page = Tags.VENETIAN.toString();
-                break;
-            case 3:
-                page = Tags.OTTOMAN.toString();
-                break;
-            case 4:
-                page = Tags.MODERN.toString();
-                break;
-        }
-        return page;
-    }
-
-    public int getPeriodCount() {
-        return Tags.values().length;
-    }
-
-    private enum Tags {
-
-        OTTOMAN,
-
-        VENETIAN,
-
-        MODERN,
-
-        HELLENISTIC,
-
-        BYZANTINE
-
-    }
-
-    public void downloadScenes(final ContentListener cl) {
+    public void downloadPeriods(final ContentListener cl) {
+        Log.i(TAG,"Downloading Periods");
         AsyncHttpClient client = new AsyncHttpClient();
-        client.get(Constants.URL_SCENES, null, new AsyncHttpResponseHandler() {
+        client.get(Constants.URL_PERIODS, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
                 try {
                     JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    PopulateScenesTask myTask = new PopulateScenesTask(json,cl);
+                    PopulateDBTask myTask = new PopulateDBTask(json,cl,mDBHelper.PeriodEntry.TABLE_NAME);
                     myTask.execute();
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -448,33 +332,89 @@ public class DataManager {
         });
     }
 
-    private class PopulateScenesTask extends AsyncTask<Void, Void, Boolean> {
+    public void downloadScenes(final ContentListener cl) {
+        Log.i(TAG,"Downloading Scenes");
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get(Constants.URL_SCENES, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                try {
+                    JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
+                    PopulateDBTask myTask = new PopulateDBTask(json,cl, mDBHelper.SceneEntry.TABLE_NAME);
+                    myTask.execute();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
 
-        private final JSONArray scenes;
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+
+            }
+        });
+    }
+
+    private class PopulateDBTask extends AsyncTask<Void, Double, Boolean> {
+
+        private final JSONArray jsonArray;
         private final ContentListener cl;
+        private final String tableName;
 
-        PopulateScenesTask(JSONArray json,ContentListener cl) {
-            this.scenes = json;
+        PopulateDBTask(JSONArray json,ContentListener cl, String tableName) {
+            this.jsonArray = json;
             this.cl=cl;
+            this.tableName = tableName;
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
             try {
-                Scene scene = new Scene();
-                for (int i = 0; i < scenes.length(); i++) {
-                    JSONObject obj = new JSONObject(scenes.get(i).toString());
-                    scene.setId(obj.getLong("id"));
-                    scene.setPeriod_id(obj.getLong("periodId"));
-                    scene.setName(obj.getString("name"));
-                    scene.setDescription(obj.getString("description"));
-                    scene.setLatitude(obj.getDouble("latitude"));
-                    scene.setLongitude(obj.getDouble("longitude"));
-                    if(!mDBh.insertScene(scene)){
-                        Log.i(TAG,"DELETED SCENES");
-                        mDBh.clearScenes();
-                        return false;
-                    }
+                switch (tableName) {
+
+                    case  mDBHelper.SceneEntry.TABLE_NAME:
+
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            Scene scene = new Scene();
+                            publishProgress((double) (i + 1) / jsonArray.length() * 100);
+                            JSONObject obj = new JSONObject(jsonArray.get(i).toString());
+                            scene.setId(obj.getLong("id"));
+                            scene.setPeriod_id(obj.getLong("periodId"));
+                            scene.setName(obj.getString("name"));
+                            scene.setDescription(obj.getString("description"));
+                            scene.setLatitude(obj.getDouble("latitude"));
+                            scene.setLongitude(obj.getDouble("longitude"));
+                            if (!mDBh.insertScene(scene)) {
+                                Log.i(TAG, "DELETED SCENES");
+                                mDBh.clearScenes();
+                                return false;
+                            }
+                        }
+                        break;
+
+                    case mDBHelper.PeriodEntry.TABLE_NAME:
+
+                        for(int i= 0; i< jsonArray.length();i++){
+                            Period period = new Period();
+                            publishProgress((double) (i + 1) / jsonArray.length() * 100);
+                            JSONObject obj = new JSONObject(jsonArray.get(i).toString());
+
+                            period.setId(obj.getLong("id"));
+                            period.setName(obj.getString("name"));
+                            period.setDescription(obj.getString("description"));
+
+                            JSONArray links = obj.getJSONArray("links");
+                           for(int j = 0; j< links.length();j++){
+                               JSONObject json = new JSONObject(links.get(j).toString());
+                               period.addLink(json.getString("rel"),json.getString("url"));
+                           }
+                            if (!mDBh.insertPeriod(period)) {
+                                Log.i(TAG, "DELETED PERIODS");
+                                mDBh.clearPeriods();
+                                return false;
+                            }
+                            periods.put(period.getName(),period);
+                        }
+                        break;
                 }
             } catch (JSONException e) {
                 Log.i(TAG,e.getMessage());
@@ -485,8 +425,13 @@ public class DataManager {
         }
 
         @Override
+        protected  void onProgressUpdate(Double... progress){
+            Log.i(TAG,"Downloading :"+progress[0]);
+        }
+        @Override
         protected void onPostExecute(final Boolean success) {
             if(success){
+                Log.i(TAG,"Download Complete :");
                 cl.downloadComplete();
             }
         }
@@ -495,4 +440,6 @@ public class DataManager {
         protected void onCancelled() {
         }
     }
+
+
 }

@@ -16,6 +16,7 @@ public class Scene {
     private boolean visible;
     private boolean hasAR;
     private boolean unlocked;
+
     private String briefDesc;
     private String description;
     private String TAG;
