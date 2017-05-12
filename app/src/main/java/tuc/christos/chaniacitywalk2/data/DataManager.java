@@ -39,9 +39,6 @@ public class DataManager {
     private ArrayList<Scene> Route = new ArrayList<>();
     private HashMap<String, Scene> routeMap = new HashMap<>();
 
-    private HashMap<String, Scene> scenes= new HashMap<>();
-    private HashMap<String, Period> periods= new HashMap<>();
-
     private HashMap<Polyline, Scene> lineToSceneMap = new HashMap<>();
     private HashMap<Scene, Polyline> sceneToLineMap = new HashMap<>();
 
@@ -84,43 +81,27 @@ public class DataManager {
         return sceneToLineMap.get(scene);
     }
 
-    /*
-	public void init(Context context){
-        this.initiated = true;
-        mContext = context;
-        initDBhelper(context);
-        instantiate();
-        mDBh.closeDataBase();
+    /**********************************************************MODIFICATIONS******************************************************************/
+    public String getLastUpdate(String table_name){
+        Cursor c = mDBh.getModification(table_name);
+        String action = "";
+        String update = "";
+        if(c.moveToNext()){
+            action = c.getString(c.getColumnIndexOrThrow(mDBHelper.ModificationsEntry.COLUMN_ACTION));
+            update = c.getString(c.getColumnIndexOrThrow(mDBHelper.ModificationsEntry.COLUMN_LAST_MODIFIED));
+        }
+        return update + ":" + action;
     }
 
-	private void initDBhelper(Context context){
-        this.mDBh = new mDBHelper(context);
-        try {
-            mDBh.createDataBase();
-        }catch(IOException e){
-            Log.i(TAG,"Unable to create database");
-        }
-        try{
-            mDBh.openDataBase();
-        }catch(SQLException e){
-            Log.i(TAG,e.getMessage());
-        }
-
+    public void printModsTable(){
+        mDBh.printModsTable();
     }
-*/
-
-    /*public Player getPlayer(){
-        Player player = new Player();
-        Cursor c = mDBh.getActivePlayer();
-        while(c.moveToNext()){
-            player.setEmail(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
-            player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_PASSWORD)));
-        }
-
-        return player;
-    }*/
 
     /**********************************************************PLAYER METHODS*****************************************************************/
+
+    public boolean isUsersEmpty(){
+        return mDBh.isPlayersEmpty();
+    }
 
     public String getAutoLoginCredentials() {
         String credentials;
@@ -161,6 +142,10 @@ public class DataManager {
 
     /**********************************************************PERIOD METHODS*****************************************************************/
 
+    public boolean isPeriodsEmpty(){
+        return mDBh.isPeriodsEmpty();
+    }
+
     public List<Period> getPeriods() {
         Cursor c = mDBh.getPeriods();
         List<Period> periodsGet = new ArrayList<>();
@@ -171,9 +156,19 @@ public class DataManager {
             String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_NAME));
             long id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ID));
             String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_DESCRIPTION));
+            String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_IMAGES_URL));
+            String logo = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_LOGO_URL));
+            String started = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_STARTED));
+            String ended = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ENDED));
+
             Period temp = new Period(id, name, description);
+            temp.setUriLogo(logo);
+            temp.setUriImages(images);
+            temp.setStarted(started);
+            temp.setEnded(ended);
+            temp.setScenes(getPeriodScenes(temp.getId()));
+
             periodsGet.add(temp);
-            //periods.put(name,temp);
         }
         Log.i(TAG,"Fetched: "+i+" Periods");
         return periodsGet;
@@ -186,64 +181,68 @@ public class DataManager {
             p.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ID)));
             p.setName(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_NAME)));
             p.setDescription(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_DESCRIPTION)));
+            p.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_IMAGES_URL)));
+            p.setUriLogo(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_LOGO_URL)));
+            p.setStarted(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_STARTED)));
+            p.setEnded(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ENDED)));
+
+            p.setScenes(getPeriodScenes(p.getId()));
         }
         return p;
     }
-    public Period getPeriod(int position){
-        Period period;
-        Log.i(TAG,"Fragment position: "+position);
-        switch(position){
-            case 0:
-                period =  periods.get("HELLENISTIC");
-                Log.i(TAG,"Period: "+period.getName());
-                break;
-            case 1:
-                period = periods.get("BYZANTINE");
-                Log.i(TAG,"Period: "+period.getName());
-                break;
-            case 2:
-                period =  periods.get("VENETIAN");
-                Log.i(TAG,"Period: "+period.getName());
-                break;
-            case 3:
-                period =  periods.get("OTTOMAN");
-                Log.i(TAG,"Period: "+period.getName());
-                break;
-            case 4:
-                period =  periods.get("MODERN");
-                Log.i(TAG,"Period: "+period.getName());
-                break;
-            default:
-                period =  new Period();
-        }
-        return period;
-    }
 
-    public int getPeriodCount(){
-        return periods.values().size();
-    }
+    private List<Scene> getPeriodScenes(long periodid){
+        List<Scene> scenes = new ArrayList<>();
+        Cursor c = mDBh.getPeriodScenes(periodid);
+        while(c.moveToNext()){
+            String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
+            double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
+            double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
+            int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID));
+            int period_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID));
+            String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
+            String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL));
+            String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
-    public List<Scene> getScenesFromPeriod(String page){
-        List<Scene> pScenes = new ArrayList<>();
-        Period period = periods.get(page);
-        if(period == null)
-            return pScenes;
-        for(Scene temp : scenes.values()){
-           if(temp.getPeriod_id() == period.getId())
-               pScenes.add(temp);
+            Scene temp = new Scene(lat, lon, id, period_id, name, description);
+            temp.setVisible(true);
+            temp.setHasAR(false);
+            temp.setVisited(false);
+            temp.setUriImages(images);
+            temp.setUriThumb(thumbnail);
+            scenes.add(temp);
         }
-        return pScenes;
+        return scenes;
     }
 
     /**********************************************************SCENE METHODS*****************************************************************/
 
+    public boolean isScenesEmpty(){
+        return mDBh.isScenesEmpty();
+    }
 
     public Scene getScene(String id) {
-        return scenes.get(id);
-    }
+            Cursor c = mDBh.getScene(Long.valueOf(id));
+            Scene s = new Scene();
+            if(c.moveToNext()){
+                s.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID)));
+                s.setName(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME)));
+                s.setDescription(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION)));
+                s.setLatitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE)));
+                s.setLongitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE)));
+                s.setPeriod_id(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID)));
+                s.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL)));
+                s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
+                s.setVisible(true);
+                s.setHasAR(false);
+                s.setVisited(false);
+            }
+            return s;
+        }
 
     public List<Scene> getScenes() {
         Cursor c = mDBh.getScenes();
+        List<Scene> scenes = new ArrayList<>();
         int i = 0;
         Log.i(TAG,"Fetching Scenes from local db");
         while(c.moveToNext()){
@@ -254,17 +253,22 @@ public class DataManager {
             int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID));
             int period_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID));
             String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
+            String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL));
+            String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
             Scene temp = new Scene(lat, lon, id, period_id, name, description);
             temp.setVisible(true);
             temp.setHasAR(false);
             temp.setVisited(false);
-            scenes.put(String.valueOf(id),temp);
+            temp.setUriImages(images);
+            temp.setUriThumb(thumbnail);
+            scenes.add(temp);
         }
         Log.i(TAG,"Fetched: "+i+" Scenes");
-        return new ArrayList<>(scenes.values());
+        return scenes;
     }
 
+    /*****************************************************POLYLINES************************************************************************/
 
     public ArrayList<LatLng> getPolyPoints(Scene scene) {
         return sceneToPointsMap.get(scene);
@@ -383,6 +387,14 @@ public class DataManager {
                             scene.setDescription(obj.getString("description"));
                             scene.setLatitude(obj.getDouble("latitude"));
                             scene.setLongitude(obj.getDouble("longitude"));
+
+                            JSONArray links = obj.getJSONArray("links");
+                            for(int j = 0; j< links.length();j++){
+                                JSONObject json = new JSONObject(links.get(j).toString());
+                                scene.addLink(json.getString("rel"),json.getString("url"));
+                            }
+                            scene.setUriImages(scene.getLinks().get("images"));
+                            scene.setUriThumb(scene.getLinks().get("thumbnail"));
                             if (!mDBh.insertScene(scene)) {
                                 Log.i(TAG, "DELETED SCENES");
                                 mDBh.clearScenes();
@@ -401,18 +413,21 @@ public class DataManager {
                             period.setId(obj.getLong("id"));
                             period.setName(obj.getString("name"));
                             period.setDescription(obj.getString("description"));
+                            period.setStarted(obj.getString("started"));
+                            period.setEnded(obj.getString("ended"));
 
                             JSONArray links = obj.getJSONArray("links");
-                           for(int j = 0; j< links.length();j++){
-                               JSONObject json = new JSONObject(links.get(j).toString());
-                               period.addLink(json.getString("rel"),json.getString("url"));
-                           }
+                            for(int j = 0; j< links.length();j++){
+                                JSONObject json = new JSONObject(links.get(j).toString());
+                                period.addLink(json.getString("rel"),json.getString("url"));
+                            }
+                            period.setUriImages(period.getLinks().get("images"));
+                            period.setUriLogo(period.getLinks().get("logo"));
                             if (!mDBh.insertPeriod(period)) {
                                 Log.i(TAG, "DELETED PERIODS");
                                 mDBh.clearPeriods();
                                 return false;
                             }
-                            periods.put(period.getName(),period);
                         }
                         break;
                 }

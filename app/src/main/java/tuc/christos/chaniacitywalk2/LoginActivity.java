@@ -24,6 +24,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.loopj.android.http.*;
 
@@ -32,6 +33,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,6 +44,8 @@ import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
+
+import static tuc.christos.chaniacitywalk2.utils.Constants.PLAYERS_TABLE;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -354,6 +359,7 @@ public class LoginActivity extends AppCompatActivity {
             showProgress(false);
             if (focusView != null) focusView.requestFocus();
         } else {
+            Toast.makeText(this,mDataManager.getLastUpdate(PLAYERS_TABLE),Toast.LENGTH_LONG).show();
             mDataManager.insertUser(mPlayer);
         }
     }
@@ -494,7 +500,13 @@ public class LoginActivity extends AppCompatActivity {
             mPlayer.setPassword(json.getString("password"));
             mPlayer.setFirstname(json.getString("firstname"));
             mPlayer.setLastname(json.getString("lastname"));
-            mPlayer.setCreated(json.getString("created"));
+            try {
+                Log.i("Date","Json Date: "+ json.getString("created"));
+                mPlayer.setCreated(new SimpleDateFormat("yyyy-MM-dd").parse(json.getString("created")));
+                Log.i("Date","parsed Date: "+ mPlayer.getCreated());
+            }catch(ParseException e){
+                e.printStackTrace();
+            }
             JSONArray links = json.getJSONArray("links");
             for (int i = 0; i < links.length(); i++) {
                 JSONObject obj = new JSONObject(links.get(i).toString());

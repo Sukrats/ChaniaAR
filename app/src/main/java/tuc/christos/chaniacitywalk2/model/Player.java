@@ -17,7 +17,7 @@ public class Player {
     private String password;
     private String firstname;
     private String lastname;
-    private String created;
+    private Date created;
     private Long numOfPlaces;
     private Long numOfVisits;
 
@@ -120,11 +120,11 @@ public class Player {
     }
 
 
-    public String getCreated() {
+    public Date getCreated() {
         return created;
     }
 
-    public void setCreated(String created) {
+    public void setCreated(Date created) {
         this.created = created;
     }
 

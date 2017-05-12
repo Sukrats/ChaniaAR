@@ -30,7 +30,7 @@ public class ProfileActivity extends AppCompatActivity {
         email.setText(mPlayer.getEmail());
         fName.setText(mPlayer.getFirstname());
         lName.setText(mPlayer.getLastname());
-        created.setText(mPlayer.getCreated());
+        created.setText(mPlayer.getCreated().toString());
 
     }
 }

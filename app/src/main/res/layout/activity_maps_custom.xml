@@ -39,7 +39,7 @@
     <include layout="@layout/bottom_bar_custom"/>
 
     <ImageButton
-        android:id ="@+id/push_button"
+        android:id ="@+id/round_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal|bottom"

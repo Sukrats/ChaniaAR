@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -100,17 +101,19 @@ public class MapsActivity extends AppCompatActivity implements
         //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
+        mDataManager.init(this);
+        if(mDataManager.isScenesEmpty()){
+            mDataManager.downloadScenes(this);
+        }
         //Registering this activity for locationProvider and Event listener
         mLocationProvider = new LocationProvider(this);
         mEventHandler = new LocationEventHandler(this);
 
-        final ContentListener cl = this;
-        pushButton = (ImageButton) findViewById(R.id.push_button);
+        pushButton = (ImageButton) findViewById(R.id.round_button);
         pushButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mDataManager.downloadScenes(cl);
-                mDataManager.downloadPeriods(cl);
+                mDataManager.printModsTable();
             }
         });
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -130,6 +133,8 @@ public class MapsActivity extends AppCompatActivity implements
             mapFragment.setRetainInstance(true);
             camToStart = true;
         }else camToStart = false;
+
+
 
         mapFragment.getMapAsync(this);
     }

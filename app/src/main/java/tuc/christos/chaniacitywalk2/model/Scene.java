@@ -1,5 +1,8 @@
 package tuc.christos.chaniacitywalk2.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by Christos on 28-Jan-17.
  *
@@ -17,8 +20,12 @@ public class Scene {
     private boolean hasAR;
     private boolean unlocked;
 
+    private Map<String,String> links = new HashMap<>();
+
     private String briefDesc;
     private String description;
+    private String uriImages;
+    private String uriThumb;
     private String TAG;
 
     public boolean isHasAR() {
@@ -141,4 +148,33 @@ public class Scene {
     public String getName() {
         return name;
     }
+
+    public Map<String, String> getLinks() {
+        return links;
+    }
+
+    public void setLinks(Map<String, String> links) {
+        this.links = links;
+    }
+
+    public void addLink(String rel, String url){
+        this.links.put(rel, url);
+    }
+
+    public String getUriImages() {
+        return uriImages;
+    }
+
+    public void setUriImages(String uriImages) {
+        this.uriImages = uriImages;
+    }
+
+    public String getUriThumb() {
+        return uriThumb;
+    }
+
+    public void setUriThumb(String uriThumb) {
+        this.uriThumb = uriThumb;
+    }
+
 }
