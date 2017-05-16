@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -24,7 +23,6 @@ import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.loopj.android.http.*;
 
@@ -33,8 +31,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.sql.Date;
+import java.util.Calendar;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,7 +51,7 @@ public class LoginActivity extends AppCompatActivity {
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private DataManager mDataManager;
-    private Player mPlayer = Player.getInstance();
+    private Player mPlayer =new Player();
     // UI references.
 
     private AutoCompleteTextView mEmailView;
@@ -358,9 +356,14 @@ public class LoginActivity extends AppCompatActivity {
         if (cancel) {
             showProgress(false);
             if (focusView != null) focusView.requestFocus();
-        } else {
-            Toast.makeText(this,mDataManager.getLastUpdate(PLAYERS_TABLE),Toast.LENGTH_LONG).show();
+
+        }else if(responseCode == 204) {
             mDataManager.insertUser(mPlayer);
+        }else {
+            if(mPlayer.getRecentActivity().after(mDataManager.getLastUpdate(PLAYERS_TABLE)))
+                mDataManager.syncLocalToRemote();
+            else
+                mDataManager.syncRemoteToLocal();
         }
     }
 
@@ -386,7 +389,7 @@ public class LoginActivity extends AppCompatActivity {
                 Log.i("Response Body: ", code);
 
                 try {
-                    initPlayer(new JSONObject(code));
+                    parsePlayer(new JSONObject(code));
                     handleResponse(i, "ok");
                 } catch (JSONException e) {
                     Log.i("JSON EXCEPTION: ", e.getMessage());
@@ -448,7 +451,7 @@ public class LoginActivity extends AppCompatActivity {
                     Log.i("Response Body: ", code);
 
                     try {
-                        initPlayer(new JSONObject(code));
+                        parsePlayer(new JSONObject(code));
                         handleResponse(i, "ok");
                     } catch (JSONException e) {
                         Log.i("JSON EXCEPTION: ", e.getMessage());
@@ -492,7 +495,7 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    private void initPlayer(JSONObject json) {
+    private void parsePlayer(JSONObject json) {
         Log.i("JSON PARSING COMMENCE: ", json.toString());
         try {
             mPlayer.setEmail(json.getString("email"));
@@ -500,13 +503,14 @@ public class LoginActivity extends AppCompatActivity {
             mPlayer.setPassword(json.getString("password"));
             mPlayer.setFirstname(json.getString("firstname"));
             mPlayer.setLastname(json.getString("lastname"));
-            try {
-                Log.i("Date","Json Date: "+ json.getString("created"));
-                mPlayer.setCreated(new SimpleDateFormat("yyyy-MM-dd").parse(json.getString("created")));
-                Log.i("Date","parsed Date: "+ mPlayer.getCreated());
-            }catch(ParseException e){
-                e.printStackTrace();
-            }
+            Log.i("json","Created: "+ json.getString("created"));
+            mPlayer.setCreated(Date.valueOf(json.getString("created")));
+            Log.i("json","parsed Created: "+ mPlayer.getCreated());
+
+            Log.i("json","Activity: "+ json.getString("recentActivity"));
+            mPlayer.setRecentActivity(Date.valueOf(json.getString("recentActivity")));
+            Log.i("json","parsed Activity: "+ mPlayer.getCreated());
+
             JSONArray links = json.getJSONArray("links");
             for (int i = 0; i < links.length(); i++) {
                 JSONObject obj = new JSONObject(links.get(i).toString());

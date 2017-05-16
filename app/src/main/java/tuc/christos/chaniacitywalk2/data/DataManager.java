@@ -15,6 +15,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -82,22 +83,34 @@ public class DataManager {
     }
 
     /**********************************************************MODIFICATIONS******************************************************************/
-    public String getLastUpdate(String table_name){
+    public Date getLastUpdate(String table_name){
         Cursor c = mDBh.getModification(table_name);
-        String action = "";
         String update = "";
         if(c.moveToNext()){
-            action = c.getString(c.getColumnIndexOrThrow(mDBHelper.ModificationsEntry.COLUMN_ACTION));
             update = c.getString(c.getColumnIndexOrThrow(mDBHelper.ModificationsEntry.COLUMN_LAST_MODIFIED));
         }
-        return update + ":" + action;
+        Log.i(TAG,update);
+        return Date.valueOf(update);
     }
 
     public void printModsTable(){
         mDBh.printModsTable();
     }
 
+    /**********************************************************DB SYNCING********************************************************************/
+    public void syncLocalToRemote(){
+        //update places, visits
+        Log.i(TAG,"UPDATED LOCAL DATABASE");
+    }
+    public void syncRemoteToLocal(){
+        Log.i(TAG,"UPDATED REMOTE DATABASE");
+    }
+
+
     /**********************************************************PLAYER METHODS*****************************************************************/
+
+    //Login and autocomplete methods
+
 
     public boolean isUsersEmpty(){
         return mDBh.isPlayersEmpty();
@@ -136,8 +149,26 @@ public class DataManager {
         return emails;
     }
 
+
+    // Active Player Methods
+
     public void insertUser(Player player) {
         mDBh.insertUser(player);
+    }
+
+    public Player getPlayer() {
+        Player player = new Player();
+        Cursor c = mDBh.getPlayer();
+
+        while(c.moveToNext()){
+            player.setEmail(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
+            player.setUsername(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_USERNAME)));
+            player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_PASSWORD)));
+            player.setFirstname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_FIRST_NAME)));
+            player.setLastname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_LAST_NAME)));
+            player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+        }
+        return player;
     }
 
     /**********************************************************PERIOD METHODS*****************************************************************/
@@ -443,6 +474,7 @@ public class DataManager {
         protected  void onProgressUpdate(Double... progress){
             Log.i(TAG,"Downloading :"+progress[0]);
         }
+
         @Override
         protected void onPostExecute(final Boolean success) {
             if(success){

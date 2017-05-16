@@ -19,16 +19,12 @@ import tuc.christos.chaniacitywalk2.model.Scene;
 
 final class mDBHelper extends SQLiteOpenHelper {
 
-    private static final String TAG = "myDBHelper";
     private static final int DB_VERSION = 1;
-    private static String DB_PATH;// = "/data/data/tuc.christos.chaniacitywalk2/databases/";
     private static String DB_NAME = "scenesDBtest.db";
-    private static String DB_NAME_c = "ARAppDB.db";
 
 
     mDBHelper(Context context){
         super(context, DB_NAME, null, DB_VERSION);
-        DB_PATH = context.getApplicationInfo().dataDir + "/databases/";
     }
 
 
@@ -104,6 +100,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         while(c.moveToNext()){
             schema+= c.getString(c.getColumnIndexOrThrow("name"))+"\n";
         }
+        c.close();
         Log.i("Schema","DB Schema: " + schema);
 
     }
@@ -144,6 +141,7 @@ final class mDBHelper extends SQLiteOpenHelper {
             mods += cur.getString(cur.getColumnIndexOrThrow(ModificationsEntry.COLUMN_ACTION))+"\t";
             mods += cur.getString(cur.getColumnIndexOrThrow(ModificationsEntry.COLUMN_LAST_MODIFIED))+"\n";
         }
+        cur.close();
         Log.i("Schema","Modifications Table: \n" + mods);
     }
 
@@ -153,14 +151,14 @@ final class mDBHelper extends SQLiteOpenHelper {
         return db.rawQuery(query, null);
     }
 
-    public Cursor getModification(String table_name){
+     Cursor getModification(String table_name){
         SQLiteDatabase db = this.getWritableDatabase();
         String query = " SELECT * FROM "+ModificationsEntry.TABLE_NAME +
                        " WHERE "+ModificationsEntry.COLUMN_TABLE_NAME+" = '"+table_name+"';";
         return db.rawQuery(query, null);
     }
 
-    public boolean isPlayersEmpty(){
+     boolean isPlayersEmpty(){
         SQLiteDatabase db = this.getWritableDatabase();
         String countQ = "SELECT count(*) FROM "+PlayerEntry.TABLE_NAME;
         Cursor c = db.rawQuery(countQ, null);
@@ -170,7 +168,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         return count == 0;
     }
 
-    public boolean isScenesEmpty(){
+     boolean isScenesEmpty(){
         SQLiteDatabase db = this.getWritableDatabase();
         String countQ = "SELECT count(*) FROM "+SceneEntry.TABLE_NAME;
         Cursor c = db.rawQuery(countQ, null);
@@ -180,7 +178,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         return count == 0;
     }
 
-    public boolean isPeriodsEmpty(){
+     boolean isPeriodsEmpty(){
         SQLiteDatabase db = this.getWritableDatabase();
         String countQ = "SELECT count(*) FROM "+PeriodEntry.TABLE_NAME;
         Cursor c = db.rawQuery(countQ, null);

@@ -18,6 +18,7 @@ public class Player {
     private String firstname;
     private String lastname;
     private Date created;
+    private Date recentActivity;
     private Long numOfPlaces;
     private Long numOfVisits;
 
@@ -29,17 +30,8 @@ public class Player {
     private SparseArray<Scene> visited = new SparseArray<>();
     private SparseArray<Scene> places = new SparseArray<>();
 
-    public static Player INSTANCE = null;
 
-    private Player(){}
-
-    public static Player getInstance() {
-        if(INSTANCE == null )
-            INSTANCE = new Player();
-
-        return INSTANCE;
-    }
-
+    public Player(){}
     /**
      * Player Instance
      * @return
@@ -155,5 +147,15 @@ public class Player {
     public void addLink(String rel, String url){
         this.links.put(rel, url);
     }
+
+
+    public Date getRecentActivity() {
+        return recentActivity;
+    }
+
+    public void setRecentActivity(Date recent_activity) {
+        this.recentActivity = recent_activity;
+    }
+
 
 }

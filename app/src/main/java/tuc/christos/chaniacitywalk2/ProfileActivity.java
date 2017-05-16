@@ -18,7 +18,7 @@ public class ProfileActivity extends AppCompatActivity {
         setContentView(R.layout.activity_profile);
 
         mDataManager = DataManager.getInstance();
-        mPlayer = Player.getInstance();
+        mPlayer = mDataManager.getPlayer();
 
         TextView name = (TextView) findViewById(R.id.user_profile_name);
         TextView email = (TextView) findViewById(R.id.user_profile_short_bio);
