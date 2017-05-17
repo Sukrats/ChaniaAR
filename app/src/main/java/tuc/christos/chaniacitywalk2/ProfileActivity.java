@@ -25,12 +25,14 @@ public class ProfileActivity extends AppCompatActivity {
         TextView fName = (TextView) findViewById(R.id.tx1);
         TextView lName = (TextView) findViewById(R.id.tx2);
         TextView created = (TextView) findViewById(R.id.tx3);
+        TextView recentActivity = (TextView) findViewById(R.id.tx4);
 
         name.setText(mPlayer.getUsername());
         email.setText(mPlayer.getEmail());
         fName.setText(mPlayer.getFirstname());
         lName.setText(mPlayer.getLastname());
         created.setText(mPlayer.getCreated().toString());
-
+        final String activeTime = "Last Active on: "+mPlayer.getRecentActivity();
+        recentActivity.setText(activeTime);
     }
 }

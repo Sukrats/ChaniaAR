@@ -54,6 +54,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
+import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
@@ -114,6 +115,9 @@ public class MapsActivity extends AppCompatActivity implements
             @Override
             public void onClick(View v) {
                 mDataManager.printModsTable();
+                Player player = mDataManager.getPlayer();
+                player.setFirstname("Christos");
+                mDataManager.updatePlayer(player , getApplicationContext());
             }
         });
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -286,7 +290,7 @@ public class MapsActivity extends AppCompatActivity implements
             }
     }
 
-    public void downloadComplete(){
+    public void downloadComplete(boolean success,int code){
         drawMap();
     }
 

@@ -20,7 +20,7 @@ import tuc.christos.chaniacitywalk2.model.Scene;
 final class mDBHelper extends SQLiteOpenHelper {
 
     private static final int DB_VERSION = 1;
-    private static String DB_NAME = "scenesDBtest.db";
+    private static String DB_NAME = "MyDB.db";
 
 
     mDBHelper(Context context){
@@ -29,16 +29,17 @@ final class mDBHelper extends SQLiteOpenHelper {
 
 
     public void onCreate(SQLiteDatabase db) {
-        final String SQL_CREATE_EMAILS ="CREATE TABLE IF NOT EXISTS " + PlayerEntry.TABLE_NAME + " (" +
+        final String SQL_CREATE_PLAYERS ="CREATE TABLE IF NOT EXISTS " + PlayerEntry.TABLE_NAME + " (" +
                 PlayerEntry.COLUMN_EMAIL + " TEXT PRIMARY KEY," +
                 PlayerEntry.COLUMN_USERNAME + " TEXT,"+
                 PlayerEntry.COLUMN_PASSWORD + " TEXT,"+
                 PlayerEntry.COLUMN_FIRST_NAME + " TEXT,"+
                 PlayerEntry.COLUMN_LAST_NAME + " TEXT,"+
                 PlayerEntry.COLUMN_CREATED + " TEXT,"+
+                PlayerEntry.COLUMN_RECENT_ACTIVITY + " TIMESTAMP,"+
                 PlayerEntry.COLUMN_ACTIVE + " INTEGER "+
                 ")";
-        db.execSQL(SQL_CREATE_EMAILS);
+        db.execSQL(SQL_CREATE_PLAYERS);
 
         final String SQL_CREATE_SCENES ="CREATE TABLE IF NOT EXISTS " + SceneEntry.TABLE_NAME + " (" +
                 SceneEntry.SCENES_COLUMN_ID + " INTEGER PRIMARY KEY," +
@@ -120,7 +121,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         String trigger =
                 " CREATE TRIGGER IF NOT EXISTS " + table_name + "_"+action+" AFTER "+ action +" ON "+table_name +
                         " BEGIN " +
-                        " INSERT INTO "+ModificationsEntry.TABLE_NAME+" ( "+
+                        " INSERT OR REPLACE INTO "+ModificationsEntry.TABLE_NAME+" ( "+
                         ModificationsEntry.COLUMN_TABLE_NAME+","+
                         ModificationsEntry.COLUMN_ACTION + ")" +
                         " VALUES ( '"+table_name+"','"+action+"');" +
@@ -129,6 +130,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         Log.i("Schema","DB Schema: " + trigger);
         return trigger;
     }
+    /**************************************************************************************MODIFICATIONS****************************************************************************************/
 
     void printModsTable(){
         SQLiteDatabase db = this.getWritableDatabase();
@@ -188,35 +190,58 @@ final class mDBHelper extends SQLiteOpenHelper {
         return count == 0;
     }
 
+    /**************************************************************************************PLAYERS****************************************************************************************/
 
-    Cursor getEmails(){
+
+    Cursor getPlayers(){
         SQLiteDatabase db = this.getWritableDatabase();
-
         String selectQ = "SELECT * FROM "+ PlayerEntry.TABLE_NAME;
         return db.rawQuery(selectQ,null);
     }
 
-    Cursor getPlayer(){
+    Cursor getActivePlayer(){
         String selectQ = "SELECT * FROM " + PlayerEntry.TABLE_NAME + " WHERE " +
-                PlayerEntry.COLUMN_ACTIVE + " == 1 ";
+                PlayerEntry.COLUMN_ACTIVE + " = 1 ";
 
         SQLiteDatabase db = this.getWritableDatabase();
 
         return db.rawQuery(selectQ,null);
     }
+    void setActivePlayer(String uname){
+        SQLiteDatabase db = this.getWritableDatabase();
+        clearActivePlayer();
+        ContentValues values = new ContentValues();
+        values.put(PlayerEntry.COLUMN_ACTIVE,1);
+        String[] args = new String[]{uname};
+        db.update(PlayerEntry.TABLE_NAME,values, PlayerEntry.COLUMN_USERNAME +" = ? ", args);
+    }
 
-    void insertUser(Player player){
+    void clearActivePlayer(){
         SQLiteDatabase db = this.getWritableDatabase();
 
         String checkEntriesQ = "SELECT * FROM "+ PlayerEntry.TABLE_NAME;
         Cursor p = db.rawQuery(checkEntriesQ,null);
         if( p.getCount() > 0 ) {
-            String updateQ = "UPDATE " + PlayerEntry.TABLE_NAME + " SET " +
-                    PlayerEntry.COLUMN_ACTIVE + " = "+0;
-            db.rawQuery(updateQ,null);
+            Log.i("clear","UPDATED");
+            ContentValues cv = new ContentValues();
+            cv.put(PlayerEntry.COLUMN_ACTIVE, 0);
+            db.update(PlayerEntry.TABLE_NAME,cv,null,null);
         }
         p.close();
 
+    }
+
+    Cursor getPlayer(String username){
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query = "SELECT * FROM "+ PlayerEntry.TABLE_NAME + " WHERE "+ PlayerEntry.COLUMN_USERNAME + " = " +"'"+username+"'";
+        return db.rawQuery(query,null);
+    }
+
+    void insertPlayer(Player player){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        clearActivePlayer();
         ContentValues values = new ContentValues();
         values.put(PlayerEntry.COLUMN_EMAIL, player.getEmail());
         values.put(PlayerEntry.COLUMN_PASSWORD, player.getPassword());
@@ -224,10 +249,38 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(PlayerEntry.COLUMN_FIRST_NAME, player.getFirstname());
         values.put(PlayerEntry.COLUMN_LAST_NAME, player.getLastname());
         values.put(PlayerEntry.COLUMN_CREATED, player.getCreated().toString());
+        values.put(PlayerEntry.COLUMN_RECENT_ACTIVITY, player.getRecentActivity().toString());
         values.put(PlayerEntry.COLUMN_ACTIVE, 1);
 
         db.insertWithOnConflict(PlayerEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
     }
+    void updatePlayer(Player player){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        String updateQ = "UPDATE "+PlayerEntry.TABLE_NAME+" SET "+
+                PlayerEntry.COLUMN_EMAIL + " = '"+player.getEmail() +"',"+
+                PlayerEntry.COLUMN_PASSWORD + " = '"+player.getPassword() +"',"+
+                PlayerEntry.COLUMN_USERNAME + " = '"+player.getUsername() +"',"+
+                PlayerEntry.COLUMN_FIRST_NAME + " = '"+player.getFirstname() +"',"+
+                PlayerEntry.COLUMN_LAST_NAME + " = '"+player.getLastname() +"',"+
+                PlayerEntry.COLUMN_RECENT_ACTIVITY + " =  current_timestamp "+
+                " WHERE "+ PlayerEntry.COLUMN_ACTIVE + " = '1' ";
+        db.execSQL(updateQ);
+
+        /*ContentValues values = new ContentValues();
+        values.put(PlayerEntry.COLUMN_EMAIL, player.getEmail());
+        values.put(PlayerEntry.COLUMN_PASSWORD, player.getPassword());
+        values.put(PlayerEntry.COLUMN_USERNAME, player.getUsername());
+        values.put(PlayerEntry.COLUMN_FIRST_NAME, player.getFirstname());
+        values.put(PlayerEntry.COLUMN_LAST_NAME, player.getLastname());
+        values.put(PlayerEntry.COLUMN_ACTIVE, 1);
+
+        String[] args = new String[]{player.getUsername()};
+        db.update(PlayerEntry.TABLE_NAME,values, PlayerEntry.COLUMN_USERNAME +" = ? " ,args);*/
+    }
+
+    /**************************************************************************************SCENES****************************************************************************************/
+
 
     Cursor getScenes(){
         SQLiteDatabase db = this.getWritableDatabase();
@@ -273,6 +326,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         String deleteQ = "DELETE FROM "+SceneEntry.TABLE_NAME;
         db.rawQuery(deleteQ,null);
     }
+    /**************************************************************************************PERIODS****************************************************************************************/
 
     Cursor getPeriods(){
         SQLiteDatabase db = this.getWritableDatabase();
@@ -343,6 +397,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         static final String COLUMN_FIRST_NAME = "firstname";
         static final String COLUMN_LAST_NAME = "lastname";
         static final String COLUMN_CREATED = "created";
+        static final String COLUMN_RECENT_ACTIVITY = "recent_activity";
         static final String COLUMN_ACTIVE = "active";
     }
 

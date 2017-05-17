@@ -14,13 +14,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.ContentListener;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
@@ -83,14 +86,14 @@ public class DataManager {
     }
 
     /**********************************************************MODIFICATIONS******************************************************************/
-    public Date getLastUpdate(String table_name){
+    public Timestamp getLastUpdate(String table_name){
         Cursor c = mDBh.getModification(table_name);
         String update = "";
         if(c.moveToNext()){
             update = c.getString(c.getColumnIndexOrThrow(mDBHelper.ModificationsEntry.COLUMN_LAST_MODIFIED));
         }
-        Log.i(TAG,update);
-        return Date.valueOf(update);
+        Log.i(TAG,Timestamp.valueOf(update).toString());
+        return Timestamp.valueOf(update);
     }
 
     public void printModsTable(){
@@ -100,29 +103,23 @@ public class DataManager {
     /**********************************************************DB SYNCING********************************************************************/
     public void syncLocalToRemote(){
         //update places, visits
-        Log.i(TAG,"UPDATED LOCAL DATABASE");
+        Log.i("DB_SYNC","UPDATED LOCAL DATABASE");
     }
     public void syncRemoteToLocal(){
-        Log.i(TAG,"UPDATED REMOTE DATABASE");
+        Log.i("DB_SYNC","UPDATED REMOTE DATABASE");
     }
 
 
     /**********************************************************PLAYER METHODS*****************************************************************/
 
     //Login and autocomplete methods
-
-
-    public boolean isUsersEmpty(){
-        return mDBh.isPlayersEmpty();
-    }
-
     public String getAutoLoginCredentials() {
         String credentials;
         String email;
         String username;
         String password;
 
-        Cursor c = mDBh.getPlayer();
+        Cursor c = mDBh.getActivePlayer();
         if (c.moveToNext()) {
             email = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL));
             username = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_USERNAME));
@@ -132,10 +129,17 @@ public class DataManager {
         }
         return null;
     }
+    public void clearActivePlayer(){
+        mDBh.clearActivePlayer();
+    }
 
-    public List<String> getEmails() {
+    public void setActivePlayer(String username){
+        mDBh.setActivePlayer(username);
+    }
+
+    public List<String> getEmailsForAutoComplete() {
         List<String> emails = new ArrayList<>();
-        Cursor c = mDBh.getEmails();
+        Cursor c = mDBh.getPlayers();
         if (c.getCount() > 0) {
             while (c.moveToNext()) {
                 emails.add(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
@@ -149,16 +153,35 @@ public class DataManager {
         return emails;
     }
 
+    public Timestamp getPlayerLastActivity(String uname){
+        Cursor c = mDBh.getPlayer(uname);
+        Timestamp time = new Timestamp(0);
+        if(c.moveToNext()){
+            time = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY)));
+        }
+        return time;
+    }
+
 
     // Active Player Methods
 
-    public void insertUser(Player player) {
-        mDBh.insertUser(player);
+
+    public boolean isPlayersEmpty(){
+        return mDBh.isPlayersEmpty();
+    }
+
+    public void updatePlayer(Player player, Context context){
+        mDBh.updatePlayer(player);
+        putPlayer(player, context);
+    }
+
+    public void insertPlayer(Player player) {
+        mDBh.insertPlayer(player);
     }
 
     public Player getPlayer() {
         Player player = new Player();
-        Cursor c = mDBh.getPlayer();
+        Cursor c = mDBh.getActivePlayer();
 
         while(c.moveToNext()){
             player.setEmail(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
@@ -167,6 +190,7 @@ public class DataManager {
             player.setFirstname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_FIRST_NAME)));
             player.setLastname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_LAST_NAME)));
             player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+            player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
         }
         return player;
     }
@@ -342,27 +366,74 @@ public class DataManager {
         }
 
     }
+    /**********************************************************POST*************************************************************************/
+
+    private void putPlayer(Player player, Context context){
+        Log.i("POST","STARTING...");
+        ByteArrayEntity entity = null;
+        AsyncHttpClient client = new AsyncHttpClient();
+        JSONObject json = new JSONObject();
+        try{
+            json.put("username", player.getUsername());
+            json.put("email", player.getEmail());
+            json.put("password", player.getPassword());
+            json.put("firstname", player.getFirstname());
+            json.put("lastname", player.getLastname());
+        }catch(JSONException e){
+            Log.i(TAG,e.getMessage());
+        }
+        try{
+            entity = new ByteArrayEntity(json.toString().getBytes("UTF-8"));
+        }catch(UnsupportedEncodingException es){
+            Log.i(TAG,es.getMessage());
+        }
+        client.setBasicAuth(player.getUsername(), player.getPassword());
+        if(entity !=null)
+            client.put(context,Constants.URL_PUT_USER + player.getUsername(),entity,"application/json", new AsyncHttpResponseHandler() {
+                @Override
+                public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                    Log.i("PUT","SUCCESS"+i);
+                    String code = "";
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                @Override
+                public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                    Log.i("PUT","NOP"+i);
+                    String code = "";
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+            });
+
+    }
 
     /**********************************************************DOWNLOAD*************************************************************************/
 
     public void downloadPeriods(final ContentListener cl) {
         Log.i(TAG,"Downloading Periods");
+
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(Constants.URL_PERIODS, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
                 try {
                     JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    PopulateDBTask myTask = new PopulateDBTask(json,cl,mDBHelper.PeriodEntry.TABLE_NAME);
+                    PopulateDBTask myTask = new PopulateDBTask(json,mDBHelper.PeriodEntry.TABLE_NAME);
                     myTask.execute();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                cl.downloadComplete(true,i);
             }
 
             @Override
             public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-
+                cl.downloadComplete(false,i);
             }
         });
     }
@@ -375,16 +446,17 @@ public class DataManager {
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
                 try {
                     JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    PopulateDBTask myTask = new PopulateDBTask(json,cl, mDBHelper.SceneEntry.TABLE_NAME);
+                    PopulateDBTask myTask = new PopulateDBTask(json, mDBHelper.SceneEntry.TABLE_NAME);
                     myTask.execute();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                cl.downloadComplete(true,i);
             }
 
             @Override
             public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-
+                cl.downloadComplete(false,i);
             }
         });
     }
@@ -392,12 +464,10 @@ public class DataManager {
     private class PopulateDBTask extends AsyncTask<Void, Double, Boolean> {
 
         private final JSONArray jsonArray;
-        private final ContentListener cl;
         private final String tableName;
 
-        PopulateDBTask(JSONArray json,ContentListener cl, String tableName) {
+        PopulateDBTask(JSONArray json, String tableName) {
             this.jsonArray = json;
-            this.cl=cl;
             this.tableName = tableName;
         }
 
@@ -479,7 +549,6 @@ public class DataManager {
         protected void onPostExecute(final Boolean success) {
             if(success){
                 Log.i(TAG,"Download Complete :");
-                cl.downloadComplete();
             }
         }
 

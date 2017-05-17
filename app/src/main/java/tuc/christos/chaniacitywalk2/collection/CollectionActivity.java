@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -72,7 +73,10 @@ public class CollectionActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_collection_siblings);
+
         mImageSize = getResources().getDimensionPixelSize(R.dimen.image_size)*2;
+        //empty on click listener so that no accidental clicks occur
+
 
         final ImageView imgView = (ImageView)findViewById(R.id.logo);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -104,7 +108,6 @@ public class CollectionActivity extends AppCompatActivity {
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                return;
             }
 
             @Override
@@ -126,11 +129,12 @@ public class CollectionActivity extends AppCompatActivity {
         if(mDataManager.isPeriodsEmpty()) {
             mDataManager.downloadPeriods(new ContentListener() {
                 @Override
-                public void downloadComplete() {
-                    periods = sortPeriodsList(mDataManager.getPeriods());
-                    progressbar.setVisibility(View.GONE);
-                    mViewPager.setAdapter(mSectionsPagerAdapter);
-
+                public void downloadComplete(boolean success, int code) {
+                    if(success) {
+                        periods = sortPeriodsList(mDataManager.getPeriods());
+                        progressbar.setVisibility(View.GONE);
+                        mViewPager.setAdapter(mSectionsPagerAdapter);
+                    }
                 }
             });
         }else{
@@ -291,6 +295,12 @@ public class CollectionActivity extends AppCompatActivity {
 
                 }
             });
+            holder.ln.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                }
+            });
         }
 
         @Override
@@ -303,12 +313,14 @@ public class CollectionActivity extends AppCompatActivity {
             final TextView mView;
             final TextView mIdView;
             final CardView cardView;
+            final LinearLayout ln;
 
             ViewHolder(View view) {
                 super(view);
                 mIdView = (TextView) view.findViewById(R.id.id);
                 mView = (TextView)view.findViewById(R.id.content);
                 cardView = (CardView)view.findViewById(R.id.card_view);
+                 ln = (LinearLayout) view.findViewById(R.id.btn_holder);
             }
 
             @Override

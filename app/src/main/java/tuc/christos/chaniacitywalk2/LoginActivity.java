@@ -32,7 +32,7 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.sql.Date;
-import java.util.Calendar;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,15 +43,13 @@ import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
 
-import static tuc.christos.chaniacitywalk2.utils.Constants.PLAYERS_TABLE;
-
 
 public class LoginActivity extends AppCompatActivity {
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private DataManager mDataManager;
-    private Player mPlayer =new Player();
+    private Player mPlayer = new Player();
     // UI references.
 
     private AutoCompleteTextView mEmailView;
@@ -64,10 +62,12 @@ public class LoginActivity extends AppCompatActivity {
     private LinearLayout formsContainer;
     private LinearLayout btnPanel;
     private AppCompatCheckBox remember;
+    private int downloads = 0;
 
     private String mActiveView = "login";
 
     private TextView resultsView;
+    private TextView progressView;
 
     private AsyncHttpClient mClient;
 
@@ -90,6 +90,7 @@ public class LoginActivity extends AppCompatActivity {
         mProgressView = findViewById(R.id.login_progress);
 
         resultsView = (TextView) findViewById(R.id.results);
+        progressView = (TextView) findViewById(R.id.progress);
 
         mLoginFormView = findViewById(R.id.login_form);
         mRegisterFormView = findViewById(R.id.register_form);
@@ -117,14 +118,14 @@ public class LoginActivity extends AppCompatActivity {
         if (!isConnected)
             showNoConnectionDialog(this);
 
+        getAutoCompleteList();
         if (autoSignIn) {
             String credentials = mDataManager.getAutoLoginCredentials();
             if (credentials != null) {
                 String[] tokens = credentials.split(":");// 0 -> email, 1->password, 2-> username
+                Log.i("REMEMBER", "uname: " + tokens[2] + "pass: " + tokens[1]);
                 invokeWSLogin(tokens[0], tokens[1]);
             }
-        }else{
-            getAutoCompleteList();
         }
     }
 
@@ -135,11 +136,19 @@ public class LoginActivity extends AppCompatActivity {
             mClient.cancelAllRequests(true);
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        if (mClient != null) {
+            mClient.cancelAllRequests(true);
+        }
+    }
+
     public void getAutoCompleteList() {
-        List<String> emails = mDataManager.getEmails();
+        List<String> emails = mDataManager.getEmailsForAutoComplete();
         if (!emails.isEmpty()) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(LoginActivity.this,
-                android.R.layout.simple_dropdown_item_1line, emails);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(LoginActivity.this,
+                    android.R.layout.simple_dropdown_item_1line, emails);
             mEmailView.setAdapter(adapter);
         }
     }
@@ -313,14 +322,10 @@ public class LoginActivity extends AppCompatActivity {
         switch (responseCode) {
             case 200:
                 resultsView.setText(R.string.action_sign_in_successful);
-                Intent intent3 = new Intent(getApplicationContext(), MapsActivity.class);
-                startActivity(intent3);
                 cancel = false;
                 break;
             case 204:
                 resultsView.setText(R.string.action_register_successful);
-                Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
-                startActivity(intent);
                 cancel = false;
                 break;
             case 401:
@@ -356,22 +361,86 @@ public class LoginActivity extends AppCompatActivity {
         if (cancel) {
             showProgress(false);
             if (focusView != null) focusView.requestFocus();
+            mDataManager.clearActivePlayer();
+        } else {
+            String sc = "Downloading Scenes...";
+            String pd = "Downloading Periods...";
+            if (mDataManager.isScenesEmpty()) {
+                progressView.setText(sc);
+                mDataManager.downloadScenes(new ContentListener() {
+                    @Override
+                    public void downloadComplete(boolean success, int code) {
+                        if (success) {
+                            downloadsComplete("scenes");
+                        } else {
+                            showProgress(false);
+                            final String result = "Scenes download error: " + code;
+                            resultsView.setText(result);
+                        }
+                    }
+                });
+            }else downloads++;
 
-        }else if(responseCode == 204) {
-            mDataManager.insertUser(mPlayer);
-        }else {
-            if(mPlayer.getRecentActivity().after(mDataManager.getLastUpdate(PLAYERS_TABLE)))
-                mDataManager.syncLocalToRemote();
-            else
-                mDataManager.syncRemoteToLocal();
+            if (mDataManager.isPeriodsEmpty()) {
+                progressView.setText(pd);
+                mDataManager.downloadPeriods(new ContentListener() {
+                    @Override
+                    public void downloadComplete(boolean success, int code) {
+                        if (success) {
+                            downloadsComplete("periods");
+                        } else {
+                            showProgress(false);
+                            final String result = "Periods download error: " + code;
+                            resultsView.setText(result);
+                        }
+                    }
+                });
+            }else downloads++;
+
+            if (mDataManager.isPlayersEmpty()) {
+                Log.i("DB_SYNC", "Inserted new Player on: " + mPlayer.getRecentActivity().toString());
+                mDataManager.insertPlayer(mPlayer);
+            } else {
+                Log.i("DB_SYNC", "MYSQL last update: " + mPlayer.getRecentActivity().toString());
+                Log.i("DB_SYNC", "SQLite last update: " + mDataManager.getPlayerLastActivity(mPlayer.getUsername()));
+                if (mPlayer.getRecentActivity().after(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
+                    mDataManager.insertPlayer(mPlayer);
+                    mDataManager.syncLocalToRemote();
+                } else if (mPlayer.getRecentActivity().before(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
+                    mDataManager.setActivePlayer(mPlayer.getUsername());
+                    mDataManager.syncRemoteToLocal();
+                }
+
+            }
+            if(downloads == 2){
+                Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                startActivity(intent);
+            }
+
         }
+    }
+
+    private void downloadsComplete(String table){
+        switch (table){
+            case "scenes":
+                downloads++;
+                break;
+            case "periods":
+                downloads++;
+                break;
+        }
+        if(downloads == 2){
+            Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+            startActivity(intent);
+        }
+
     }
 
     private void invokeWSLogin(String cred, String password) {
         showProgress(true);
         AsyncHttpClient client = new AsyncHttpClient();
         mClient = client;
-        final String login_url = Constants.URL_LOGIN_USER +"?auth="+cred;
+        final String login_url = Constants.URL_LOGIN_USER + "?auth=" + cred;
         client.setBasicAuth(cred, password);
         client.setMaxRetriesAndTimeout(0, 200);
         client.get(login_url, null, new AsyncHttpResponseHandler() {
@@ -417,12 +486,14 @@ public class LoginActivity extends AppCompatActivity {
                     }
                     Log.i("Response Body: ", code);
                 }
+                String result = "404 NOT FOUND! Service unreachable. :(";
                 try {
                     JSONObject errorMessage = new JSONObject(code);
-                    final String result = errorMessage.getString("message");
+                    result = errorMessage.getString("message");
                     handleResponse(i, result);
                 } catch (JSONException ex) {
                     Log.i("JSON EXCEPTION: ", ex.getMessage());
+                    handleResponse(505, result);
                 }
             }
         });
@@ -479,12 +550,14 @@ public class LoginActivity extends AppCompatActivity {
                         }
                         Log.i("Response Body: ", code);
                     }
+                    String result = "404 NOT FOUND! Service unreachable. :(";
                     try {
                         JSONObject errorMessage = new JSONObject(code);
-                        final String result = errorMessage.getString("message");
+                        result = errorMessage.getString("message");
                         handleResponse(i, result);
                     } catch (JSONException ex) {
                         Log.i("JSON EXCEPTION: ", ex.getMessage());
+                        handleResponse(i, result);
                     }
                 }
             });
@@ -503,13 +576,14 @@ public class LoginActivity extends AppCompatActivity {
             mPlayer.setPassword(json.getString("password"));
             mPlayer.setFirstname(json.getString("firstname"));
             mPlayer.setLastname(json.getString("lastname"));
-            Log.i("json","Created: "+ json.getString("created"));
-            mPlayer.setCreated(Date.valueOf(json.getString("created")));
-            Log.i("json","parsed Created: "+ mPlayer.getCreated());
 
-            Log.i("json","Activity: "+ json.getString("recentActivity"));
-            mPlayer.setRecentActivity(Date.valueOf(json.getString("recentActivity")));
-            Log.i("json","parsed Activity: "+ mPlayer.getCreated());
+            Log.i("json", "Created: " + json.getString("created"));
+            mPlayer.setCreated(Date.valueOf(json.getString("created")));
+            Log.i("json", "parsed Created: " + mPlayer.getCreated());
+
+            Log.i("json", "Activity: " + json.getString("recentActivity"));
+            mPlayer.setRecentActivity(Timestamp.valueOf(json.getString("recentActivity")));
+            Log.i("json", "parsed Activity: " + mPlayer.getRecentActivity().toString());
 
             JSONArray links = json.getJSONArray("links");
             for (int i = 0; i < links.length(); i++) {
@@ -539,7 +613,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private boolean isEmailValid(String email) {
         final String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
-            + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+                + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
         Pattern pattern = Pattern.compile(EMAIL_PATTERN);
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();
@@ -549,7 +623,7 @@ public class LoginActivity extends AppCompatActivity {
         final String USERNAME_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*";
         Pattern pattern = Pattern.compile(USERNAME_PATTERN);
         Matcher matcher = pattern.matcher(password);
-        return password.length() > 4 && matcher.matches() ;
+        return password.length() > 4 && matcher.matches();
     }
 
     private void showProgress(final boolean show) {
