@@ -442,7 +442,7 @@ public class LoginActivity extends AppCompatActivity {
         mClient = client;
         final String login_url = Constants.URL_LOGIN_USER + "?auth=" + cred;
         client.setBasicAuth(cred, password);
-        client.setMaxRetriesAndTimeout(0, 200);
+        client.setMaxRetriesAndTimeout(4, 20000);
         client.get(login_url, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
@@ -506,7 +506,7 @@ public class LoginActivity extends AppCompatActivity {
             showProgress(true);
             AsyncHttpClient client = new AsyncHttpClient();
             mClient = client;
-            client.setMaxRetriesAndTimeout(1, 20);
+            client.setMaxRetriesAndTimeout(4, 20000);
             client.post(this, Constants.URL_REGISTER_USER, entity, "application/json", new AsyncHttpResponseHandler() {
                 @Override
                 public void onSuccess(int i, Header[] headers, byte[] bytes) {

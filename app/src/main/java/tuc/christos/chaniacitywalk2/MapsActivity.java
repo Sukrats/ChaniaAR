@@ -1,10 +1,8 @@
 package tuc.christos.chaniacitywalk2;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,12 +11,10 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.provider.ContactsContract;
 import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
@@ -30,7 +26,6 @@ import android.view.animation.Interpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -53,11 +48,10 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
+import tuc.christos.chaniacitywalk2.wikitude.ArchitectActivity;
 import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
-import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.data.DataManager;
-import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 
 
 public class MapsActivity extends AppCompatActivity implements
@@ -118,8 +112,10 @@ public class MapsActivity extends AppCompatActivity implements
                 mDataManager.printModsTable();
                 Player player = mDataManager.getPlayer();
                 player.setFirstname("Christos");
-                mDataManager.updatePlayer(player , getApplicationContext());*/
-                mDataManager.printPlaces();
+                mDataManager.updatePlayer(player , getApplicationContext());
+                mDataManager.printPlaces();*/
+                Intent intent = new Intent(getApplicationContext(), ArchitectActivity.class);
+                startActivity(intent);
             }
         });
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);

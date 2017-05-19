@@ -1,10 +1,11 @@
 apply plugin: 'com.android.application'
+//<!--applicationId "tuc.christos.chaniacitywalk2"-->
 
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
     defaultConfig {
-        applicationId "tuc.christos.chaniacitywalk2"
+        applicationId "tuc.chaniacitywalk"
         minSdkVersion 19
         targetSdkVersion 25
         versionCode 1
@@ -42,8 +43,9 @@ dependencies {
     compile 'com.android.support:preference-v7:25.3.1'
     testCompile 'junit:junit:4.12'
 }
+
 repositories {
-    flatDir{
+    flatDir {
         dirs 'libs'
     }
 }

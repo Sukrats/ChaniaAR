@@ -23,6 +23,7 @@
     <string name="title_profile">Profile</string>
     <string name="title_activity_collection_siblings">CollectionSiblings</string>
     <string name="section_format">Hello World from section: %1$s</string>
+    <string name="compass_accuracy_low">Please re-calibrate compass by waving your device in a figure 8 motion.</string>
 
 
     <!-- LOGIN -->

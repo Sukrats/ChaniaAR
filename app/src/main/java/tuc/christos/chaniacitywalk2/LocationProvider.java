@@ -62,6 +62,25 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
         String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
         setLocationMode(mode);
 
+    }/**
+     * public constructor
+     * @param context
+     * context of calling activity
+     */
+    public LocationProvider (Context context,LocationCallback locationCallback){
+        this.mGoogleApiClient = new GoogleApiClient.Builder(context)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+
+        mContext = context;
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
+        setLocationMode(mode);
+
+        this.mLocationCallback.add(locationCallback);
     }
     /**
      * PUBLIC METHODS TO START AND STOP THE LOCATION PROVIDER
