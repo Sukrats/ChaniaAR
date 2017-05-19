@@ -32,7 +32,7 @@ public class ProfileActivity extends AppCompatActivity {
         fName.setText(mPlayer.getFirstname());
         lName.setText(mPlayer.getLastname());
         created.setText(mPlayer.getCreated().toString());
-        final String activeTime = "Last Active on: "+mPlayer.getRecentActivity();
+        final String activeTime = "Last Active on: " + mPlayer.getRecentActivity();
         recentActivity.setText(activeTime);
     }
 }

@@ -73,10 +73,12 @@ public class DataManager {
         lineToSceneMap.put(line, scene);
         return true;
     }
+
     public boolean mapScenetoLine(Scene scene, Polyline line) {
         sceneToLineMap.put(scene, line);
         return true;
     }
+
     public Scene getSceneFromLine(Polyline line) {
         return lineToSceneMap.get(line);
     }
@@ -86,27 +88,27 @@ public class DataManager {
     }
 
     /**********************************************************MODIFICATIONS******************************************************************/
-    public Timestamp getLastUpdate(String table_name){
+    public Timestamp getLastUpdate(String table_name) {
         Cursor c = mDBh.getModification(table_name);
         String update = "";
-        if(c.moveToNext()){
+        if (c.moveToNext()) {
             update = c.getString(c.getColumnIndexOrThrow(mDBHelper.ModificationsEntry.COLUMN_LAST_MODIFIED));
         }
-        Log.i(TAG,Timestamp.valueOf(update).toString());
+        Log.i(TAG, Timestamp.valueOf(update).toString());
         return Timestamp.valueOf(update);
     }
 
-    public void printModsTable(){
+    public void printModsTable() {
         mDBh.printModsTable();
     }
 
     /**********************************************************DB SYNCING********************************************************************/
-    public void syncLocalToRemote(){
-        //update places, visits
-        Log.i("DB_SYNC","UPDATED LOCAL DATABASE");
+    public void syncLocalToRemote() {
+        Log.i("DB_SYNC", "UPDATED LOCAL DATABASE");
     }
-    public void syncRemoteToLocal(){
-        Log.i("DB_SYNC","UPDATED REMOTE DATABASE");
+
+    public void syncRemoteToLocal() {
+        Log.i("DB_SYNC", "UPDATED REMOTE DATABASE");
     }
 
 
@@ -129,11 +131,12 @@ public class DataManager {
         }
         return null;
     }
-    public void clearActivePlayer(){
+
+    public void clearActivePlayer() {
         mDBh.clearActivePlayer();
     }
 
-    public void setActivePlayer(String username){
+    public void setActivePlayer(String username) {
         mDBh.setActivePlayer(username);
     }
 
@@ -153,10 +156,10 @@ public class DataManager {
         return emails;
     }
 
-    public Timestamp getPlayerLastActivity(String uname){
+    public Timestamp getPlayerLastActivity(String uname) {
         Cursor c = mDBh.getPlayer(uname);
         Timestamp time = new Timestamp(0);
-        if(c.moveToNext()){
+        if (c.moveToNext()) {
             time = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY)));
         }
         return time;
@@ -166,11 +169,11 @@ public class DataManager {
     // Active Player Methods
 
 
-    public boolean isPlayersEmpty(){
+    public boolean isPlayersEmpty() {
         return mDBh.isPlayersEmpty();
     }
 
-    public void updatePlayer(Player player, Context context){
+    public void updatePlayer(Player player, Context context) {
         mDBh.updatePlayer(player);
         putPlayer(player, context);
     }
@@ -183,7 +186,7 @@ public class DataManager {
         Player player = new Player();
         Cursor c = mDBh.getActivePlayer();
 
-        while(c.moveToNext()){
+        while (c.moveToNext()) {
             player.setEmail(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
             player.setUsername(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_USERNAME)));
             player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_PASSWORD)));
@@ -195,9 +198,25 @@ public class DataManager {
         return player;
     }
 
+    public void printPlayers(){
+        Cursor c = mDBh.getPlayers();
+        Player player = new Player();
+        while(c.moveToNext()){
+            player.setEmail(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
+            player.setUsername(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_USERNAME)));
+            player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_PASSWORD)));
+            player.setFirstname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_FIRST_NAME)));
+            player.setLastname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_LAST_NAME)));
+            int active = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_ACTIVE));
+            player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+            player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
+            Log.i("Players",player.getEmail()+player.getUsername()+player.getRecentActivity()+" ACTIVE?: "+ String.valueOf(active));
+        }
+    }
+
     /**********************************************************PERIOD METHODS*****************************************************************/
 
-    public boolean isPeriodsEmpty(){
+    public boolean isPeriodsEmpty() {
         return mDBh.isPeriodsEmpty();
     }
 
@@ -205,8 +224,8 @@ public class DataManager {
         Cursor c = mDBh.getPeriods();
         List<Period> periodsGet = new ArrayList<>();
         int i = 0;
-        Log.i(TAG,"Fetching Periods from local db");
-        while(c.moveToNext()){
+        Log.i(TAG, "Fetching Periods from local db");
+        while (c.moveToNext()) {
             i++;
             String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_NAME));
             long id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ID));
@@ -225,14 +244,14 @@ public class DataManager {
 
             periodsGet.add(temp);
         }
-        Log.i(TAG,"Fetched: "+i+" Periods");
+        Log.i(TAG, "Fetched: " + i + " Periods");
         return periodsGet;
     }
 
-    public Period getPeriod(String name){
+    public Period getPeriod(String name) {
         Cursor c = mDBh.getPeriod(name);
         Period p = new Period();
-        if(c.moveToNext()){
+        if (c.moveToNext()) {
             p.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ID)));
             p.setName(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_NAME)));
             p.setDescription(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_DESCRIPTION)));
@@ -246,10 +265,10 @@ public class DataManager {
         return p;
     }
 
-    private List<Scene> getPeriodScenes(long periodid){
+    private List<Scene> getPeriodScenes(long periodid) {
         List<Scene> scenes = new ArrayList<>();
         Cursor c = mDBh.getPeriodScenes(periodid);
-        while(c.moveToNext()){
+        while (c.moveToNext()) {
             String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
             double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
             double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
@@ -272,35 +291,35 @@ public class DataManager {
 
     /**********************************************************SCENE METHODS*****************************************************************/
 
-    public boolean isScenesEmpty(){
+    public boolean isScenesEmpty() {
         return mDBh.isScenesEmpty();
     }
 
     public Scene getScene(String id) {
-            Cursor c = mDBh.getScene(Long.valueOf(id));
-            Scene s = new Scene();
-            if(c.moveToNext()){
-                s.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID)));
-                s.setName(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME)));
-                s.setDescription(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION)));
-                s.setLatitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE)));
-                s.setLongitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE)));
-                s.setPeriod_id(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID)));
-                s.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL)));
-                s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
-                s.setVisible(true);
-                s.setHasAR(false);
-                s.setVisited(false);
-            }
-            return s;
+        Cursor c = mDBh.getScene(Long.valueOf(id));
+        Scene s = new Scene();
+        if (c.moveToNext()) {
+            s.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID)));
+            s.setName(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME)));
+            s.setDescription(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION)));
+            s.setLatitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE)));
+            s.setLongitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE)));
+            s.setPeriod_id(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID)));
+            s.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL)));
+            s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
+            s.setVisible(true);
+            s.setHasAR(false);
+            s.setVisited(false);
         }
+        return s;
+    }
 
     public List<Scene> getScenes() {
         Cursor c = mDBh.getScenes();
         List<Scene> scenes = new ArrayList<>();
         int i = 0;
-        Log.i(TAG,"Fetching Scenes from local db");
-        while(c.moveToNext()){
+        Log.i(TAG, "Fetching Scenes from local db");
+        while (c.moveToNext()) {
             i++;
             String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
             double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
@@ -319,8 +338,64 @@ public class DataManager {
             temp.setUriThumb(thumbnail);
             scenes.add(temp);
         }
-        Log.i(TAG,"Fetched: "+i+" Scenes");
+        Log.i(TAG, "Fetched: " + i + " Scenes");
         return scenes;
+    }
+    /*****************************************************PLACES METHODS************************************************************************/
+
+    public void savePlace(long id){
+        Player p = getPlayer();
+        mDBh.insertPlace(id,p.getUsername());
+    }
+    public void clearPlace(long id){
+        Player p = getPlayer();
+        mDBh.deletePlace(id,p.getUsername());
+    }
+
+    public boolean hasSaved(long scene_id){
+        Player p = getPlayer();
+        Cursor c = mDBh.getPlace(scene_id,p.getUsername());
+        return c.moveToNext();
+    }
+    public void printPlaces(){
+        Player p = getPlayer();
+        Cursor c = mDBh.getPlaces(p.getUsername());
+        String username ;
+        int scene_id;
+        Timestamp created ;
+        Log.i("Place","Attempt Print: "+c.getCount());
+        while (c.moveToNext()){
+            username = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_USERNAME));
+            scene_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
+            created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_CREATED)));
+            Log.i("Place","Username: "+username+"\tScene: "+scene_id+"\tCreated: "+created.toString());
+        }
+    }
+
+    /*****************************************************VISITS METHODS************************************************************************/
+    public void addVisit(long id){
+        Player p = getPlayer();
+        mDBh.insertVisit(id,p.getUsername());
+    }
+
+    public boolean hasVisited(long scene_id){
+        Player p = getPlayer();
+        Cursor c = mDBh.getVisit(scene_id,p.getUsername());
+        return c.moveToNext();
+    }
+    public void printVisits(){
+        Player p = getPlayer();
+        Cursor c = mDBh.getVisits(p.getUsername());
+        String username ;
+        int scene_id;
+        Timestamp created ;
+        Log.i("Visit","Attempt Print: "+c.getCount());
+        while (c.moveToNext()){
+            username = c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_USERNAME));
+            scene_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
+            created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_CREATED)));
+            Log.i("Visit","Username: "+username+"\tScene: "+scene_id+"\tCreated: "+created.toString());
+        }
     }
 
     /*****************************************************POLYLINES************************************************************************/
@@ -366,42 +441,44 @@ public class DataManager {
         }
 
     }
+
     /**********************************************************POST*************************************************************************/
 
-    private void putPlayer(Player player, Context context){
-        Log.i("POST","STARTING...");
+    private void putPlayer(Player player, Context context) {
+        Log.i("POST", "STARTING...");
         ByteArrayEntity entity = null;
         AsyncHttpClient client = new AsyncHttpClient();
         JSONObject json = new JSONObject();
-        try{
+        try {
             json.put("username", player.getUsername());
             json.put("email", player.getEmail());
             json.put("password", player.getPassword());
             json.put("firstname", player.getFirstname());
             json.put("lastname", player.getLastname());
-        }catch(JSONException e){
-            Log.i(TAG,e.getMessage());
+        } catch (JSONException e) {
+            Log.i(TAG, e.getMessage());
         }
-        try{
+        try {
             entity = new ByteArrayEntity(json.toString().getBytes("UTF-8"));
-        }catch(UnsupportedEncodingException es){
-            Log.i(TAG,es.getMessage());
+        } catch (UnsupportedEncodingException es) {
+            Log.i(TAG, es.getMessage());
         }
         client.setBasicAuth(player.getUsername(), player.getPassword());
-        if(entity !=null)
-            client.put(context,Constants.URL_PUT_USER + player.getUsername(),entity,"application/json", new AsyncHttpResponseHandler() {
+        if (entity != null)
+            client.put(context, Constants.URL_PUT_USER + player.getUsername(), entity, "application/json", new AsyncHttpResponseHandler() {
                 @Override
                 public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                    Log.i("PUT","SUCCESS"+i);
+                    Log.i("PUT", "SUCCESS" + i);
                     String code = "";
                     for (byte b : bytes) {
                         code = code + ((char) b);
                     }
                     Log.i("Response Body: ", code);
                 }
+
                 @Override
                 public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                    Log.i("PUT","NOP"+i);
+                    Log.i("PUT", "NOP" + i);
                     String code = "";
                     for (byte b : bytes) {
                         code = code + ((char) b);
@@ -415,7 +492,7 @@ public class DataManager {
     /**********************************************************DOWNLOAD*************************************************************************/
 
     public void downloadPeriods(final ContentListener cl) {
-        Log.i(TAG,"Downloading Periods");
+        Log.i(TAG, "Downloading Periods");
 
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(Constants.URL_PERIODS, null, new AsyncHttpResponseHandler() {
@@ -423,23 +500,23 @@ public class DataManager {
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
                 try {
                     JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    PopulateDBTask myTask = new PopulateDBTask(json,mDBHelper.PeriodEntry.TABLE_NAME);
+                    PopulateDBTask myTask = new PopulateDBTask(json, mDBHelper.PeriodEntry.TABLE_NAME);
                     myTask.execute();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                cl.downloadComplete(true,i);
+                cl.downloadComplete(true, i);
             }
 
             @Override
             public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                cl.downloadComplete(false,i);
+                cl.downloadComplete(false, i);
             }
         });
     }
 
     public void downloadScenes(final ContentListener cl) {
-        Log.i(TAG,"Downloading Scenes");
+        Log.i(TAG, "Downloading Scenes");
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(Constants.URL_SCENES, null, new AsyncHttpResponseHandler() {
             @Override
@@ -451,12 +528,12 @@ public class DataManager {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                cl.downloadComplete(true,i);
+                cl.downloadComplete(true, i);
             }
 
             @Override
             public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                cl.downloadComplete(false,i);
+                cl.downloadComplete(false, i);
             }
         });
     }
@@ -476,7 +553,7 @@ public class DataManager {
             try {
                 switch (tableName) {
 
-                    case  mDBHelper.SceneEntry.TABLE_NAME:
+                    case mDBHelper.SceneEntry.TABLE_NAME:
 
                         for (int i = 0; i < jsonArray.length(); i++) {
                             Scene scene = new Scene();
@@ -490,9 +567,9 @@ public class DataManager {
                             scene.setLongitude(obj.getDouble("longitude"));
 
                             JSONArray links = obj.getJSONArray("links");
-                            for(int j = 0; j< links.length();j++){
+                            for (int j = 0; j < links.length(); j++) {
                                 JSONObject json = new JSONObject(links.get(j).toString());
-                                scene.addLink(json.getString("rel"),json.getString("url"));
+                                scene.addLink(json.getString("rel"), json.getString("url"));
                             }
                             scene.setUriImages(scene.getLinks().get("images"));
                             scene.setUriThumb(scene.getLinks().get("thumbnail"));
@@ -506,7 +583,7 @@ public class DataManager {
 
                     case mDBHelper.PeriodEntry.TABLE_NAME:
 
-                        for(int i= 0; i< jsonArray.length();i++){
+                        for (int i = 0; i < jsonArray.length(); i++) {
                             Period period = new Period();
                             publishProgress((double) (i + 1) / jsonArray.length() * 100);
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
@@ -518,9 +595,9 @@ public class DataManager {
                             period.setEnded(obj.getString("ended"));
 
                             JSONArray links = obj.getJSONArray("links");
-                            for(int j = 0; j< links.length();j++){
+                            for (int j = 0; j < links.length(); j++) {
                                 JSONObject json = new JSONObject(links.get(j).toString());
-                                period.addLink(json.getString("rel"),json.getString("url"));
+                                period.addLink(json.getString("rel"), json.getString("url"));
                             }
                             period.setUriImages(period.getLinks().get("images"));
                             period.setUriLogo(period.getLinks().get("logo"));
@@ -533,7 +610,7 @@ public class DataManager {
                         break;
                 }
             } catch (JSONException e) {
-                Log.i(TAG,e.getMessage());
+                Log.i(TAG, e.getMessage());
                 mDBh.clearScenes();
                 return false;
             }
@@ -541,14 +618,14 @@ public class DataManager {
         }
 
         @Override
-        protected  void onProgressUpdate(Double... progress){
-            Log.i(TAG,"Downloading :"+progress[0]);
+        protected void onProgressUpdate(Double... progress) {
+            Log.i(TAG, "Downloading :" + progress[0]);
         }
 
         @Override
         protected void onPostExecute(final Boolean success) {
-            if(success){
-                Log.i(TAG,"Download Complete :");
+            if (success) {
+                Log.i(TAG, "Download Complete :");
             }
         }
 

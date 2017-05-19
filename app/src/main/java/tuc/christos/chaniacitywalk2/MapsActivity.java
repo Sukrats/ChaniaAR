@@ -114,10 +114,12 @@ public class MapsActivity extends AppCompatActivity implements
         pushButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                /*
                 mDataManager.printModsTable();
                 Player player = mDataManager.getPlayer();
                 player.setFirstname("Christos");
-                mDataManager.updatePlayer(player , getApplicationContext());
+                mDataManager.updatePlayer(player , getApplicationContext());*/
+                mDataManager.printPlaces();
             }
         });
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);

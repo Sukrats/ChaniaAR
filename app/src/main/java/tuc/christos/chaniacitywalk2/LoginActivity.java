@@ -363,6 +363,7 @@ public class LoginActivity extends AppCompatActivity {
             if (focusView != null) focusView.requestFocus();
             mDataManager.clearActivePlayer();
         } else {
+            mDataManager.printPlayers();
             String sc = "Downloading Scenes...";
             String pd = "Downloading Periods...";
             if (mDataManager.isScenesEmpty()) {
@@ -410,7 +411,6 @@ public class LoginActivity extends AppCompatActivity {
                     mDataManager.setActivePlayer(mPlayer.getUsername());
                     mDataManager.syncRemoteToLocal();
                 }
-
             }
             if(downloads == 2){
                 Intent intent = new Intent(getApplicationContext(), MapsActivity.class);

@@ -10,15 +10,15 @@ public class Constants {
     private static final String URL_APP = "http://citywalk.duckdns.org:8080/citywalk/arapp/";
     private static final String URL_APP_OLD = "http://10.0.25.125:8080/citywalk/arapp/";
 
-    public static final String URL_SCENES = URL_APP +"scenes";
-    public static final String URL_SCENES_SYNC = URL_SCENES+"/sync";
+    public static final String URL_SCENES = URL_APP + "scenes";
+    public static final String URL_SCENES_SYNC = URL_SCENES + "/sync";
 
-    public static final String URL_PERIODS =  URL_APP +"periods";
-    public static final String URL_PERIODS_SYNC =  URL_PERIODS+"/sync";
+    public static final String URL_PERIODS = URL_APP + "periods";
+    public static final String URL_PERIODS_SYNC = URL_PERIODS + "/sync";
 
-    public static final String URL_PUT_USER =  URL_APP +"users/secure/";
-    public static final String URL_REGISTER_USER =  URL_APP +"users/";
-    public static final String URL_LOGIN_USER =  URL_APP +"users/secure/login";
+    public static final String URL_PUT_USER = URL_APP + "users/secure/";
+    public static final String URL_REGISTER_USER = URL_APP + "users/";
+    public static final String URL_LOGIN_USER = URL_APP + "users/secure/login";
 
     public static final String PLAYERS_TABLE = "Player";
     public static final String SCENES_TABLE = "Scenes";

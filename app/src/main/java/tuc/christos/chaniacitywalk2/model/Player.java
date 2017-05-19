@@ -25,23 +25,25 @@ public class Player {
     private Scene isAtScene;
     private boolean completedRoute;
 
-    private Map<String,String> links = new HashMap<>();
+    private Map<String, String> links = new HashMap<>();
 
     private SparseArray<Scene> visited = new SparseArray<>();
     private SparseArray<Scene> places = new SparseArray<>();
 
 
-    public Player(){}
+    public Player() {
+    }
+
     /**
      * Player Instance
-     * @return
-     * Always check for null return to know if it is instantiated
+     *
+     * @return Always check for null return to know if it is instantiated
      */
 
     public String getEmail() {
         return email;
     }
-    
+
     public void setEmail(String email) {
         this.email = email;
     }
@@ -144,7 +146,7 @@ public class Player {
         this.links = links;
     }
 
-    public void addLink(String rel, String url){
+    public void addLink(String rel, String url) {
         this.links.put(rel, url);
     }
 

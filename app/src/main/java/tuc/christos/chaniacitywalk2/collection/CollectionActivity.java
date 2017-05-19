@@ -30,6 +30,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -74,11 +75,11 @@ public class CollectionActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_collection_siblings);
 
-        mImageSize = getResources().getDimensionPixelSize(R.dimen.image_size)*2;
+        mImageSize = getResources().getDimensionPixelSize(R.dimen.image_size) * 2;
         //empty on click listener so that no accidental clicks occur
 
 
-        final ImageView imgView = (ImageView)findViewById(R.id.logo);
+        final ImageView imgView = (ImageView) findViewById(R.id.logo);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -88,7 +89,7 @@ public class CollectionActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-        tabLayout.setSelectedTabIndicatorColor(ContextCompat.getColor(this,R.color.colorPrimary));
+        tabLayout.setSelectedTabIndicatorColor(ContextCompat.getColor(this, R.color.colorPrimary));
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         final SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -126,39 +127,39 @@ public class CollectionActivity extends AppCompatActivity {
             }
         });
 
-        if(mDataManager.isPeriodsEmpty()) {
+        if (mDataManager.isPeriodsEmpty()) {
             mDataManager.downloadPeriods(new ContentListener() {
                 @Override
                 public void downloadComplete(boolean success, int code) {
-                    if(success) {
+                    if (success) {
                         periods = sortPeriodsList(mDataManager.getPeriods());
                         progressbar.setVisibility(View.GONE);
                         mViewPager.setAdapter(mSectionsPagerAdapter);
                     }
                 }
             });
-        }else{
+        } else {
             periods = sortPeriodsList(mDataManager.getPeriods());
             progressbar.setVisibility(View.GONE);
             mViewPager.setAdapter(mSectionsPagerAdapter);
         }
     }
 
-    public List<Period> sortPeriodsList(List<Period> list){
+    public List<Period> sortPeriodsList(List<Period> list) {
         Collections.sort(list, new Comparator<Period>() {
             @Override
             public int compare(Period lhs, Period rhs) {
                 String dateCur = lhs.getStarted();
-                if(dateCur == null)
+                if (dateCur == null)
                     return 1;
                 int cur = Integer.valueOf(dateCur);
 
                 String dateNext = rhs.getStarted();
-                if(dateNext == null)
+                if (dateNext == null)
                     return -1;
                 int next = Integer.valueOf(dateNext);
                 // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
-                return cur > next ? -1 : (cur < next ) ? 1 : 0;
+                return cur > next ? -1 : (cur < next) ? 1 : 0;
             }
         });
         return list;
@@ -177,7 +178,7 @@ public class CollectionActivity extends AppCompatActivity {
 
         if (id == R.id.action_settings) {
             return true;
-        }else if (id == android.R.id.home) {
+        } else if (id == android.R.id.home) {
             onBackPressed();
             return true;
         }
@@ -228,11 +229,12 @@ public class CollectionActivity extends AppCompatActivity {
 
         public PlaceholderFragment() {
         }
+
         /**
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static PlaceholderFragment newInstance(int section ) {
+        public static PlaceholderFragment newInstance(int section) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, section);
@@ -252,9 +254,8 @@ public class CollectionActivity extends AppCompatActivity {
 
             RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
             recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(period.getScenesAsList()));
-               return rootView;
+            return rootView;
         }
-
 
 
     }
@@ -279,19 +280,23 @@ public class CollectionActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             final Scene item = mValues.get(position);
+            DataManager dm = DataManager.getInstance();
             holder.mView.setText(item.getName());
-            holder.mIdView.setText(String.valueOf(position+1));
-
+            holder.mIdView.setText(String.valueOf(position + 1));
+            if(dm.hasSaved(item.getId()))
+                holder.save.setChecked(true);
+            else
+                holder.save.setChecked(false);
             //holder.mContentView.setText(mValues.get(position).getTAG());
 
             holder.cardView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                        Context context = v.getContext();
-                        Intent intent = new Intent(context, SceneDetailActivity.class);
-                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
+                    Context context = v.getContext();
+                    Intent intent = new Intent(context, SceneDetailActivity.class);
+                    intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
 
-                        context.startActivity(intent);
+                    context.startActivity(intent);
 
                 }
             });
@@ -299,6 +304,20 @@ public class CollectionActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
 
+                }
+            });
+            holder.save.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ToggleButton tg = (ToggleButton) v;
+                    DataManager dm = DataManager.getInstance();
+                    if(tg.isChecked()){
+                        Log.i("Place","Save place: "+ item.getId());
+                        dm.savePlace(item.getId());
+                    }else{
+                        Log.i("Place","Delete place: "+ item.getId());
+                        dm.clearPlace(item.getId());
+                    }
                 }
             });
         }
@@ -314,13 +333,15 @@ public class CollectionActivity extends AppCompatActivity {
             final TextView mIdView;
             final CardView cardView;
             final LinearLayout ln;
+            final ToggleButton save;
 
             ViewHolder(View view) {
                 super(view);
                 mIdView = (TextView) view.findViewById(R.id.id);
-                mView = (TextView)view.findViewById(R.id.content);
-                cardView = (CardView)view.findViewById(R.id.card_view);
-                 ln = (LinearLayout) view.findViewById(R.id.btn_holder);
+                mView = (TextView) view.findViewById(R.id.content);
+                cardView = (CardView) view.findViewById(R.id.card_view);
+                ln = (LinearLayout) view.findViewById(R.id.btn_holder);
+                save = (ToggleButton) view.findViewById(R.id.save_btn);
             }
 
             @Override
