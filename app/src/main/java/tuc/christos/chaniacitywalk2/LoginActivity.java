@@ -42,6 +42,7 @@ import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
+import tuc.christos.chaniacitywalk2.utils.JsonHelper;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -294,18 +295,9 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 // Show a progress spinner, and kick off a background task to
                 // perform the user login attempt.
-                try {
-                    JSONObject json = new JSONObject();
-                    json.put("username", username);
-                    json.put("email", email);
-                    json.put("password", password);
-                    json.put("firstname", fName);
-                    json.put("lastname", lName);
-                    Log.i("Object Sent:", json.toString());
-                    invokeWSRegister(json);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }//mAuthTask = new UserLoginTask(email, password);
+                JSONObject json = JsonHelper.playerToJson(new Player(email,username,password,fName,lName));
+                invokeWSRegister(json);
+                //mAuthTask = new UserLoginTask(email, password);
                 //mAuthTask.execute((Void) null);
             }
         } else
@@ -324,7 +316,7 @@ public class LoginActivity extends AppCompatActivity {
                 resultsView.setText(R.string.action_sign_in_successful);
                 cancel = false;
                 break;
-            case 204:
+            case 201 :
                 resultsView.setText(R.string.action_register_successful);
                 cancel = false;
                 break;
@@ -458,7 +450,8 @@ public class LoginActivity extends AppCompatActivity {
                 Log.i("Response Body: ", code);
 
                 try {
-                    parsePlayer(new JSONObject(code));
+                    //parsePlayer(new JSONObject(code));
+                    mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
                     handleResponse(i, "ok");
                 } catch (JSONException e) {
                     Log.i("JSON EXCEPTION: ", e.getMessage());
@@ -522,7 +515,8 @@ public class LoginActivity extends AppCompatActivity {
                     Log.i("Response Body: ", code);
 
                     try {
-                        parsePlayer(new JSONObject(code));
+                        //parsePlayer(new JSONObject(code));
+                        mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
                         handleResponse(i, "ok");
                     } catch (JSONException e) {
                         Log.i("JSON EXCEPTION: ", e.getMessage());
@@ -566,42 +560,6 @@ public class LoginActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-    }
-
-    private void parsePlayer(JSONObject json) {
-        Log.i("JSON PARSING COMMENCE: ", json.toString());
-        try {
-            mPlayer.setEmail(json.getString("email"));
-            mPlayer.setUsername(json.getString("username"));
-            mPlayer.setPassword(json.getString("password"));
-            mPlayer.setFirstname(json.getString("firstname"));
-            mPlayer.setLastname(json.getString("lastname"));
-
-            Log.i("json", "Created: " + json.getString("created"));
-            mPlayer.setCreated(Date.valueOf(json.getString("created")));
-            Log.i("json", "parsed Created: " + mPlayer.getCreated());
-
-            Log.i("json", "Activity: " + json.getString("recentActivity"));
-            mPlayer.setRecentActivity(Timestamp.valueOf(json.getString("recentActivity")));
-            Log.i("json", "parsed Activity: " + mPlayer.getRecentActivity().toString());
-
-            JSONArray links = json.getJSONArray("links");
-            for (int i = 0; i < links.length(); i++) {
-                JSONObject obj = new JSONObject(links.get(i).toString());
-                mPlayer.addLink(obj.getString("rel"), obj.getString("url"));
-            }
-        } catch (JSONException e) {
-            Log.i("JSON EXCEPTION", e.getMessage());
-        }
-        Log.i("JSONParsed", "User info:\n Email:" + mPlayer.getEmail() + "\n" +
-                "Username:" + mPlayer.getUsername() + "\n" +
-                "Password:" + mPlayer.getPassword() + "\n" +
-                "Firstname:" + mPlayer.getFirstname() + "\n" +
-                "Lastname:" + mPlayer.getLastname() + "\n" +
-                "Created:" + mPlayer.getCreated() + "\n");
-        for (String str : mPlayer.getLinks().keySet()) {
-            Log.i("Parsed Links", "key: " + str + "\tvalue: " + mPlayer.getLinks().get(str));
-        }
     }
 
     private boolean isUsernameValid(String username) {

@@ -82,7 +82,7 @@
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
         </activity>
         <activity
-            android:name=".wikitude.ArchitectActivity"
+            android:name=".wikitude.ArNavigationActivity"
             android:configChanges="screenSize|orientation"/>
 
     </application>

@@ -1,7 +1,6 @@
 package tuc.christos.chaniacitywalk2.wikitude;
 
 import android.app.Activity;
-import android.graphics.Camera;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -15,23 +14,29 @@ import com.wikitude.architect.StartupConfiguration;
 //import com.wikitude.common.camera.CameraSettings;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.List;
 
 import tuc.christos.chaniacitywalk2.LocationCallback;
 import tuc.christos.chaniacitywalk2.LocationProvider;
 import tuc.christos.chaniacitywalk2.R;
+import tuc.christos.chaniacitywalk2.data.DataManager;
+import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.utils.Constants;
+import tuc.christos.chaniacitywalk2.utils.JsonHelper;
 
 /**
  * Created by Christos on 19-May-17.
  * Augmented Reality Native Activity
  */
 
-public class ArchitectActivity extends Activity {
+public class ArNavigationActivity extends Activity {
 
     protected final String TAG = "Architect Activity";
 
+    protected DataManager mDataManager = DataManager.getInstance();
 
     /**
      * holds the Wikitude SDK AR-View, this is where camera, markers, compass, 3D models etc. are rendered
@@ -86,7 +91,7 @@ public class ArchitectActivity extends Activity {
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
         config.setCameraResolution(CameraSettings.CameraResolution.AUTO);
         config.setCameraPosition(CameraSettings.CameraPosition.DEFAULT);*/
-        final StartupConfiguration config = new StartupConfiguration( Constants.WIKITUDE_SDK_KEY, 1, StartupConfiguration.CameraPosition.FRONT);
+        final StartupConfiguration config = new StartupConfiguration(Constants.WIKITUDE_SDK_KEY, 1, StartupConfiguration.CameraPosition.FRONT);
 
         //architectView.setCameraLifecycleListener(null);
         try {
@@ -107,7 +112,7 @@ public class ArchitectActivity extends Activity {
         };
         // register valid urlListener in architectView, ensure this is set before content is loaded to not miss any event
         if (architectView != null) {
-            architectView.registerUrlListener( urlListener );
+            architectView.registerUrlListener(urlListener);
         }
 
         worldLoadedListener = getWorldLoadedListener();
@@ -119,26 +124,26 @@ public class ArchitectActivity extends Activity {
         LocationListener = new LocationCallback() {
             @Override
             public void handleNewLocation(Location location) {
-                lastKnownLocaton = location;
+                ArNavigationActivity.this.lastKnownLocaton = location;
                 //update JS Location
-                architectView.setLocation( location.getLatitude(), location.getLongitude(), location.getAccuracy());
+                ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
             }
         };
         locationProvider = new LocationProvider(this, LocationListener);
-
-
     }
 
     @Override
     protected void onPostCreate(final Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        if(architectView != null){
+        if (architectView != null) {
             // call mandatory live-cycle method of architectView
             this.architectView.onPostCreate();
             try {
                 // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
                 // have a look at wikitude.com's developer section for API references
-                architectView.load( "" );
+                architectView.load("GeoLocationPointsOfInterest/index.html");
+                injectData(mDataManager.getScenes());
+
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
@@ -149,7 +154,10 @@ public class ArchitectActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-
+        if (locationProvider != null) {
+            locationProvider.connect(this);
+            locationProvider.setLocationCallbackListener(LocationListener);
+        }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {
             architectView.onResume();
@@ -165,7 +173,10 @@ public class ArchitectActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-
+        if (locationProvider != null) {
+            locationProvider.disconnect();
+            locationProvider.removeLocationCallbackListener(LocationListener);
+        }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {
             architectView.onPause();
@@ -196,6 +207,50 @@ public class ArchitectActivity extends Activity {
         }
     }
 
+    private void injectData(List<Scene> scenes) {
+        String[] args;
+        JSONArray array = new JSONArray();
+        if (!isLoading) {
+            isLoading = true;
+            final int WAIT_FOR_LOCATION_STEP_MS = 2000;
+
+            while (lastKnownLocaton==null && !isFinishing()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(ArNavigationActivity.this, R.string.location_fetching, Toast.LENGTH_SHORT).show();
+                    }
+                });
+                try {
+                    Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+            for (Scene scene : scenes) {
+                array.put(JsonHelper.sceneToJson(scene));
+            }
+            args = new String[]{array.toString()};
+            callJavaScript("World.loadPoisFromJsonData", args);
+            isLoading = false;
+        }
+    }
+
+
+    private void callJavaScript(final String methodName, final String[] arguments) {
+        final StringBuilder argumentsString = new StringBuilder("");
+        for (int i = 0; i < arguments.length; i++) {
+            argumentsString.append(arguments[i]);
+            if (i < arguments.length - 1) {
+                argumentsString.append(", ");
+            }
+        }
+        if (this.architectView != null) {
+            final String js = (methodName + "( " + argumentsString.toString() + " );");
+            this.architectView.callJavascript(js);
+        }
+    }
+
     public ArchitectView.ArchitectWorldLoadedListener getWorldLoadedListener() {
         return new ArchitectView.ArchitectWorldLoadedListener() {
             @Override
@@ -214,10 +269,10 @@ public class ArchitectActivity extends Activity {
         return new ArchitectView.SensorAccuracyChangeListener() {
             @Override
             public void onCompassAccuracyChanged(int accuracy) {
-				/* UNRELIABLE = 0, LOW = 1, MEDIUM = 2, HIGH = 3 */
-                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM && !ArchitectActivity.this.isFinishing() && System.currentTimeMillis() - ArchitectActivity.this.lastCalibrationToastShownTimeMillis > 5 * 1000) {
-                    Toast.makeText(ArchitectActivity.this, R.string.compass_accuracy_low, Toast.LENGTH_LONG).show();
-                    ArchitectActivity.this.lastCalibrationToastShownTimeMillis = System.currentTimeMillis();
+                /* UNRELIABLE = 0, LOW = 1, MEDIUM = 2, HIGH = 3 */
+                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM && !ArNavigationActivity.this.isFinishing() && System.currentTimeMillis() - ArNavigationActivity.this.lastCalibrationToastShownTimeMillis > 5 * 1000) {
+                    Toast.makeText(ArNavigationActivity.this, R.string.compass_accuracy_low, Toast.LENGTH_LONG).show();
+                    ArNavigationActivity.this.lastCalibrationToastShownTimeMillis = System.currentTimeMillis();
                 }
             }
         };

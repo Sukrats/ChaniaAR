@@ -25,6 +25,8 @@
     <string name="section_format">Hello World from section: %1$s</string>
     <string name="compass_accuracy_low">Please re-calibrate compass by waving your device in a figure 8 motion.</string>
 
+    <!-- WIKITUDE -->
+    <string name ="location_fetching">Trying to find out where you are...</string>
 
     <!-- LOGIN -->
     <string name="remember_me">Remember me </string>

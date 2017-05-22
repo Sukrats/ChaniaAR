@@ -29,6 +29,7 @@ import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.utils.Constants;
+import tuc.christos.chaniacitywalk2.utils.JsonHelper;
 
 /**
  * Created by Christos on 24/1/2017.
@@ -556,23 +557,9 @@ public class DataManager {
                     case mDBHelper.SceneEntry.TABLE_NAME:
 
                         for (int i = 0; i < jsonArray.length(); i++) {
-                            Scene scene = new Scene();
                             publishProgress((double) (i + 1) / jsonArray.length() * 100);
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
-                            scene.setId(obj.getLong("id"));
-                            scene.setPeriod_id(obj.getLong("periodId"));
-                            scene.setName(obj.getString("name"));
-                            scene.setDescription(obj.getString("description"));
-                            scene.setLatitude(obj.getDouble("latitude"));
-                            scene.setLongitude(obj.getDouble("longitude"));
-
-                            JSONArray links = obj.getJSONArray("links");
-                            for (int j = 0; j < links.length(); j++) {
-                                JSONObject json = new JSONObject(links.get(j).toString());
-                                scene.addLink(json.getString("rel"), json.getString("url"));
-                            }
-                            scene.setUriImages(scene.getLinks().get("images"));
-                            scene.setUriThumb(scene.getLinks().get("thumbnail"));
+                            Scene scene = JsonHelper.parseSceneFromJson(obj);
                             if (!mDBh.insertScene(scene)) {
                                 Log.i(TAG, "DELETED SCENES");
                                 mDBh.clearScenes();
@@ -584,23 +571,10 @@ public class DataManager {
                     case mDBHelper.PeriodEntry.TABLE_NAME:
 
                         for (int i = 0; i < jsonArray.length(); i++) {
-                            Period period = new Period();
                             publishProgress((double) (i + 1) / jsonArray.length() * 100);
+
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
-
-                            period.setId(obj.getLong("id"));
-                            period.setName(obj.getString("name"));
-                            period.setDescription(obj.getString("description"));
-                            period.setStarted(obj.getString("started"));
-                            period.setEnded(obj.getString("ended"));
-
-                            JSONArray links = obj.getJSONArray("links");
-                            for (int j = 0; j < links.length(); j++) {
-                                JSONObject json = new JSONObject(links.get(j).toString());
-                                period.addLink(json.getString("rel"), json.getString("url"));
-                            }
-                            period.setUriImages(period.getLinks().get("images"));
-                            period.setUriLogo(period.getLinks().get("logo"));
+                            Period period = JsonHelper.parsePeriodFromJson(obj);
                             if (!mDBh.insertPeriod(period)) {
                                 Log.i(TAG, "DELETED PERIODS");
                                 mDBh.clearPeriods();

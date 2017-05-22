@@ -48,7 +48,7 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
-import tuc.christos.chaniacitywalk2.wikitude.ArchitectActivity;
+import tuc.christos.chaniacitywalk2.wikitude.ArNavigationActivity;
 import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.data.DataManager;
@@ -114,7 +114,7 @@ public class MapsActivity extends AppCompatActivity implements
                 player.setFirstname("Christos");
                 mDataManager.updatePlayer(player , getApplicationContext());
                 mDataManager.printPlaces();*/
-                Intent intent = new Intent(getApplicationContext(), ArchitectActivity.class);
+                Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
                 startActivity(intent);
             }
         });

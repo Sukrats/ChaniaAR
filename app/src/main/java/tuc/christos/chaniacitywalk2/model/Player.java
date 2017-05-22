@@ -34,6 +34,13 @@ public class Player {
     public Player() {
     }
 
+    public Player(String email, String username, String password, String firstname, String lastname){
+        this.email = email;
+        this.password = password;
+        this.username = username;
+        this.firstname = firstname;
+        this.lastname = lastname;
+    }
     /**
      * Player Instance
      *
