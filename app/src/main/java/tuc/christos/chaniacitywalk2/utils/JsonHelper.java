@@ -115,12 +115,25 @@ public class JsonHelper {
         }catch(JSONException e){
             Log.i("JSON EXCEPTION", e.getMessage());
         }
-        Log.i("Player Sent:", json.toString());
+        Log.i("Player Parsed:", json.toString());
         return json;
     }
 
     public static JSONObject sceneToJson(Scene scene){
         JSONObject json = new JSONObject();
+        try {
+            json.put("id", scene.getId());
+            json.put("name", scene.getName());
+            json.put("description", scene.getDescription());
+            json.put("latitude", scene.getLatitude());
+            json.put("longitude", scene.getLongitude());
+            json.put("period_id", scene.getPeriod_id());
+            json.put("thumb_uri", scene.getUriThumb());
+            json.put("images_uri", scene.getUriImages());
+        }catch(JSONException e){
+            Log.i("JSON EXCEPTION", e.getMessage());
+        }
+        Log.i("Scene parsed:", json.toString());
         return json;
     }
 

@@ -34,7 +34,7 @@ import tuc.christos.chaniacitywalk2.utils.JsonHelper;
 
 public class ArNavigationActivity extends Activity {
 
-    protected final String TAG = "Architect Activity";
+    protected final String TAG = "ARNav";
 
     protected DataManager mDataManager = DataManager.getInstance();
 
@@ -75,7 +75,7 @@ public class ArNavigationActivity extends Activity {
 
     private long lastCalibrationToastShownTimeMillis = System.currentTimeMillis();
 
-    protected JSONArray poiData;
+    protected String[] args;
 
     protected boolean isLoading = false;
 
@@ -141,7 +141,7 @@ public class ArNavigationActivity extends Activity {
             try {
                 // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
                 // have a look at wikitude.com's developer section for API references
-                architectView.load("GeoLocationPointsOfInterest/index.html");
+                architectView.load("PoiAtLocation/index.html");
                 injectData(mDataManager.getScenes());
 
             } catch (IOException e1) {
@@ -207,38 +207,52 @@ public class ArNavigationActivity extends Activity {
         }
     }
 
-    private void injectData(List<Scene> scenes) {
-        String[] args;
-        JSONArray array = new JSONArray();
+    private void injectData(final List<Scene> scenes) {
         if (!isLoading) {
-            isLoading = true;
-            final int WAIT_FOR_LOCATION_STEP_MS = 2000;
+            final Thread t = new Thread(new Runnable() {
 
-            while (lastKnownLocaton==null && !isFinishing()) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(ArNavigationActivity.this, R.string.location_fetching, Toast.LENGTH_SHORT).show();
+                @Override
+                public void run() {
+                    isLoading = true;
+                    final int WAIT_FOR_LOCATION_STEP_MS = 2000;
+
+                    while (lastKnownLocaton == null) {
+                        runOnUiThread(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                Toast.makeText(ArNavigationActivity.this, R.string.location_fetching, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        try {
+                            Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
                     }
-                });
-                try {
-                    Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
-                } catch (InterruptedException e) {
-                    break;
+                    if (lastKnownLocaton != null) {
+                        args = new String[]{scenesToJson(scenes).toString()};
+                        callJavaScript("World.loadPoisFromJsonData", args);
+                    }
+                    isLoading = false;
                 }
-            }
-            for (Scene scene : scenes) {
-                array.put(JsonHelper.sceneToJson(scene));
-            }
-            args = new String[]{array.toString()};
-            callJavaScript("World.loadPoisFromJsonData", args);
-            isLoading = false;
+            });
+            t.start();
         }
+    }
+
+    private JSONArray scenesToJson(List<Scene> scenes) {
+        JSONArray array = new JSONArray();
+        for (Scene scene : scenes) {
+            array.put(JsonHelper.sceneToJson(scene));
+        }
+        return array;
     }
 
 
     private void callJavaScript(final String methodName, final String[] arguments) {
         final StringBuilder argumentsString = new StringBuilder("");
+        Log.i(TAG, "Arguments Length: " + arguments.length);
         for (int i = 0; i < arguments.length; i++) {
             argumentsString.append(arguments[i]);
             if (i < arguments.length - 1) {

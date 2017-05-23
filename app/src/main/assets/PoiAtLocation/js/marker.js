@@ -34,7 +34,7 @@ function Marker(poiData) {
         onClick: null
     });
 
-    // create an AR.Label for the marker's title 
+    // create an AR.Label for the marker's title
     this.titleLabel = new AR.Label(poiData.title.trunc(10), 1, {
         zOrder: 1,
         offsetY: 0.55,
@@ -52,22 +52,12 @@ function Marker(poiData) {
             textColor: '#FFFFFF'
         }
     });
-
-    /*
-        Create an AR.ImageDrawable using the AR.ImageResource for the direction indicator which was created in the World. Set options regarding the offset and anchor of the image so that it will be displayed correctly on the edge of the screen.
-    */
-    this.directionIndicatorDrawable = new AR.ImageDrawable(World.markerDrawable_directionIndicator, 0.1, {
-        enabled: false,
-        verticalAnchor: AR.CONST.VERTICAL_ANCHOR.TOP
-    });
-
     /*
         Create the AR.GeoObject with the drawable objects and define the AR.ImageDrawable as an indicator target on the marker AR.GeoObject. The direction indicator is displayed automatically when necessary. AR.Drawable subclasses (e.g. AR.Circle) can be used as direction indicators.
     */
     this.markerObject = new AR.GeoObject(markerLocation, {
         drawables: {
-            cam: [this.markerDrawable_idle, this.markerDrawable_selected, this.titleLabel, this.descriptionLabel],
-            indicator: this.directionIndicatorDrawable
+            cam: [this.markerDrawable_idle, this.markerDrawable_selected, this.titleLabel, this.descriptionLabel]
         }
     });
 
@@ -77,7 +67,7 @@ function Marker(poiData) {
 Marker.prototype.getOnClickTrigger = function(marker) {
 
     /*
-        The setSelected and setDeselected functions are prototype Marker functions. 
+        The setSelected and setDeselected functions are prototype Marker functions.
         Both functions perform the same steps but inverted.
     */
 
@@ -85,7 +75,9 @@ Marker.prototype.getOnClickTrigger = function(marker) {
 
         if (!Marker.prototype.isAnyAnimationRunning(marker)) {
             if (marker.isSelected) {
+
                 Marker.prototype.setDeselected(marker);
+
             } else {
                 Marker.prototype.setSelected(marker);
                 try {
@@ -112,7 +104,7 @@ Marker.prototype.setSelected = function(marker) {
 
     marker.isSelected = true;
 
-    // New: 
+    // New:
     if (marker.animationGroup_selected === null) {
 
         // create AR.PropertyAnimation that animates the opacity to 0.0 in order to hide the idle-state-drawable
@@ -148,8 +140,6 @@ Marker.prototype.setSelected = function(marker) {
     // sets the click trigger function for the selected state marker
     marker.markerDrawable_selected.onClick = Marker.prototype.getOnClickTrigger(marker);
 
-    // enables the direction indicator drawable for the current marker
-    marker.directionIndicatorDrawable.enabled = true;
     // starts the selected-state animation
     marker.animationGroup_selected.start();
 };
@@ -192,8 +182,6 @@ Marker.prototype.setDeselected = function(marker) {
     // removes function that is set on the onClick trigger of the selected-state marker
     marker.markerDrawable_selected.onClick = null;
 
-    // disables the direction indicator drawable for the current marker
-    marker.directionIndicatorDrawable.enabled = false;
     // starts the idle-state animation
     marker.animationGroup_idle.start();
 };
