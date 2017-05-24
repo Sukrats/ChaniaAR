@@ -57,16 +57,34 @@
         <!-- header with "close" button -->
         <div data-role="header" data-theme="a">
             <h1>Details</h1>
-            <a href="#header" data-rel="close">Close</a>
+            <a id="closeBtn" href="#header" data-rel="close">Close</a>
         </div>
         <!-- content of POI detail page, you may also add thumbnails etc. here if you like -->
         <div data-role="content" style="background-color:#F0F0F0;">
-            <!-- title -->
-            <h3 id="poi-detail-title"></h3>
+            <!-- title button -->
+            <div class="ui-grid-a" style="align-self:stretch">
+                <div class="ui-block-a" style="width:70%;">
+                    <h3 id="poi-detail-title"></h3>
+                </div>
+                <div class="ui-block-b" style="width:30%;">
+                    <a id="open-details-activity" href="#"
+                    data-icon="bars" data-role="button" class="ui-icon-alt" data-inline="true" data-theme="d"
+                    data-mini="true" >Details</a>
+                </div>
+            </div>
             <!-- description -->
             <h4 id="poi-detail-description"></h4>
-            <!-- distance -->
-            <h4>Distance: <a id="poi-detail-distance"></a></h4>
+            <!-- distance and map button -->
+            <div class="ui-grid-a" style="align-self:stretch">
+                <div class="ui-block-a" style="width:70%;">
+                    <h4>Distance: <a id="poi-detail-distance"></a></h4>
+                </div>
+                <div class="ui-block-b" style="width:30%;">
+                    <a id="open-map"
+                       data-icon="back" data-role="button" class="ui-icon-alt" data-inline="true" data-theme="d"
+                       data-mini="true" >See On Map</a>
+                </div>
+            </div>
         </div>
     </div>
 

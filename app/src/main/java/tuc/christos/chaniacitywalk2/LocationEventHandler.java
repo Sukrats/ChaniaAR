@@ -32,16 +32,14 @@ public class LocationEventHandler implements LocationCallback {
 
     /**
      * public EventHandler Constructor
-     * @param context
      * Creator activity context for Toasts
      * Can be removed
      */
-
-    public LocationEventHandler(Context context){
-        this.mContext = context;
+    public LocationEventHandler(LocationEventsListener listener){
+        setLocationEventListener(listener);
         mDataManager = DataManager.getInstance();
-
     }
+
 
     /**
      * Register Listeners to the EventHandler
@@ -50,6 +48,7 @@ public class LocationEventHandler implements LocationCallback {
      */
 
     public void setLocationEventListener(LocationEventsListener listener){
+
         this.iLocationEventListener.add(listener);
         Log.i("Event Handler","Listeners Registered: " + this.iLocationEventListener );
 

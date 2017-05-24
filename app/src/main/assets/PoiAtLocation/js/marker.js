@@ -77,7 +77,11 @@ Marker.prototype.getOnClickTrigger = function(marker) {
             if (marker.isSelected) {
 
                 Marker.prototype.setDeselected(marker);
-
+                try {
+                    World.onMarkerDeSelected(marker);
+                } catch (err) {
+                    alert(err);
+                }
             } else {
                 Marker.prototype.setSelected(marker);
                 try {

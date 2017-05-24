@@ -9,6 +9,8 @@ var World = {
 
 	// The last selected marker
 	currentMarker: null,
+    // Last Area Triggered
+	currentArea: 0,
 
     //POI-Marker List
 	markerList: [],
@@ -46,6 +48,7 @@ var World = {
         	World.markerList.push(new Marker(singlePoi));
         }
 		World.updateStatusMessage(currentPlaceNr + ' places loaded');
+		World.initiallyLoadedData = true;
 	},
 
 	// updates status message shown in small "i"-button aligned bottom center
@@ -69,14 +72,13 @@ var World = {
 			to create a marker using the World.loadPoisFromJsonData function.
 		*/
 	},
-
+    onMarkerDeSelected: function onMarkerDeSelectedFn(marker){
+        $("#panel-poidetail").slideToggle();
+        panelOpen = false;
+        World.currentMarker = null;
+    },
 	// fired when user pressed maker in cam
     onMarkerSelected: function onMarkerSelectedFn(marker) {
-        if(World.currentMarker != null){
-            World.currentMarker.setDeselected(World.currentMarker);
-        }
-        World.currentMarker = marker;
-
 		/*
 			In this sample a POI detail panel appears when pressing a cam-marker (the blue box with title & description),
 			compare index.html in the sample's directory.
@@ -85,50 +87,86 @@ var World = {
 		$("#poi-detail-title").html(marker.poiData.title);
 		$("#poi-detail-description").html(marker.poiData.description);
 
-
 		// It's ok for AR.Location subclass objects to return a distance of `undefined`. In case such a distance was calculated when all distances were queried in `updateDistanceToUserValues`, we recalculate this specific distance before we update the UI.
 		if( undefined == marker.distanceToUser ) {
 			marker.distanceToUser = marker.markerObject.locations[0].distanceToUser();
 		}
-
 		// distance and altitude are measured in meters by the SDK. You may convert them to miles / feet if required.
 		var distanceToUserValue = (marker.distanceToUser > 999) ? ((marker.distanceToUser / 1000).toFixed(2) + " km") : (Math.round(marker.distanceToUser) + " m");
 
 		$("#poi-detail-distance").html(distanceToUserValue);
 
-		// show panel
-		//$("#panel-poidetail").panel("open");
-		$("#panel-poidetail").slideToggle();
-        World.panelOpen = true;
 		$(".ui-panel-dismiss").unbind("mousedown");
-
 		// deselect AR-marker when user exits detail screen div.
 		$("#panel-poidetail").on("panelbeforeclose", function(event, ui) {
 			World.currentMarker.setDeselected(World.currentMarker);
-            World.panelOpen = false;
 		});
-    	/*// deselect previous marker
-    	if (World.currentMarker) {
-    		if (World.currentMarker.poiData.id == marker.poiData.id) {
-    			return;
-    		}
-    		World.currentMarker.setDeselected(World.currentMarker);
-    	}
+		$("#closeBtn").click(function(){
+			World.currentMarker.setDeselected(World.currentMarker);
+            $("#panel-poidetail").slideToggle();
+            panelOpen = false;
+            World.currentMarker = null;
+		});
+		$("#open-details-activity").click(function(){
+            var architectSdkUrl = "architectsdk://details?id=" + encodeURIComponent(marker.poiData.id);
+            /*
+                The urlListener of the native project intercepts this call and parses the arguments.
+                This is the only way to pass information from JavaSCript to your native code.
+                Ensure to properly encode and decode arguments.
+                Note: you must use 'document.location = "architectsdk://...' to pass information from JavaScript to native.
+                ! This will cause an HTTP error if you didn't register a urlListener in native architectView !
+            */
+            document.location = architectSdkUrl;
+		});
 
-    	// highlight current one
+		$("#open-map").click(function(){
+            var architectSdkUrl = "architectsdk://map?id=" + encodeURIComponent(marker.poiData.id);
+            /*
+                The urlListener of the native project intercepts this call and parses the arguments.
+                This is the only way to pass information from JavaSCript to your native code.
+                Ensure to properly encode and decode arguments.
+                Note: you must use 'document.location = "architectsdk://...' to pass information from JavaScript to native.
+                ! This will cause an HTTP error if you didn't register a urlListener in native architectView !
+            */
+            document.location = architectSdkUrl;
+		});
+
+		if (World.currentMarker != null) {
+            if (World.currentMarker.poiData.id == marker.poiData.id) {
+                return;
+            }
+            World.currentMarker.setDeselected(World.currentMarker);
+            $("#panel-poidetail").slideToggle();
+            panelOpen = false;
+        }
+        if(!World.panelOpen){
+            $("#panel-poidetail").slideToggle();
+            panelOpen = true;
+        }
     	marker.setSelected(marker);
-    	World.currentMarker = marker;*/
+    	World.currentMarker = marker;
     },
 
+    userEnteredArea: function userEnteredAreaFn(areaId){
+        if(World.initiallyLoadedData){
+            World.currentArea = areaId;
+            for(var i=0; i < World.markerList.length; i++){
+                World.markerList[i].markerObject.enabled = false;
+                if(World.markerList[i].poiData.id == areaId){
+                    World.markerList[i].markerObject.enabled = true;
+                }
+            }
+        }
+    },
+
+    userLeftArea: function userLeftAreaFn(areaId){
+        World.currentArea = null;
+        for(var i=0; i < World.markerList.length; i++){
+            World.markerList[i].markerObject.enabled = true;
+        }
+    },
     // screen was clicked but no geo-object was hit
     onScreenClick: function onScreenClickFn() {
-    	if (World.currentMarker) {
-    		World.currentMarker.setDeselected(World.currentMarker);
-    	}
-        if(World.panelOpen){
-		    $("#panel-poidetail").slideToggle();
-		    World.panelOpen = false;
-        }
     }
 };
 

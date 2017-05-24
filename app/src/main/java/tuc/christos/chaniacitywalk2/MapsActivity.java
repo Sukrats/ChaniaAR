@@ -1,8 +1,10 @@
 package tuc.christos.chaniacitywalk2;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,6 +18,7 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.DrawableRes;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
@@ -26,6 +29,7 @@ import android.view.animation.Interpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -43,11 +47,14 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.wikitude.architect.StartupConfiguration;
 
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
+import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.wikitude.ArNavigationActivity;
 import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -62,6 +69,8 @@ public class MapsActivity extends AppCompatActivity implements
         OnMapReadyCallback {
 
     protected static final String TAG = "MAPS ACTIVITY";
+
+    private final int MY_PERMISSION_REQUEST_CAMERA = 1;
 
     private DataManager mDataManager;
     private GoogleMap mMap;
@@ -104,20 +113,6 @@ public class MapsActivity extends AppCompatActivity implements
         mLocationProvider = new LocationProvider(this);
         mEventHandler = new LocationEventHandler(this);
 
-        pushButton = (ImageButton) findViewById(R.id.round_button);
-        pushButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /*
-                mDataManager.printModsTable();
-                Player player = mDataManager.getPlayer();
-                player.setFirstname("Christos");
-                mDataManager.updatePlayer(player , getApplicationContext());
-                mDataManager.printPlaces();*/
-                Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                startActivity(intent);
-            }
-        });
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -136,12 +131,58 @@ public class MapsActivity extends AppCompatActivity implements
             camToStart = true;
         }else camToStart = false;
 
-
-
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CAMERA);
+        else{
+            pushButton = (ImageButton) findViewById(R.id.round_button);
+            pushButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                /*
+                mDataManager.printModsTable();
+                Player player = mDataManager.getPlayer();
+                player.setFirstname("Christos");
+                mDataManager.updatePlayer(player , getApplicationContext());
+                mDataManager.printPlaces();*/
+                    Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
+                    startActivity(intent);
+                }
+            });
+        }
+        String camToItem = getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID);
+        if(camToItem != null){
+            Scene temp = mDataManager.getScene(camToItem);
+            defaultCameraPosition = new CameraPosition.Builder()
+                    .target(new LatLng(temp.getLatitude(), temp.getLongitude())).zoom(20.0f).bearing(0).tilt(50).build();
+            camToStart = true;
+        }
         mapFragment.getMapAsync(this);
     }
 
-
+    @Override
+    public void onRequestPermissionsResult(int requestCode,String permissions[], int[] grantResults){
+        switch(requestCode){
+            case MY_PERMISSION_REQUEST_CAMERA:
+                pushButton = (ImageButton) findViewById(R.id.round_button);
+                pushButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                /*
+                mDataManager.printModsTable();
+                Player player = mDataManager.getPlayer();
+                player.setFirstname("Christos");
+                mDataManager.updatePlayer(player , getApplicationContext());
+                mDataManager.printPlaces();*/
+                        Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
+                        startActivity(intent);
+                    }
+                });
+                Toast.makeText(this,"Permission Granted AR experiences are on the ready!",Toast.LENGTH_LONG).show();
+                break;
+            default: Toast.makeText(this,"You wont be able to access the AR experiences",Toast.LENGTH_LONG).show();
+                break;
+        }
+    }
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -435,6 +476,7 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     public void setCameraPosition(double latitude, double longitude) {
+        Log.i(TAG,String.valueOf(latitude)+String.valueOf(longitude));
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(latitude, longitude)).bearing(0).tilt(50).build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));

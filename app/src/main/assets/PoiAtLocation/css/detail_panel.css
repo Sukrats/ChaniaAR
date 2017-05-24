@@ -5,14 +5,15 @@ body
 }
 #page1
 {
+    position: fixed;
     margin: 0;
     padding: 0;
 }
 #panel-poidetail
 {
-    position:absolute;
+    position: fixed;
     bottom: 0px;
-    height: 20%;
     width: 100%;
-    display:none;
+    display: none;
+    align-self: baseline|center;
 }

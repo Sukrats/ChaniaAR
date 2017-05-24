@@ -1,10 +1,20 @@
 package tuc.christos.chaniacitywalk2.wikitude;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.webkit.WebView;
 import android.widget.Toast;
 
 //import com.wikitude.architect.ArchitectJavaScriptInterfaceListener;
@@ -20,8 +30,13 @@ import java.io.IOException;
 import java.util.List;
 
 import tuc.christos.chaniacitywalk2.LocationCallback;
+import tuc.christos.chaniacitywalk2.LocationEventHandler;
+import tuc.christos.chaniacitywalk2.LocationEventsListener;
 import tuc.christos.chaniacitywalk2.LocationProvider;
+import tuc.christos.chaniacitywalk2.MapsActivity;
 import tuc.christos.chaniacitywalk2.R;
+import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
+import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.utils.Constants;
@@ -61,6 +76,10 @@ public class ArNavigationActivity extends Activity {
      */
     protected LocationProvider locationProvider;
 
+    protected LocationEventsListener mLocationEventListener;
+
+    protected LocationEventHandler mLocationEventHandler;
+
     /**
      * JS interface listener handling e.g. 'AR.platform.sendJSONObject({foo:"bar", bar:123})' calls in JavaScript
      */
@@ -80,6 +99,7 @@ public class ArNavigationActivity extends Activity {
     protected boolean isLoading = false;
 
 
+
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,9 +111,10 @@ public class ArNavigationActivity extends Activity {
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
         config.setCameraResolution(CameraSettings.CameraResolution.AUTO);
         config.setCameraPosition(CameraSettings.CameraPosition.DEFAULT);*/
-        final StartupConfiguration config = new StartupConfiguration(Constants.WIKITUDE_SDK_KEY, 1, StartupConfiguration.CameraPosition.FRONT);
+        final StartupConfiguration config = new StartupConfiguration(Constants.WIKITUDE_SDK_KEY, 1, StartupConfiguration.CameraPosition.DEFAULT);
 
         //architectView.setCameraLifecycleListener(null);
+
         try {
             /* first mandatory life-cycle notification */
             architectView.onCreate(config);
@@ -103,11 +124,24 @@ public class ArNavigationActivity extends Activity {
             Log.e(this.getClass().getName(), "Exception in ArchitectView.onCreate()", rex);
         }
 
-
         urlListener = new ArchitectView.ArchitectUrlListener() {
             @Override
             public boolean urlWasInvoked(String s) {
-                return false;
+                Uri invokedUri = Uri.parse(s);
+                switch (invokedUri.getHost()){
+                    case "details":
+                        Intent intent = new Intent(getApplicationContext(), SceneDetailActivity.class);
+                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(invokedUri.getQueryParameter("id")));
+                        startActivity(intent);
+                        return true;
+                    case "map":
+                        Intent mapIntent = NavUtils.getParentActivityIntent(ArNavigationActivity.this);
+                        mapIntent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(invokedUri.getQueryParameter("id")));
+                        NavUtils.navigateUpTo(ArNavigationActivity.this, mapIntent);
+                        return true;
+
+                    default: return false;
+                }
             }
         };
         // register valid urlListener in architectView, ensure this is set before content is loaded to not miss any event
@@ -130,6 +164,30 @@ public class ArNavigationActivity extends Activity {
             }
         };
         locationProvider = new LocationProvider(this, LocationListener);
+
+        mLocationEventListener = new LocationEventsListener() {
+            @Override
+            public void drawGeoFences(String[] areaIds, int radius) {
+
+            }
+
+            @Override
+            public void userEnteredArea(String areaID) {
+                callJavaScript("World.userEnteredArea",new String[]{areaID});
+                Log.i("GeoFence","Fence Triggered: "+areaID);
+            }
+
+            @Override
+            public void userLeftArea(String areaID) {
+                callJavaScript("World.userLeftArea",new String[]{areaID});
+                Log.i("GeoFence","Fence Removed: "+areaID);
+            }
+        };
+        mLocationEventHandler = new LocationEventHandler(mLocationEventListener);
+        locationProvider.setLocationCallbackListener(mLocationEventHandler);
+        if(Build.VERSION.SDK_INT >= 19) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
     }
 
     @Override
@@ -154,9 +212,13 @@ public class ArNavigationActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (mLocationEventHandler != null) {
+            mLocationEventHandler.setLocationEventListener(mLocationEventListener);
+        }
         if (locationProvider != null) {
             locationProvider.connect(this);
             locationProvider.setLocationCallbackListener(LocationListener);
+            locationProvider.setLocationCallbackListener(mLocationEventHandler);
         }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {
@@ -173,9 +235,13 @@ public class ArNavigationActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        if (mLocationEventHandler != null) {
+            mLocationEventHandler.removeLocationEventListener(mLocationEventListener);
+        }
         if (locationProvider != null) {
             locationProvider.disconnect();
             locationProvider.removeLocationCallbackListener(LocationListener);
+            locationProvider.removeLocationCallbackListener(mLocationEventHandler);
         }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {
@@ -216,14 +282,8 @@ public class ArNavigationActivity extends Activity {
                     isLoading = true;
                     final int WAIT_FOR_LOCATION_STEP_MS = 2000;
 
-                    while (lastKnownLocaton == null) {
-                        runOnUiThread(new Runnable() {
+                    while (lastKnownLocaton == null ) {
 
-                            @Override
-                            public void run() {
-                                Toast.makeText(ArNavigationActivity.this, R.string.location_fetching, Toast.LENGTH_SHORT).show();
-                            }
-                        });
                         try {
                             Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
                         } catch (InterruptedException e) {
@@ -252,7 +312,7 @@ public class ArNavigationActivity extends Activity {
 
     private void callJavaScript(final String methodName, final String[] arguments) {
         final StringBuilder argumentsString = new StringBuilder("");
-        Log.i(TAG, "Arguments Length: " + arguments.length);
+        Log.i("CallJavaScript", "Arguments Length: " + arguments.length);
         for (int i = 0; i < arguments.length; i++) {
             argumentsString.append(arguments[i]);
             if (i < arguments.length - 1) {
@@ -261,6 +321,7 @@ public class ArNavigationActivity extends Activity {
         }
         if (this.architectView != null) {
             final String js = (methodName + "( " + argumentsString.toString() + " );");
+            Log.i("GeoFence", js);
             this.architectView.callJavascript(js);
         }
     }
