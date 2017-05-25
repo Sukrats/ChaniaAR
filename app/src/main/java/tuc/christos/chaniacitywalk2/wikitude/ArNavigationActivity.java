@@ -1,18 +1,13 @@
 package tuc.christos.chaniacitywalk2.wikitude;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.webkit.WebView;
 import android.widget.Toast;
@@ -24,7 +19,6 @@ import com.wikitude.architect.StartupConfiguration;
 //import com.wikitude.common.camera.CameraSettings;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +27,6 @@ import tuc.christos.chaniacitywalk2.LocationCallback;
 import tuc.christos.chaniacitywalk2.LocationEventHandler;
 import tuc.christos.chaniacitywalk2.LocationEventsListener;
 import tuc.christos.chaniacitywalk2.LocationProvider;
-import tuc.christos.chaniacitywalk2.MapsActivity;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
@@ -139,9 +132,15 @@ public class ArNavigationActivity extends Activity {
                         mapIntent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(invokedUri.getQueryParameter("id")));
                         NavUtils.navigateUpTo(ArNavigationActivity.this, mapIntent);
                         return true;
+                    case "mark":
+                        SwapAugmentedRealityWorlds();
+                        break;
 
-                    default: return false;
+                    default:
+                        Toast.makeText(getApplicationContext(),"Got url: "+invokedUri.getHost(), Toast.LENGTH_SHORT).show();
+                        return true;
                 }
+                return true;
             }
         };
         // register valid urlListener in architectView, ensure this is set before content is loaded to not miss any event
@@ -155,6 +154,9 @@ public class ArNavigationActivity extends Activity {
         }
 
         sensorAccuracyListener = getSensorAccuracyListener();
+        architectView.registerSensorAccuracyChangeListener(sensorAccuracyListener);
+
+
         LocationListener = new LocationCallback() {
             @Override
             public void handleNewLocation(Location location) {
@@ -190,6 +192,94 @@ public class ArNavigationActivity extends Activity {
         }
     }
 
+    private void injectData(final List<Scene> scenes) {
+        if (!isLoading) {
+            final Thread t = new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    isLoading = true;
+                    final int WAIT_FOR_LOCATION_STEP_MS = 2000;
+
+                    while (lastKnownLocaton == null ) {
+
+                        try {
+                            Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                    if (lastKnownLocaton != null) {
+                        args = new String[]{scenesToJson(scenes).toString()};
+                        callJavaScript("World.loadPoisFromJsonData", args);
+                    }
+                    isLoading = false;
+                }
+            });
+            t.start();
+        }
+    }
+
+    private JSONArray scenesToJson(List<Scene> scenes) {
+        JSONArray array = new JSONArray();
+        for (Scene scene : scenes) {
+            array.put(JsonHelper.sceneToJson(scene));
+        }
+        return array;
+    }
+
+
+    private void callJavaScript(final String methodName, final String[] arguments) {
+        final StringBuilder argumentsString = new StringBuilder("");
+        Log.i("CallJavaScript", "Arguments Length: " + arguments.length);
+        for (int i = 0; i < arguments.length; i++) {
+            argumentsString.append(arguments[i]);
+            if (i < arguments.length - 1) {
+                argumentsString.append(", ");
+            }
+        }
+        if (this.architectView != null) {
+            final String js = (methodName + "( " + argumentsString.toString() + " );");
+            Log.i("GeoFence", js);
+            this.architectView.callJavascript(js);
+        }
+    }
+
+    public ArchitectView.ArchitectWorldLoadedListener getWorldLoadedListener() {
+        return new ArchitectView.ArchitectWorldLoadedListener() {
+            @Override
+            public void worldWasLoaded(String url) {
+                Log.i(TAG, "worldWasLoaded: url: " + url);
+            }
+
+            @Override
+            public void worldLoadFailed(int errorCode, String description, String failingUrl) {
+                Log.e(TAG, "worldLoadFailed: url: " + failingUrl + " " + description);
+            }
+        };
+    }
+
+    public void SwapAugmentedRealityWorlds() {
+        try {
+            architectView.load("ModelAtGeoLocation/index.html");
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    public ArchitectView.SensorAccuracyChangeListener getSensorAccuracyListener() {
+        return new ArchitectView.SensorAccuracyChangeListener() {
+            @Override
+            public void onCompassAccuracyChanged(int accuracy) {
+                /* UNRELIABLE = 0, LOW = 1, MEDIUM = 2, HIGH = 3 */
+                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_HIGH ) {
+                    Toast.makeText(ArNavigationActivity.this, R.string.compass_accuracy_low, Toast.LENGTH_LONG).show();
+                    ArNavigationActivity.this.lastCalibrationToastShownTimeMillis = System.currentTimeMillis();
+                }
+            }
+        };
+    }
+
     @Override
     protected void onPostCreate(final Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -199,7 +289,7 @@ public class ArNavigationActivity extends Activity {
             try {
                 // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
                 // have a look at wikitude.com's developer section for API references
-                architectView.load("PoiAtLocation/index.html");
+                architectView.load("ArNavigation/index.html");
                 injectData(mDataManager.getScenes());
 
             } catch (IOException e1) {
@@ -273,84 +363,5 @@ public class ArNavigationActivity extends Activity {
         }
     }
 
-    private void injectData(final List<Scene> scenes) {
-        if (!isLoading) {
-            final Thread t = new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    isLoading = true;
-                    final int WAIT_FOR_LOCATION_STEP_MS = 2000;
-
-                    while (lastKnownLocaton == null ) {
-
-                        try {
-                            Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
-                        } catch (InterruptedException e) {
-                            break;
-                        }
-                    }
-                    if (lastKnownLocaton != null) {
-                        args = new String[]{scenesToJson(scenes).toString()};
-                        callJavaScript("World.loadPoisFromJsonData", args);
-                    }
-                    isLoading = false;
-                }
-            });
-            t.start();
-        }
-    }
-
-    private JSONArray scenesToJson(List<Scene> scenes) {
-        JSONArray array = new JSONArray();
-        for (Scene scene : scenes) {
-            array.put(JsonHelper.sceneToJson(scene));
-        }
-        return array;
-    }
-
-
-    private void callJavaScript(final String methodName, final String[] arguments) {
-        final StringBuilder argumentsString = new StringBuilder("");
-        Log.i("CallJavaScript", "Arguments Length: " + arguments.length);
-        for (int i = 0; i < arguments.length; i++) {
-            argumentsString.append(arguments[i]);
-            if (i < arguments.length - 1) {
-                argumentsString.append(", ");
-            }
-        }
-        if (this.architectView != null) {
-            final String js = (methodName + "( " + argumentsString.toString() + " );");
-            Log.i("GeoFence", js);
-            this.architectView.callJavascript(js);
-        }
-    }
-
-    public ArchitectView.ArchitectWorldLoadedListener getWorldLoadedListener() {
-        return new ArchitectView.ArchitectWorldLoadedListener() {
-            @Override
-            public void worldWasLoaded(String url) {
-                Log.i(TAG, "worldWasLoaded: url: " + url);
-            }
-
-            @Override
-            public void worldLoadFailed(int errorCode, String description, String failingUrl) {
-                Log.e(TAG, "worldLoadFailed: url: " + failingUrl + " " + description);
-            }
-        };
-    }
-
-    public ArchitectView.SensorAccuracyChangeListener getSensorAccuracyListener() {
-        return new ArchitectView.SensorAccuracyChangeListener() {
-            @Override
-            public void onCompassAccuracyChanged(int accuracy) {
-                /* UNRELIABLE = 0, LOW = 1, MEDIUM = 2, HIGH = 3 */
-                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM && !ArNavigationActivity.this.isFinishing() && System.currentTimeMillis() - ArNavigationActivity.this.lastCalibrationToastShownTimeMillis > 5 * 1000) {
-                    Toast.makeText(ArNavigationActivity.this, R.string.compass_accuracy_low, Toast.LENGTH_LONG).show();
-                    ArNavigationActivity.this.lastCalibrationToastShownTimeMillis = System.currentTimeMillis();
-                }
-            }
-        };
-    }
 
 }

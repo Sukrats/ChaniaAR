@@ -18,6 +18,12 @@ var World = {
 	// called to inject new POI data
 	loadPoisFromJsonData: function loadPoisFromJsonDataFn(poiData) {
 
+		// show radar & set click-listener
+		PoiRadar.show();
+        PoiRadar.setMaxDistance(Math.max(400, 1));
+		$('#radarContainer').unbind('click');
+		$("#radarContainer").click(PoiRadar.clickedRadar);
+
 		World.markerList = [];
 		/*
 			The example Image Recognition already explained how images are loaded and displayed in the augmented reality view.
@@ -62,6 +68,7 @@ var World = {
 		$("#popupInfoButton").buttonMarkup({
 			icon: iconToUse
 		});
+		$("#info-footer").hide();
 	},
 
 	// location updates, fired every time you call architectView.setLocation() in native environment
@@ -121,15 +128,17 @@ var World = {
 
 		$("#open-map").click(function(){
             var architectSdkUrl = "architectsdk://map?id=" + encodeURIComponent(marker.poiData.id);
-            /*
-                The urlListener of the native project intercepts this call and parses the arguments.
-                This is the only way to pass information from JavaSCript to your native code.
-                Ensure to properly encode and decode arguments.
-                Note: you must use 'document.location = "architectsdk://...' to pass information from JavaScript to native.
-                ! This will cause an HTTP error if you didn't register a urlListener in native architectView !
-            */
+
             document.location = architectSdkUrl;
 		});
+		$("#mark-place").click(function(){
+                    var themeToUse = ($("#mark-place").attr("data-theme") == "d"? "b" : "d");
+                    $("#mark-place").buttonMarkup({
+                        theme: themeToUse
+                    });
+                    var architectSdkUrl = "architectsdk://mark?id=" + encodeURIComponent(marker.poiData.id);
+                    document.location = architectSdkUrl;
+        });
 
 		if (World.currentMarker != null) {
             if (World.currentMarker.poiData.id == marker.poiData.id) {

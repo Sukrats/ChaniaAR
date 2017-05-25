@@ -52,12 +52,35 @@ function Marker(poiData) {
             textColor: '#FFFFFF'
         }
     });
+    this.radarCircle = new AR.Circle(0.03, {
+            horizontalAnchor: AR.CONST.HORIZONTAL_ANCHOR.CENTER,
+            opacity: 0.8,
+            style: {
+                fillColor: "#ffffff"
+            }
+        });
+
+        this.radarCircleSelected = new AR.Circle(0.05, {
+            horizontalAnchor: AR.CONST.HORIZONTAL_ANCHOR.CENTER,
+            opacity: 0.8,
+            style: {
+                fillColor: "#0066ff"
+            }
+        });
+
+        this.radardrawables = [];
+        this.radardrawables.push(this.radarCircle);
+
+        this.radardrawablesSelected = [];
+        this.radardrawablesSelected.push(this.radarCircleSelected);
+
     /*
         Create the AR.GeoObject with the drawable objects and define the AR.ImageDrawable as an indicator target on the marker AR.GeoObject. The direction indicator is displayed automatically when necessary. AR.Drawable subclasses (e.g. AR.Circle) can be used as direction indicators.
     */
     this.markerObject = new AR.GeoObject(markerLocation, {
         drawables: {
-            cam: [this.markerDrawable_idle, this.markerDrawable_selected, this.titleLabel, this.descriptionLabel]
+            cam: [this.markerDrawable_idle, this.markerDrawable_selected, this.titleLabel, this.descriptionLabel],
+            radar: this.radardrawables
         }
     });
 
@@ -144,6 +167,8 @@ Marker.prototype.setSelected = function(marker) {
     // sets the click trigger function for the selected state marker
     marker.markerDrawable_selected.onClick = Marker.prototype.getOnClickTrigger(marker);
 
+    marker.markerObject.drawables.radar = marker.radardrawablesSelected;
+
     // starts the selected-state animation
     marker.animationGroup_selected.start();
 };
@@ -151,6 +176,8 @@ Marker.prototype.setSelected = function(marker) {
 Marker.prototype.setDeselected = function(marker) {
 
     marker.isSelected = false;
+
+    marker.markerObject.drawables.radar = marker.radardrawables;
 
     if (marker.animationGroup_idle === null) {
 

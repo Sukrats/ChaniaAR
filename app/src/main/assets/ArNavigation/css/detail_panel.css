@@ -17,3 +17,10 @@ body
     display: none;
     align-self: baseline|center;
 }
+.radarContainer_left {
+	position:absolute;
+	top:0px;
+	left:0px;
+	width:100px;
+	height:100px;
+}

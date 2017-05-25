@@ -1,0 +1,28 @@
+body
+{
+    margin: 0px;
+    padding: 0px;
+}
+#loadingMessage
+ {
+	font-size: large;
+	position: absolute;
+	width: 100%;
+	padding-top: 12px;
+	padding-bottom: 12px;
+	background-color: #BBBBBB;
+	text-align: center;
+	top: 0;
+	left: 0;
+	opacity: 0.7;
+}
+#overflow
+ {
+ 	 position: fixed;
+     right: 0px;
+     bottom: 0px;
+     align-self: baseline;
+ }
+.ui-panel-inner {
+  padding: 0 !important;
+}
