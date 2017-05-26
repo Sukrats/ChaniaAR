@@ -29,3 +29,7 @@
 	background-color: lightgrey;
 	background-image:none;
 }
+/*No PADDING FOR PANELS */
+.ui-panel-inner {
+  padding: 0 !important;
+}

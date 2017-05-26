@@ -133,9 +133,12 @@ public class ArNavigationActivity extends Activity {
                         NavUtils.navigateUpTo(ArNavigationActivity.this, mapIntent);
                         return true;
                     case "mark":
-                        SwapAugmentedRealityWorlds();
+                        try {
+                            architectView.load("ModelAtGeoLocation/index.html");
+                        }catch(IOException e){
+                            e.printStackTrace();
+                        }
                         break;
-
                     default:
                         Toast.makeText(getApplicationContext(),"Got url: "+invokedUri.getHost(), Toast.LENGTH_SHORT).show();
                         return true;
@@ -257,14 +260,6 @@ public class ArNavigationActivity extends Activity {
                 Log.e(TAG, "worldLoadFailed: url: " + failingUrl + " " + description);
             }
         };
-    }
-
-    public void SwapAugmentedRealityWorlds() {
-        try {
-            architectView.load("ModelAtGeoLocation/index.html");
-        }catch(IOException e){
-            e.printStackTrace();
-        }
     }
 
     public ArchitectView.SensorAccuracyChangeListener getSensorAccuracyListener() {

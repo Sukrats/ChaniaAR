@@ -4,7 +4,7 @@ body
     padding: 0px;
 }
 #loadingMessage
- {
+{
 	font-size: large;
 	position: absolute;
 	width: 100%;
@@ -17,12 +17,17 @@ body
 	opacity: 0.7;
 }
 #overflow
- {
- 	 position: fixed;
-     right: 0px;
-     bottom: 0px;
-     align-self: baseline;
- }
-.ui-panel-inner {
-  padding: 0 !important;
+{
+    position: fixed;
+    right: 0px;
+    bottom: 0px;
+    align-self: stretch;
+}
+#controls
+{
+    position: fixed;
+    bottom: 0px;
+    width: 100%;
+    display: none;
+    align-self: baseline|center;
 }

@@ -24,26 +24,32 @@
 </head>
 
 <body>
-    <div data-role="page" id="page1" style="background: none;" >
+    <div data-role="page" id="page-one" style="background: none;" >
         <div id="loadingMessage" >Loading ...</div>
 
-        <a id="overflow" href="#myPanel" data-icon="bars" data-role="button" data-theme="d">Expand</a>
+        <a id="overflow" data-iconpos="top" data-inline="true" data-corners="true" data-icon="arrow-u"
+           data-role="button" data-theme="d"></a>
+        <!-- content of POI detail page, you may also add thumbnails etc. here if you like -->
 
-        <div data-role="panel" id="myPanel" data-position="right" data-display="overlay"
-             style="background-color:#F0F0F0;" data-theme="d">
-            <!-- header with "close" button -->
-            <div data-role="header" data-theme="c">
-                <h1>Details</h1>
-                <a href="#header" data-rel="close">Close</a>
-            </div>
-            <!-- content of POI detail page, you may also add thumbnails etc. here if you like -->
-            <div data-role="content">
-                <div id="slider_form" data-theme="b" >
-                    <input type="range" id="slider" min="0" max="5" step="1" value="0"
-                           data-highlight="true" data-theme="d" data-show-value="true">
+        <div id="controls" >
+
+            <div id="cont" data-role="content" style="background-color:#F0F0F0;">
+
+                <div id="slider_form" class="ui-grid-a" style="align-self:stretch">
+                    <div class="ui-block-a" style="width:15%;">
+                    </div>
+
+                    <div class="ui-block-b" style="width:85%";>
+                        <input id="slider" type="range" min="0" max="3" step="1" value="0"
+                       data-highlight="true" data-theme="d" data-show-value="true">
+                    </div>
                 </div>
+
             </div>
         </div>
+
     </div>
+
+
 </body>
 </html>
