@@ -79,6 +79,10 @@ var World = {
                 icon: iconToUse
             });
 		});
+
+        $("#backBtn").click(function(){
+            document.location = "architectsdk://arNav";
+        });
 	},
 
 	showModel: function showModel(index){

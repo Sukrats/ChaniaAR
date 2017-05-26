@@ -139,6 +139,14 @@ public class ArNavigationActivity extends Activity {
                             e.printStackTrace();
                         }
                         break;
+                    case "arNav":
+                        try {
+                            architectView.load("ArNavigation/index.html");
+                            injectData(mDataManager.getScenes());
+                        }catch(IOException e){
+                            e.printStackTrace();
+                        }
+                        break;
                     default:
                         Toast.makeText(getApplicationContext(),"Got url: "+invokedUri.getHost(), Toast.LENGTH_SHORT).show();
                         return true;
