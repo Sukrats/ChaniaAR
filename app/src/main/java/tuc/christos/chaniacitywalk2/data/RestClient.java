@@ -50,48 +50,47 @@ public class RestClient implements ContentListener {
     }
 
     public void getInitialContent(ClientListener clientListener) {
-        if (!isLoading) {
+        //if (!isLoading) {
             currentListener = clientListener;
             currentListener.onUpdate(0, "Downloading Periods...");
             isLoading = true;
             downloadPeriods(this);
-        }else{
-           Log.i(TAG,"Client is Already running...");
-        }
+       // }else{
+          // Log.i(TAG,"Can't Load Content Client is Already running...");
+        //}
     }
 
     public void login(String uname, String pass, ClientListener clientListener ){
-        if (!isLoading) {
+        //if (!isLoading) {
             currentListener = clientListener;
             currentListener.onUpdate(0, "Logging in...");
             isLoading = true;
             invokeWSLogin(uname, pass, this);
-        }else{
-            Log.i("REST","Client is Already running...");
-        }
+        //}else{
+        //    Log.i("REST","Can't Login Client is Already running...");
+        //}
 
     }
     public void register(JSONObject jsonObject, ClientListener clientListener, Context context){
-        if (!isLoading) {
+        //if (!isLoading) {
             currentListener = clientListener;
             currentListener.onUpdate(0, "Logging in...");
             isLoading = true;
             invokeWSRegister(jsonObject, this, context);
-        }else{
-            Log.i("REST","Client is Already running...");
-        }
+        //}else{
+        //    Log.i("REST","Can't Register Client is Already running...");
+        //}
     }
 
     public void getPlayerData( ClientListener clientListener){
-        Context context = (Context) clientListener;
-        if (!isLoading) {
+        //if (!isLoading) {
             currentListener = clientListener;
             currentListener.onUpdate(0, "Downloading Visits...");
             isLoading = true;
             downloadData(mDataManager.getActivePlayer().getLinks().get("visits"),this, mDBHelper.VisitsEntry.TABLE_NAME);
-        }else{
-            Toast.makeText(context,"Client is Already running...",Toast.LENGTH_SHORT).show();
-        }
+        //}else{
+        //    Log.i("REST","Cant get Player Data Client is Already running...");
+        //}
     }
 
     @Override
@@ -380,12 +379,14 @@ public class RestClient implements ContentListener {
     public void downloadData(String uri,final ContentListener contentListener,final String tag){
         Log.i(TAG, "Downloading Player Data: "+ tag);
         AsyncHttpClient client = new AsyncHttpClient();
+        client.setBasicAuth(mDataManager.getActivePlayer().getUsername(), mDataManager.getActivePlayer().getPassword());
+        client.setMaxRetriesAndTimeout(4, 20000);
         client.get(uri, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int i, Header[] headers, byte[] bytes) {
                 try {
                     JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                        mDataManager.populateUserData(json, tag);
+                    mDataManager.populateUserData(json, tag);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -412,5 +413,8 @@ public class RestClient implements ContentListener {
             }
         });
 
+    }
+    public void cancel(){
+        currentListener = null;
     }
 }

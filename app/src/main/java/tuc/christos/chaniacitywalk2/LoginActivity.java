@@ -161,10 +161,16 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onPause(){
+        super.onPause();
+        mRestClient.cancel();
+    }
+
+    @Override
     public void onBackPressed() {
         super.onBackPressed();
-        if (mClient != null) {
-            mClient.cancelAllRequests(true);
+        if (mRestClient != null) {
+            mRestClient.cancel();
         }
     }
 
@@ -424,6 +430,7 @@ public class LoginActivity extends AppCompatActivity {
             if (mDataManager.isPlayersEmpty()) {
                 Log.i("DB_SYNC", "Inserted new Player on: " + mPlayer.getRecentActivity().toString());
                 mDataManager.insertPlayer(mPlayer);
+                mDataManager.syncLocalToRemote();
             } else {
                 Log.i("DB_SYNC", "MYSQL last update: " + mPlayer.getRecentActivity().toString());
                 Log.i("DB_SYNC", "SQLite last update: " + mDataManager.getPlayerLastActivity(mPlayer.getUsername()));

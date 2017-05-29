@@ -110,6 +110,7 @@ public class DataManager {
         return !isScenesEmpty() && !isPeriodsEmpty();
     }
     public void syncLocalToRemote() {
+        Log.i("DB_SYNC", "UPDATED LOCAL DATABASE");
         RestClient rs = RestClient.getInstance();
         rs.getPlayerData(new ClientListener() {
             @Override
@@ -550,9 +551,8 @@ public class DataManager {
                             publishProgress((double) (i + 1) / jsonArray.length() * 100);
 
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
-                            if (!mDBh.insertPlace(obj.getString("scene_id"), obj.getString("username"))) {
-                                Log.i(TAG, "DELETED PERIODS");
-                                mDBh.clearPeriods();
+                            if (!mDBh.insertPlace(obj.getLong("scene_id"), obj.getString("username"))) {
+                                Log.i(TAG, "ERROR ON INSERT VISIT");
                                 return false;
                             }
                         }
