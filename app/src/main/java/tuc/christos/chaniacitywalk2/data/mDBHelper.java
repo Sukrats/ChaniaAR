@@ -295,7 +295,6 @@ final class mDBHelper extends SQLiteOpenHelper {
         String checkEntriesQ = "SELECT * FROM " + PlayerEntry.TABLE_NAME;
         Cursor p = db.rawQuery(checkEntriesQ, null);
         if (p.getCount() > 0) {
-            Log.i("clear", "UPDATED");
             ContentValues cv = new ContentValues();
             cv.put(PlayerEntry.COLUMN_ACTIVE, 0);
             db.update(PlayerEntry.TABLE_NAME, cv, null, null);
@@ -455,14 +454,15 @@ final class mDBHelper extends SQLiteOpenHelper {
         return db.rawQuery(selectQ, null);
     }
 
-    void insertPlace(long scene_id, String username) {
+    boolean insertPlace(long scene_id, String username) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
         values.put(PlacesEntry.COLUMN_USERNAME, username);
         values.put(PlacesEntry.COLUMN_SCENE_ID, scene_id);
 
-        db.insertWithOnConflict(PlacesEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        long count = db.insertWithOnConflict(PlacesEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        return count != -1;
         //db.insert(PlacesEntry.TABLE_NAME, null, values);
 
     }
@@ -496,15 +496,16 @@ final class mDBHelper extends SQLiteOpenHelper {
         return db.rawQuery(selectQ, null);
     }
 
-    void insertVisit(long scene_id, String username) {
+    boolean insertVisit(long scene_id, String username) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
         values.put(VisitsEntry.COLUMN_USERNAME, username);
         values.put(VisitsEntry.COLUMN_SCENE_ID, scene_id);
 
-        db.insertWithOnConflict(VisitsEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        long count = db.insertWithOnConflict(VisitsEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
         //db.insert(PlacesEntry.TABLE_NAME, null, values);
+        return count != -1;
 
     }
 

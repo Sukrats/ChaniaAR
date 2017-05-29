@@ -54,6 +54,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.data.RestClient;
 import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.wikitude.ArNavigationActivity;
 import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
@@ -64,7 +65,6 @@ import tuc.christos.chaniacitywalk2.data.DataManager;
 public class MapsActivity extends AppCompatActivity implements
         LocationCallback,
         LocationEventsListener,
-        ContentListener,
         GoogleMap.OnMapClickListener,
         OnMapReadyCallback {
 
@@ -73,6 +73,7 @@ public class MapsActivity extends AppCompatActivity implements
     private final int MY_PERMISSION_REQUEST_CAMERA = 1;
 
     private DataManager mDataManager;
+    private RestClient mRestClient;
     private GoogleMap mMap;
     private UiSettings mUiSettings;
     private LocationProvider mLocationProvider;
@@ -106,8 +107,19 @@ public class MapsActivity extends AppCompatActivity implements
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
-        if(mDataManager.isScenesEmpty()){
-            mDataManager.downloadScenes(this);
+        mRestClient = RestClient.getInstance();
+        if(!mDataManager.isInitialised()){
+            mRestClient.getInitialContent(new ClientListener() {
+                @Override
+                public void onCompleted(boolean success, int httpCode, String msg) {
+                    MapsActivity.this.drawMap();
+                }
+
+                @Override
+                public void onUpdate(int progress, String msg) {
+                   Toast.makeText( MapsActivity.this, msg ,Toast.LENGTH_SHORT).show();
+                }
+            });
         }
         //Registering this activity for locationProvider and Event listener
         mLocationProvider = new LocationProvider(this);
@@ -327,10 +339,6 @@ public class MapsActivity extends AppCompatActivity implements
             } catch (Resources.NotFoundException e) {
                 Log.i(TAG, "Can't find style. Error: ", e);
             }
-    }
-
-    public void downloadComplete(boolean success,int code){
-        drawMap();
     }
 
     private void drawMap() {

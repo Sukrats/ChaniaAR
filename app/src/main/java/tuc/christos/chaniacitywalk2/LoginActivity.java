@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.data.DataManager;
+import tuc.christos.chaniacitywalk2.data.RestClient;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.utils.JsonHelper;
@@ -50,6 +51,7 @@ public class LoginActivity extends AppCompatActivity {
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private DataManager mDataManager;
+    private RestClient mRestClient;
     private Player mPlayer = new Player();
     // UI references.
 
@@ -86,6 +88,8 @@ public class LoginActivity extends AppCompatActivity {
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
 
+        mRestClient = RestClient.getInstance();
+
         formsContainer = (LinearLayout) findViewById(R.id.forms_container);
         btnPanel = (LinearLayout) findViewById(R.id.btn_panel);
         mProgressView = findViewById(R.id.login_progress);
@@ -121,11 +125,30 @@ public class LoginActivity extends AppCompatActivity {
 
         getAutoCompleteList();
         if (autoSignIn) {
+            showProgress(true);
             String credentials = mDataManager.getAutoLoginCredentials();
             if (credentials != null) {
                 String[] tokens = credentials.split(":");// 0 -> email, 1->password, 2-> username
                 Log.i("REMEMBER", "uname: " + tokens[2] + "pass: " + tokens[1]);
-                invokeWSLogin(tokens[0], tokens[1]);
+                mRestClient.login(tokens[0], tokens[1],new ClientListener() {
+                    @Override
+                    public void onCompleted(boolean success, int httpCode, String code) {
+                        if(success) {
+                            try {
+                                mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
+                                handleResponse(httpCode, "ok");
+                            } catch (JSONException e) {
+                                resultsView.setText(e.getMessage());
+                            }
+                        }
+                        else{
+                            handleResponse(httpCode,code);
+                        }
+                    }
+                    @Override
+                    public void onUpdate(int progress, String msg) {
+                    }
+                });
             }
         }
     }
@@ -207,7 +230,28 @@ public class LoginActivity extends AppCompatActivity {
                     editor.putBoolean(SettingsActivity.pref_key_auto_sign_in, true);
                     editor.apply();
                 }
-                invokeWSLogin(email, password);
+                showProgress(true);
+                mRestClient.login(email, password,new ClientListener() {
+                    @Override
+                    public void onCompleted(boolean success, int httpCode, String code) {
+                        if(success) {
+                            try {
+                                mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
+                                handleResponse(httpCode, "ok");
+                                } catch (JSONException e) {
+                                    resultsView.setText(e.getMessage());
+                                }
+                        }
+                        else{
+                            handleResponse(httpCode,code);
+                        }
+                    }
+
+                    @Override
+                    public void onUpdate(int progress, String msg) {
+
+                    }
+                });
                 //mAuthTask = new UserLoginTask(email, password);
                 //mAuthTask.execute((Void) null);
             }
@@ -296,7 +340,28 @@ public class LoginActivity extends AppCompatActivity {
                 // Show a progress spinner, and kick off a background task to
                 // perform the user login attempt.
                 JSONObject json = JsonHelper.playerToJson(new Player(email,username,password,fName,lName));
-                invokeWSRegister(json);
+                showProgress(true);
+                mRestClient.register(json, new ClientListener() {
+                    @Override
+                    public void onCompleted(boolean success, int httpCode, String code) {
+                        if(success) {
+                            try {
+                                mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
+                                handleResponse(httpCode, "ok");
+                            } catch (JSONException e) {
+                                resultsView.setText(e.getMessage());
+                            }
+                        }
+                        else{
+                            handleResponse(httpCode,code);
+                        }
+                    }
+
+                    @Override
+                    public void onUpdate(int progress, String msg) {
+
+                    }
+                }, this);
                 //mAuthTask = new UserLoginTask(email, password);
                 //mAuthTask.execute((Void) null);
             }
@@ -356,40 +421,6 @@ public class LoginActivity extends AppCompatActivity {
             mDataManager.clearActivePlayer();
         } else {
             mDataManager.printPlayers();
-            String sc = "Downloading Scenes...";
-            String pd = "Downloading Periods...";
-            if (mDataManager.isScenesEmpty()) {
-                progressView.setText(sc);
-                mDataManager.downloadScenes(new ContentListener() {
-                    @Override
-                    public void downloadComplete(boolean success, int code) {
-                        if (success) {
-                            downloadsComplete("scenes");
-                        } else {
-                            showProgress(false);
-                            final String result = "Scenes download error: " + code;
-                            resultsView.setText(result);
-                        }
-                    }
-                });
-            }else downloads++;
-
-            if (mDataManager.isPeriodsEmpty()) {
-                progressView.setText(pd);
-                mDataManager.downloadPeriods(new ContentListener() {
-                    @Override
-                    public void downloadComplete(boolean success, int code) {
-                        if (success) {
-                            downloadsComplete("periods");
-                        } else {
-                            showProgress(false);
-                            final String result = "Periods download error: " + code;
-                            resultsView.setText(result);
-                        }
-                    }
-                });
-            }else downloads++;
-
             if (mDataManager.isPlayersEmpty()) {
                 Log.i("DB_SYNC", "Inserted new Player on: " + mPlayer.getRecentActivity().toString());
                 mDataManager.insertPlayer(mPlayer);
@@ -400,167 +431,36 @@ public class LoginActivity extends AppCompatActivity {
                     mDataManager.insertPlayer(mPlayer);
                     mDataManager.syncLocalToRemote();
                 } else if (mPlayer.getRecentActivity().before(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
-                    mDataManager.setActivePlayer(mPlayer.getUsername());
+                    mDataManager.setActivePlayer(mPlayer);
                     mDataManager.syncRemoteToLocal();
                 }
             }
-            if(downloads == 2){
+            if (mDataManager.isInitialised()) {
                 Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
                 startActivity(intent);
-            }
-
-        }
-    }
-
-    private void downloadsComplete(String table){
-        switch (table){
-            case "scenes":
-                downloads++;
-                break;
-            case "periods":
-                downloads++;
-                break;
-        }
-        if(downloads == 2){
-            Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
-            startActivity(intent);
-        }
-
-    }
-
-    private void invokeWSLogin(String cred, String password) {
-        showProgress(true);
-        AsyncHttpClient client = new AsyncHttpClient();
-        mClient = client;
-        final String login_url = Constants.URL_LOGIN_USER + "?auth=" + cred;
-        client.setBasicAuth(cred, password);
-        client.setMaxRetriesAndTimeout(4, 20000);
-        client.get(login_url, null, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                //Print Out response
-                String code = "";
-                Log.i("Success Response code: ", " code: " + i);
-                for (Header head : headers) {
-                    Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
-                }
-                for (byte b : bytes) {
-                    code = code + ((char) b);
-                }
-                Log.i("Response Body: ", code);
-
-                try {
-                    //parsePlayer(new JSONObject(code));
-                    mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
-                    handleResponse(i, "ok");
-                } catch (JSONException e) {
-                    Log.i("JSON EXCEPTION: ", e.getMessage());
-                }
-            }
-
-            @Override
-            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                //Print Out response
-                String code = "";
-                Log.i("Failure Response code: ", " code: " + i);
-                if (i == 0) {
-                    final String result = throwable.getMessage();
-                    handleResponse(i, result);
-                    return;
-                }
-
-                if (headers != null)
-                    for (Header head : headers) {
-                        Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
-                    }
-                if (bytes != null) {
-                    for (byte b : bytes) {
-                        code = code + ((char) b);
-                    }
-                    Log.i("Response Body: ", code);
-                }
-                String result = "404 NOT FOUND! Service unreachable. :(";
-                try {
-                    JSONObject errorMessage = new JSONObject(code);
-                    result = errorMessage.getString("message");
-                    handleResponse(i, result);
-                } catch (JSONException ex) {
-                    Log.i("JSON EXCEPTION: ", ex.getMessage());
-                    handleResponse(505, result);
-                }
-            }
-        });
-
-    }
-
-    private void invokeWSRegister(JSONObject jsonObject) {
-        try {
-            ByteArrayEntity entity = new ByteArrayEntity(jsonObject.toString().getBytes("UTF-8"));
-            showProgress(true);
-            AsyncHttpClient client = new AsyncHttpClient();
-            mClient = client;
-            client.setMaxRetriesAndTimeout(4, 20000);
-            client.post(this, Constants.URL_REGISTER_USER, entity, "application/json", new AsyncHttpResponseHandler() {
-                @Override
-                public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                    //Print Out response
-                    String code = "";
-                    Log.i("Success Response code: ", " code: " + i);
-                    for (Header head : headers) {
-                        Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
-                    }
-                    for (byte b : bytes) {
-                        code = code + ((char) b);
-                    }
-                    Log.i("Response Body: ", code);
-
-                    try {
-                        //parsePlayer(new JSONObject(code));
-                        mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
-                        handleResponse(i, "ok");
-                    } catch (JSONException e) {
-                        Log.i("JSON EXCEPTION: ", e.getMessage());
-                    }
-                }
-
-                @Override
-                public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                    //Print Out response
-                    String code = "";
-                    Log.i("Failure Response code: ", " code: " + i);
-                    if (i == 0) {
-                        final String result = throwable.getMessage();
-                        handleResponse(i, result);
-                        return;
-                    }
-
-                    if (headers != null)
-                        for (Header head : headers) {
-                            Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
+            }else{
+                mRestClient.getInitialContent( new ClientListener() {
+                    @Override
+                    public void onCompleted(boolean success, int httpCode, String msg) {
+                        if(success) {
+                            resultsView.setText(msg);
+                            Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                            startActivity(intent);
+                        }else{
+                            handleResponse(httpCode,msg);
                         }
-                    if (bytes != null) {
-                        for (byte b : bytes) {
-                            code = code + ((char) b);
-                        }
-                        Log.i("Response Body: ", code);
                     }
-                    String result = "404 NOT FOUND! Service unreachable. :(";
-                    try {
-                        JSONObject errorMessage = new JSONObject(code);
-                        result = errorMessage.getString("message");
-                        handleResponse(i, result);
-                    } catch (JSONException ex) {
-                        Log.i("JSON EXCEPTION: ", ex.getMessage());
-                        handleResponse(i, result);
-                    }
-                }
-            });
 
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+                    @Override
+                    public void onUpdate(int progress, String msg) {
+                        resultsView.setText(msg+progress+"%");
+                    }
+                });
+            }
+
         }
-
     }
+
 
     private boolean isUsernameValid(String username) {
         final String USERNAME_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*";

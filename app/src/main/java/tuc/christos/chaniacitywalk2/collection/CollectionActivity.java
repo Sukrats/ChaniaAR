@@ -44,9 +44,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import tuc.christos.chaniacitywalk2.ClientListener;
 import tuc.christos.chaniacitywalk2.ContentListener;
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.R;
+import tuc.christos.chaniacitywalk2.data.RestClient;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
@@ -65,6 +67,7 @@ public class CollectionActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     DataManager mDataManager = DataManager.getInstance();
+    RestClient mRestClient = RestClient.getInstance();
     static int mImageSize;
 
     public static List<Period> periods;
@@ -127,17 +130,23 @@ public class CollectionActivity extends AppCompatActivity {
             }
         });
 
-        if (mDataManager.isPeriodsEmpty()) {
-            mDataManager.downloadPeriods(new ContentListener() {
+        if (!mDataManager.isInitialised()) {
+            mRestClient.getInitialContent(new ClientListener() {
                 @Override
-                public void downloadComplete(boolean success, int code) {
+                public void onCompleted(boolean success, int httpCode, String msg) {
                     if (success) {
                         periods = sortPeriodsList(mDataManager.getPeriods());
                         progressbar.setVisibility(View.GONE);
                         mViewPager.setAdapter(mSectionsPagerAdapter);
                     }
                 }
+
+                @Override
+                public void onUpdate(int progress, String msg) {
+
+                }
             });
+
         } else {
             periods = sortPeriodsList(mDataManager.getPeriods());
             progressbar.setVisibility(View.GONE);

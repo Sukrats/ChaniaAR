@@ -24,6 +24,7 @@ import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
+import tuc.christos.chaniacitywalk2.ClientListener;
 import tuc.christos.chaniacitywalk2.ContentListener;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
@@ -40,6 +41,7 @@ public class DataManager {
 
     private static DataManager INSTANCE = null;
     private boolean instantiated = false;
+    private Player activePlayer;
 
     private ArrayList<Scene> Route = new ArrayList<>();
     private HashMap<String, Scene> routeMap = new HashMap<>();
@@ -104,11 +106,27 @@ public class DataManager {
     }
 
     /**********************************************************DB SYNCING********************************************************************/
+    public boolean isInitialised(){
+        return !isScenesEmpty() && !isPeriodsEmpty();
+    }
     public void syncLocalToRemote() {
+        RestClient rs = RestClient.getInstance();
+        rs.getPlayerData(new ClientListener() {
+            @Override
+            public void onCompleted(boolean success, int httpCode, String msg) {
+                Log.i(TAG,msg);
+            }
+
+            @Override
+            public void onUpdate(int progress, String msg) {
+                Log.i(TAG,msg);
+            }
+        });
         Log.i("DB_SYNC", "UPDATED LOCAL DATABASE");
     }
 
     public void syncRemoteToLocal() {
+
         Log.i("DB_SYNC", "UPDATED REMOTE DATABASE");
     }
 
@@ -134,11 +152,16 @@ public class DataManager {
     }
 
     public void clearActivePlayer() {
+        activePlayer = null;
         mDBh.clearActivePlayer();
     }
+    public Player getActivePlayer(){
+        return this.activePlayer;
+    }
 
-    public void setActivePlayer(String username) {
-        mDBh.setActivePlayer(username);
+    public void setActivePlayer(Player player) {
+        activePlayer = player;
+        mDBh.setActivePlayer(player.getUsername());
     }
 
     public List<String> getEmailsForAutoComplete() {
@@ -176,10 +199,12 @@ public class DataManager {
 
     public void updatePlayer(Player player, Context context) {
         mDBh.updatePlayer(player);
-        putPlayer(player, context);
+        RestClient rs = RestClient.getInstance();
+        rs.putPlayer(player, context);
     }
 
     public void insertPlayer(Player player) {
+        activePlayer = player;
         mDBh.insertPlayer(player);
     }
 
@@ -196,6 +221,7 @@ public class DataManager {
             player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
             player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
         }
+        activePlayer = player;
         return player;
     }
 
@@ -219,6 +245,12 @@ public class DataManager {
 
     public boolean isPeriodsEmpty() {
         return mDBh.isPeriodsEmpty();
+    }
+
+    boolean populatePeriods(JSONArray jsonArray){
+        PopulateDBTask myTask = new PopulateDBTask(jsonArray, mDBHelper.PeriodEntry.TABLE_NAME);
+        myTask.execute();
+        return true;
     }
 
     public List<Period> getPeriods() {
@@ -294,6 +326,11 @@ public class DataManager {
 
     public boolean isScenesEmpty() {
         return mDBh.isScenesEmpty();
+    }
+
+    void populateScenes(JSONArray jsonArray){
+        PopulateDBTask myTask = new PopulateDBTask(jsonArray, mDBHelper.SceneEntry.TABLE_NAME);
+        myTask.execute();
     }
 
     public Scene getScene(String id) {
@@ -374,6 +411,7 @@ public class DataManager {
     }
 
     /*****************************************************VISITS METHODS************************************************************************/
+
     public void addVisit(long id){
         Player p = getPlayer();
         mDBh.insertVisit(id,p.getUsername());
@@ -443,100 +481,11 @@ public class DataManager {
 
     }
 
-    /**********************************************************POST*************************************************************************/
+    /**********************************************************POPULATE DB TASK*************************************************************************/
 
-    private void putPlayer(Player player, Context context) {
-        Log.i("POST", "STARTING...");
-        ByteArrayEntity entity = null;
-        AsyncHttpClient client = new AsyncHttpClient();
-        JSONObject json = new JSONObject();
-        try {
-            json.put("username", player.getUsername());
-            json.put("email", player.getEmail());
-            json.put("password", player.getPassword());
-            json.put("firstname", player.getFirstname());
-            json.put("lastname", player.getLastname());
-        } catch (JSONException e) {
-            Log.i(TAG, e.getMessage());
-        }
-        try {
-            entity = new ByteArrayEntity(json.toString().getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException es) {
-            Log.i(TAG, es.getMessage());
-        }
-        client.setBasicAuth(player.getUsername(), player.getPassword());
-        if (entity != null)
-            client.put(context, Constants.URL_PUT_USER + player.getUsername(), entity, "application/json", new AsyncHttpResponseHandler() {
-                @Override
-                public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                    Log.i("PUT", "SUCCESS" + i);
-                    String code = "";
-                    for (byte b : bytes) {
-                        code = code + ((char) b);
-                    }
-                    Log.i("Response Body: ", code);
-                }
-
-                @Override
-                public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                    Log.i("PUT", "NOP" + i);
-                    String code = "";
-                    for (byte b : bytes) {
-                        code = code + ((char) b);
-                    }
-                    Log.i("Response Body: ", code);
-                }
-            });
-
-    }
-
-    /**********************************************************DOWNLOAD*************************************************************************/
-
-    public void downloadPeriods(final ContentListener cl) {
-        Log.i(TAG, "Downloading Periods");
-
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.get(Constants.URL_PERIODS, null, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                try {
-                    JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    PopulateDBTask myTask = new PopulateDBTask(json, mDBHelper.PeriodEntry.TABLE_NAME);
-                    myTask.execute();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                cl.downloadComplete(true, i);
-            }
-
-            @Override
-            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                cl.downloadComplete(false, i);
-            }
-        });
-    }
-
-    public void downloadScenes(final ContentListener cl) {
-        Log.i(TAG, "Downloading Scenes");
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.get(Constants.URL_SCENES, null, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                try {
-                    JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    PopulateDBTask myTask = new PopulateDBTask(json, mDBHelper.SceneEntry.TABLE_NAME);
-                    myTask.execute();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                cl.downloadComplete(true, i);
-            }
-
-            @Override
-            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                cl.downloadComplete(false, i);
-            }
-        });
+    public void populateUserData(JSONArray jsonArray, String tableName){
+        PopulateDBTask myTask = new PopulateDBTask(jsonArray, tableName);
+        myTask.execute();
     }
 
     private class PopulateDBTask extends AsyncTask<Void, Double, Boolean> {
@@ -582,6 +531,32 @@ public class DataManager {
                             }
                         }
                         break;
+                    case mDBHelper.VisitsEntry.TABLE_NAME:
+
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            publishProgress((double) (i + 1) / jsonArray.length() * 100);
+
+                            JSONObject obj = new JSONObject(jsonArray.get(i).toString());
+
+                            if (!mDBh.insertVisit(obj.getLong("scene_id"), obj.getString("username"))) {
+                                Log.i(TAG, "ERROR ON INSERT VISIT");
+                                return false;
+                            }
+                        }
+                        break;
+                    case mDBHelper.PlacesEntry.TABLE_NAME:
+
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            publishProgress((double) (i + 1) / jsonArray.length() * 100);
+
+                            JSONObject obj = new JSONObject(jsonArray.get(i).toString());
+                            if (!mDBh.insertPlace(obj.getString("scene_id"), obj.getString("username"))) {
+                                Log.i(TAG, "DELETED PERIODS");
+                                mDBh.clearPeriods();
+                                return false;
+                            }
+                        }
+                        break;
                 }
             } catch (JSONException e) {
                 Log.i(TAG, e.getMessage());
@@ -593,13 +568,13 @@ public class DataManager {
 
         @Override
         protected void onProgressUpdate(Double... progress) {
-            Log.i(TAG, "Downloading :" + progress[0]);
+            Log.i(TAG, "Inserting :" + progress[0]);
         }
 
         @Override
         protected void onPostExecute(final Boolean success) {
             if (success) {
-                Log.i(TAG, "Download Complete :");
+                Log.i(TAG, "Insert Complete :");
             }
         }
 

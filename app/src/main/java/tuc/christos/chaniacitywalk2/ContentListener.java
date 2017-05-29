@@ -7,5 +7,5 @@ package tuc.christos.chaniacitywalk2;
 
 public interface ContentListener {
 
-    void downloadComplete(boolean success,int httpCode);
+    void downloadComplete(boolean success,int httpCode, String TAG, String msg);
 }
