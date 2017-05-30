@@ -23,26 +23,18 @@ import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.loopj.android.http.*;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
-import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.data.RestClient;
 import tuc.christos.chaniacitywalk2.model.Player;
-import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.utils.JsonHelper;
 
 
@@ -65,14 +57,10 @@ public class LoginActivity extends AppCompatActivity {
     private LinearLayout formsContainer;
     private LinearLayout btnPanel;
     private AppCompatCheckBox remember;
-    private int downloads = 0;
 
     private String mActiveView = "login";
 
-    private TextView resultsView;
     private TextView progressView;
-
-    private AsyncHttpClient mClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,18 +72,36 @@ public class LoginActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         boolean autoSignIn = sharedPreferences.getBoolean(SettingsActivity.pref_key_auto_sign_in, false);
         remember.setChecked(autoSignIn);
+        progressView = (TextView) findViewById(R.id.progress);
 
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
-
         mRestClient = RestClient.getInstance();
 
+        if(!mDataManager.isInitialised()){
+            mRestClient.getInitialContent( new ClientListener() {
+                @Override
+                public void onCompleted(boolean success, int httpCode, String msg) {
+                    if(success) {
+                        progressView.setText(msg);
+                        Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                        Log.i("Activity","Started");
+                        startActivity(intent);
+                    }else{
+                        handleResponse(httpCode,msg);
+                    }
+                }
+
+                @Override
+                public void onUpdate(int progress, String msg) {
+                    progressView.setText(msg+progress+"%");
+                }
+            });
+        }
         formsContainer = (LinearLayout) findViewById(R.id.forms_container);
         btnPanel = (LinearLayout) findViewById(R.id.btn_panel);
         mProgressView = findViewById(R.id.login_progress);
 
-        resultsView = (TextView) findViewById(R.id.results);
-        progressView = (TextView) findViewById(R.id.progress);
 
         mLoginFormView = findViewById(R.id.login_form);
         mRegisterFormView = findViewById(R.id.register_form);
@@ -118,13 +124,10 @@ public class LoginActivity extends AppCompatActivity {
         ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
+
         boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-
-        if (!isConnected)
-            showNoConnectionDialog(this);
-
         getAutoCompleteList();
-        if (autoSignIn) {
+        if (autoSignIn && isConnected) {
             showProgress(true);
             String credentials = mDataManager.getAutoLoginCredentials();
             if (credentials != null) {
@@ -138,7 +141,7 @@ public class LoginActivity extends AppCompatActivity {
                                 mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
                                 handleResponse(httpCode, "ok");
                             } catch (JSONException e) {
-                                resultsView.setText(e.getMessage());
+                                progressView.setText(e.getMessage());
                             }
                         }
                         else{
@@ -151,19 +154,23 @@ public class LoginActivity extends AppCompatActivity {
                 });
             }
         }
+
+        if (!isConnected)
+            showNoConnectionDialog(this);
+
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mClient != null)
-            mClient.cancelAllRequests(true);
+        if (mRestClient != null) {
+            mRestClient.cancel();
+        }
     }
 
     @Override
     public void onPause(){
         super.onPause();
-        mRestClient.cancel();
     }
 
     @Override
@@ -245,7 +252,7 @@ public class LoginActivity extends AppCompatActivity {
                                 mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
                                 handleResponse(httpCode, "ok");
                                 } catch (JSONException e) {
-                                    resultsView.setText(e.getMessage());
+                                    progressView.setText(e.getMessage());
                                 }
                         }
                         else{
@@ -355,7 +362,7 @@ public class LoginActivity extends AppCompatActivity {
                                 mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
                                 handleResponse(httpCode, "ok");
                             } catch (JSONException e) {
-                                resultsView.setText(e.getMessage());
+                                progressView.setText(e.getMessage());
                             }
                         }
                         else{
@@ -384,40 +391,40 @@ public class LoginActivity extends AppCompatActivity {
         View focusView = null;
         switch (responseCode) {
             case 200:
-                resultsView.setText(R.string.action_sign_in_successful);
+                progressView.setText(R.string.action_sign_in_successful);
                 cancel = false;
                 break;
             case 201 :
-                resultsView.setText(R.string.action_register_successful);
+                progressView.setText(R.string.action_register_successful);
                 cancel = false;
                 break;
             case 401:
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
-                resultsView.setText(message);
+                progressView.setText(message);
                 focusView = mPasswordView;
                 cancel = true;
                 break;
             case 403:
-                resultsView.setText(message);
+                progressView.setText(message);
                 cancel = true;
                 break;
             case 404:
                 mEmailView.setError(getString(R.string.error_incorrect_email));
-                resultsView.setText(message);
+                progressView.setText(message);
                 focusView = mEmailView;
                 cancel = true;
                 break;
             case 409:
-                resultsView.setText(message);
+                progressView.setText(message);
                 cancel = true;
                 focusView = mEmailView;
                 break;
             case 500:
-                resultsView.setText(R.string.action_sign_in_server_error);
+                progressView.setText(R.string.action_sign_in_server_error);
                 cancel = true;
                 break;
             default:
-                resultsView.setText(message);
+                progressView.setText(message);
                 cancel = true;
                 break;
         }
@@ -444,27 +451,27 @@ public class LoginActivity extends AppCompatActivity {
             }
             if (mDataManager.isInitialised()) {
                 Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                Log.i("Activity","Started");
                 startActivity(intent);
             }else{
                 mRestClient.getInitialContent( new ClientListener() {
                     @Override
                     public void onCompleted(boolean success, int httpCode, String msg) {
                         if(success) {
-                            resultsView.setText(msg);
+                            progressView.setText(msg);
                             Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                            Log.i("Activity","Started");
                             startActivity(intent);
                         }else{
                             handleResponse(httpCode,msg);
                         }
                     }
-
                     @Override
                     public void onUpdate(int progress, String msg) {
-                        resultsView.setText(msg+progress+"%");
+                        progressView.setText(msg+progress+"%");
                     }
                 });
             }
-
         }
     }
 
@@ -495,7 +502,7 @@ public class LoginActivity extends AppCompatActivity {
         int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
         if (show) {
             final String connecting = "Connecting...";
-            resultsView.setText(connecting);
+            progressView.setText(connecting);
         }
 
         formsContainer.setVisibility(show ? View.GONE : View.VISIBLE);
@@ -571,10 +578,9 @@ public class LoginActivity extends AppCompatActivity {
 
 
     public static void showNoConnectionDialog(final Context ctx) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
         builder.setCancelable(true);
-        builder.setMessage("No Internet Connection");
-        builder.setTitle("Title: No Internet Connection");
+        builder.setTitle("No Internet Connection");
         builder.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 ctx.startActivity(new Intent(Settings.ACTION_SETTINGS));
@@ -585,7 +591,25 @@ public class LoginActivity extends AppCompatActivity {
 
             }
         });
+        if(!DataManager.getInstance().isInitialised()) {
+            builder.setMessage("In order to initialise your profile as well as some content an internet connection is required!" +
+                    "you can continue as Guest with access to some of the content!");
+            builder.setNeutralButton("Guest", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    Toast.makeText(builder.getContext(),"Guest",Toast.LENGTH_LONG).show();
+                }
+            });
+        }else{
+            builder.setMessage("We need an internet connection to keep your progress in sync with our servers, if you choose to continue" +
+                    "you should manually sync your progress from the App's Settings menu, the next time you have access to the internet!" +
+                    " enjoy :)" );
+            builder.setNeutralButton("Continue Offline!", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    Toast.makeText(builder.getContext(),"Offline",Toast.LENGTH_LONG).show();
+                }
+            });
 
+        }
         builder.show();
     }
 

@@ -36,6 +36,7 @@ final class mDBHelper extends SQLiteOpenHelper {
                 PlayerEntry.COLUMN_FIRST_NAME + " TEXT," +
                 PlayerEntry.COLUMN_LAST_NAME + " TEXT," +
                 PlayerEntry.COLUMN_CREATED + " TEXT," +
+                PlayerEntry.COLUMN_SCORE + " INTEGER," +
                 PlayerEntry.COLUMN_RECENT_ACTIVITY + " TIMESTAMP," +
                 PlayerEntry.COLUMN_ACTIVE + " INTEGER " +
                 ")";
@@ -321,6 +322,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(PlayerEntry.COLUMN_FIRST_NAME, player.getFirstname());
         values.put(PlayerEntry.COLUMN_LAST_NAME, player.getLastname());
         values.put(PlayerEntry.COLUMN_CREATED, player.getCreated().toString());
+        values.put(PlayerEntry.COLUMN_SCORE, player.getScore());
         values.put(PlayerEntry.COLUMN_RECENT_ACTIVITY, player.getRecentActivity().toString());
         values.put(PlayerEntry.COLUMN_ACTIVE, 1);
 
@@ -547,6 +549,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         static final String COLUMN_FIRST_NAME = "firstname";
         static final String COLUMN_LAST_NAME = "lastname";
         static final String COLUMN_CREATED = "created";
+        static final String COLUMN_SCORE = "score";
         static final String COLUMN_RECENT_ACTIVITY = "recent_activity";
         static final String COLUMN_ACTIVE = "active";
     }

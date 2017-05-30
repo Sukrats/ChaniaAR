@@ -30,7 +30,7 @@ public class JsonHelper {
             player.setPassword(json.getString("password"));
             player.setFirstname(json.getString("firstname"));
             player.setLastname(json.getString("lastname"));
-
+            player.setScore(0L);
             Log.i("json", "Created: " + json.getString("created"));
             player.setCreated(Date.valueOf(json.getString("created")));
             Log.i("json", "parsed Created: " + player.getCreated());

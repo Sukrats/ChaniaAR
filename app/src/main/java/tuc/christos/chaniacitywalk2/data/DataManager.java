@@ -26,6 +26,7 @@ import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.ClientListener;
 import tuc.christos.chaniacitywalk2.ContentListener;
+import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -43,7 +44,7 @@ public class DataManager {
     private boolean instantiated = false;
     private Player activePlayer;
 
-    private ArrayList<Scene> Route = new ArrayList<>();
+    private ArrayList<ArScene> Route = new ArrayList<>();
     private HashMap<String, Scene> routeMap = new HashMap<>();
 
     private HashMap<Polyline, Scene> lineToSceneMap = new HashMap<>();
@@ -68,6 +69,7 @@ public class DataManager {
         if (!instantiated && INSTANCE != null) {
             mDBh = new mDBHelper(context);
             instantiated = true;
+            initRoute();
         }
     }
 
@@ -110,7 +112,6 @@ public class DataManager {
         return !isScenesEmpty() && !isPeriodsEmpty();
     }
     public void syncLocalToRemote() {
-        Log.i("DB_SYNC", "UPDATED LOCAL DATABASE");
         RestClient rs = RestClient.getInstance();
         rs.getPlayerData(new ClientListener() {
             @Override
@@ -220,6 +221,7 @@ public class DataManager {
             player.setFirstname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_FIRST_NAME)));
             player.setLastname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_LAST_NAME)));
             player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+            player.setScore(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_SCORE)));
             player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
         }
         activePlayer = player;
@@ -237,6 +239,7 @@ public class DataManager {
             player.setLastname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_LAST_NAME)));
             int active = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_ACTIVE));
             player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+            player.setScore(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_SCORE)));
             player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
             Log.i("Players",player.getEmail()+player.getUsername()+player.getRecentActivity()+" ACTIVE?: "+ String.valueOf(active));
         }
@@ -482,6 +485,23 @@ public class DataManager {
 
     }
 
+    /**********************************************************ROUTE HARD CODED *************************************************************/
+    private void initRoute(){
+        ArrayList<ArScene> mRoute = new ArrayList<>();
+        mRoute.add(new ArScene(35.517398,24.01779,36,4,"Glass Mosque","","assets/earth.wt3"));
+        mRoute.add(new ArScene(35.51711,24.020557,37,2,"The Byzantine Wall","","assets/earth.wt3"));
+        mRoute.add(new ArScene(35.5171461,24.019581,38,1,"Minoiki Kidonia","","assets/earth.wt3"));
+        mRoute.add(new ArScene(35.5164899,24.021208,39,3,"Church of St. Rocco","","assets/earth.wt3"));
+        for(ArScene temp : mRoute){
+            temp.setHasAR(true);
+        }
+        Route = mRoute;
+    }
+
+    public ArrayList<ArScene> getRoute(){
+        return Route;
+    }
+
     /**********************************************************POPULATE DB TASK*************************************************************************/
 
     public void populateUserData(JSONArray jsonArray, String tableName){
@@ -540,7 +560,7 @@ public class DataManager {
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
 
                             if (!mDBh.insertVisit(obj.getLong("scene_id"), obj.getString("username"))) {
-                                Log.i(TAG, "ERROR ON INSERT VISIT");
+                                Log.i(TAG, "ERROR ON INSERT PLACE");
                                 return false;
                             }
                         }
@@ -560,7 +580,6 @@ public class DataManager {
                 }
             } catch (JSONException e) {
                 Log.i(TAG, e.getMessage());
-                mDBh.clearScenes();
                 return false;
             }
             return true;

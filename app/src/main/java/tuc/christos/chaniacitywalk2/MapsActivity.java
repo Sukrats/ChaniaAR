@@ -26,6 +26,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Interpolator;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -55,6 +56,8 @@ import java.util.HashMap;
 
 import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.data.RestClient;
+import tuc.christos.chaniacitywalk2.model.ArScene;
+import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.wikitude.ArNavigationActivity;
 import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
@@ -73,9 +76,7 @@ public class MapsActivity extends AppCompatActivity implements
     private final int MY_PERMISSION_REQUEST_CAMERA = 1;
 
     private DataManager mDataManager;
-    private RestClient mRestClient;
     private GoogleMap mMap;
-    private UiSettings mUiSettings;
     private LocationProvider mLocationProvider;
     private LocationEventHandler mEventHandler;
 
@@ -107,14 +108,13 @@ public class MapsActivity extends AppCompatActivity implements
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
-        mRestClient = RestClient.getInstance();
+        RestClient mRestClient = RestClient.getInstance();
         if(!mDataManager.isInitialised()){
             mRestClient.getInitialContent(new ClientListener() {
                 @Override
                 public void onCompleted(boolean success, int httpCode, String msg) {
                     MapsActivity.this.drawMap();
                 }
-
                 @Override
                 public void onUpdate(int progress, String msg) {
                    Toast.makeText( MapsActivity.this, msg ,Toast.LENGTH_SHORT).show();
@@ -157,15 +157,35 @@ public class MapsActivity extends AppCompatActivity implements
                 mDataManager.updatePlayer(player , getApplicationContext());
                 mDataManager.printPlaces();*/
                     Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                    startActivity(intent);
+                    aSyncActivity(intent);
                 }
             });
         }
+        Button myloc = (Button) findViewById(R.id.my_location_btn);
+        myloc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mCurrentLocation != null ){
+                    setCameraPosition(mCurrentLocation.getLatitude(),mCurrentLocation.getLongitude());
+                }else{
+                    Toast.makeText(MapsActivity.this.getApplicationContext(),"Please enable Location",Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
+        if(mCurrentLocation != null) {
+            defaultCameraPosition = new CameraPosition.Builder()
+                    .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
+                    .bearing(0).tilt(50).build();
+            camToStart = true;
+        }
+
         String camToItem = getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID);
         if(camToItem != null){
             Scene temp = mDataManager.getScene(camToItem);
             defaultCameraPosition = new CameraPosition.Builder()
-                    .target(new LatLng(temp.getLatitude(), temp.getLongitude())).zoom(20.0f).bearing(0).tilt(50).build();
+                    .target(new LatLng(temp.getLatitude(), temp.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
+            if(sceneToMarkerMap.containsKey(temp)) sceneToMarkerMap.get(temp).showInfoWindow();
             camToStart = true;
         }
         mapFragment.getMapAsync(this);
@@ -209,7 +229,7 @@ public class MapsActivity extends AppCompatActivity implements
         mMap = googleMap;
         mMap.setPadding(0,0,0,100);
 
-        mUiSettings = mMap.getUiSettings();
+        //mUiSettings = mMap.getUiSettings();
         //mUiSettings.setZoomControlsEnabled(true);
         //mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
@@ -225,12 +245,12 @@ public class MapsActivity extends AppCompatActivity implements
                 if(!marker.equals(mLocationMarker)) {
                     Scene scene = markerToSceneMap.get(marker);
                     if (scene.isHasAR()) {
-                        Polyline line = mDataManager.getLineFromScene(scene);
+                        /*Polyline line = mDataManager.getLineFromScene(scene);
                         if (line.getColor() == Color.BLUE) {
                             line.setColor(Color.GREEN);
                         } else if (line.getColor() == Color.GREEN) {
                             line.setColor(Color.BLUE);
-                        }
+                        }*/
                     }
                     if (marker.equals(mSelectedMarker)) {
                         mSelectedMarker = null;
@@ -250,7 +270,6 @@ public class MapsActivity extends AppCompatActivity implements
         setupMapOptions();
         drawMap();
         //enableMyLocation();
-
     }
 
 
@@ -342,106 +361,114 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     private void drawMap() {
-        mMap.clear();
-        sceneToMarkerMap.clear();
-        markerToSceneMap.clear();
-        if (mLocationMarker !=null) mLocationMarker.setVisible(false);
+        if(mMap != null){
+            mMap.clear();
+            sceneToMarkerMap.clear();
+            markerToSceneMap.clear();
+            if (mLocationMarker !=null) mLocationMarker.setVisible(false);
+            if(camToStart) mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
+            Player player = mDataManager.getActivePlayer();
 
-        for (Scene temp : mDataManager.getScenes()) {
+            if(player.getScore() <= 1000 || player.getScore() == null){
+                Log.i("Score",player.getScore()+ " < 1000");
+                for(ArScene temp: mDataManager.getRoute()){
+                    Marker marker;
+                    LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
+                    marker = mMap.addMarker(new MarkerOptions()
+                            .position(pos)
+                            .title(temp.getName())
+                            .snippet(temp.getTAG()));
+                    if (temp.getId() == 36)
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.giali_thumb)));
+                    else if (temp.getId() == 37)
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.byzantine_thumb)));
+                    else if (temp.getId() == 38)
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.kasteli_thumb)));
+                    else if (temp.getId() == 39)
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.rocco_thumb)));
+                    else
+                        marker = null;
+                    if(marker != null){
+                        sceneToMarkerMap.put(temp, marker);
+                        markerToSceneMap.put(marker, temp);
+                    }
+                }
+            }else{
+                Log.i("Score",player.getScore()+ " > 1000");
+                for (Scene temp : mDataManager.getScenes()) {
+                    if (temp.isVisible() && !temp.isHasAR()) {
+                        LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
+                        Marker marker = mMap.addMarker(new MarkerOptions()
+                                .position(pos)
+                                .title(temp.getName())
+                                .snippet(temp.getTAG()));
+                        if(temp.isVisited()){
+                            if (temp.getTAG() != null && temp.getTAG().equals("Ottoman")) {
+                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
+                            } else if (temp.getTAG() != null && temp.getTAG().equals("Venetian")) {
+                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_venetian));
+                            } else if (temp.getTAG() != null && temp.getTAG().equals("Modern")) {
+                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_modern));
+                            } else if (temp.getTAG() != null && temp.getTAG().equals("NeoGreek")) {
+                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
+                            } else {
+                                marker = mMap.addMarker(new MarkerOptions().position(pos).title(temp.getName()));
+                            }
+                        }else {
+                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.unknown_32));
+                        }
+                        sceneToMarkerMap.put(temp, marker);
+                        markerToSceneMap.put(marker, temp);
+                    }
+            }
+            /*else if (temp.isHasAR()){
+                    Marker marker;
 
-            if (temp.isVisible() && !temp.isHasAR()) {
-                LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
-                Marker marker = mMap.addMarker(new MarkerOptions()
-                        .position(pos)
-                        .title(temp.getName())
-                        .snippet(temp.getTAG()));
+                    LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
+                    marker = mMap.addMarker(new MarkerOptions()
+                            .position(pos)
+                            .title(temp.getName())
+                            .snippet(temp.getTAG()));
 
-                if(temp.isVisited()){
+                    if (temp.getId() == 1)
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.giali_thumb)));
+                    else if (temp.getId() == 2)
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.byzantine_thumb)));
+                    else if (temp.getId() == 3)
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.kasteli_thumb)));
+                    else if (temp.getId() == 4)
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.rocco_thumb)));
+                    else
+                        marker = null;
 
-                    if (temp.getTAG() != null && temp.getTAG().equals("Ottoman")) {
-                        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
-                    } else if (temp.getTAG() != null && temp.getTAG().equals("Venetian")) {
-                        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_venetian));
-                    } else if (temp.getTAG() != null && temp.getTAG().equals("Modern")) {
-                        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_modern));
-                    } else if (temp.getTAG() != null && temp.getTAG().equals("NeoGreek")) {
-                        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
-                    } else {
-                        marker = mMap.addMarker(new MarkerOptions().position(pos).title(temp.getName()));
+
+                    if(marker != null){
+                        sceneToMarkerMap.put(temp, marker);
+                        markerToSceneMap.put(marker, temp);
                     }
 
-                }else {
-                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.unknown_32));
-                }
+                    Polyline line;
+                    PolylineOptions options = new PolylineOptions()
+                            .width(20)
+                            .color(ContextCompat.getColor(this,R.color.lineColor))
+                            .geodesic(true);
 
-                sceneToMarkerMap.put(temp, marker);
-                markerToSceneMap.put(marker, temp);
-            }else if (temp.isHasAR()){
-                Marker marker;
+                    for(LatLng ll: mDataManager.getPolyPoints(temp)){
+                        options.add(ll);
+                    }
+                    line = mMap.addPolyline(options);
 
-                LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
-                marker = mMap.addMarker(new MarkerOptions()
-                        .position(pos)
-                        .title(temp.getName())
-                        .snippet(temp.getTAG()));
-
-                if (temp.getId() == 1)
-                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.giali_thumb)));
-                else if (temp.getId() == 2)
-                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.byzantine_thumb)));
-                else if (temp.getId() == 3)
-                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.kasteli_thumb)));
-                else if (temp.getId() == 4)
-                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.rocco_thumb)));
-                else
-                    marker = null;
-
-
-                if(marker != null){
-                    sceneToMarkerMap.put(temp, marker);
-                    markerToSceneMap.put(marker, temp);
-                }
-
-                Polyline line;
-                PolylineOptions options = new PolylineOptions()
-                        .width(20)
-                        .color(ContextCompat.getColor(this,R.color.lineColor))
-                        .geodesic(true);
-
-                for(LatLng ll: mDataManager.getPolyPoints(temp)){
-                    options.add(ll);
-                }
-                line = mMap.addPolyline(options);
-
-                mDataManager.mapLineToScene(line, temp);
-                mDataManager.mapScenetoLine(temp, line);
+                    mDataManager.mapLineToScene(line, temp);
+                    mDataManager.mapScenetoLine(temp, line);
+                }*/
             }
+
+            //mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
+            //mMap.setMinZoomPreference(DEFAULT_MIN_ZOOM);
+            //mMap.setLatLngBoundsForCameraTarget(CHANIA);
+
         }
-
-        if(camToStart)
-            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
-        //mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
-        //mMap.setMinZoomPreference(DEFAULT_MIN_ZOOM);
-        //mMap.setLatLngBoundsForCameraTarget(CHANIA);
-
     }
-
-    /*private void buildIntentForActivity(int id){
-        Intent intent = null;
-        switch(id) {
-            case R.id.action_profile:
-                break;
-            //case R.id.action_camera:
-              //  break;
-            case R.id.action_collection:
-                intent = new Intent(this, CollectionActivity.class);
-                break;
-        }
-        if(intent!=null){
-            aSyncActivity(intent);
-        }
-
-    }*/
 
     public void handleBottomBarSelection(View view){
         Intent intent = null;
@@ -486,9 +513,8 @@ public class MapsActivity extends AppCompatActivity implements
     public void setCameraPosition(double latitude, double longitude) {
         Log.i(TAG,String.valueOf(latitude)+String.valueOf(longitude));
         CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(latitude, longitude)).bearing(0).tilt(50).build();
+                .target(new LatLng(latitude, longitude)).bearing(0).zoom(DEFAULT_ZOOM_LEVEL).tilt(50).build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
 
     }
 
@@ -569,8 +595,6 @@ public class MapsActivity extends AppCompatActivity implements
         //Toast.makeText(this,"User Entered Area: "+ scene.getName(), Toast.LENGTH_LONG).show();
 
         setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
-
-
     }
 
     public void userLeftArea(String areaID) {

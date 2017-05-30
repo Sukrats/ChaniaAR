@@ -21,6 +21,7 @@ public class Player {
     private Date recentActivity;
     private Long numOfPlaces;
     private Long numOfVisits;
+    private Long score;
 
     private Scene isAtScene;
     private boolean completedRoute;
@@ -166,5 +167,11 @@ public class Player {
         this.recentActivity = recent_activity;
     }
 
+    public Long getScore() {
+        return score;
+    }
 
+    public void setScore(Long score) {
+        this.score = score;
+    }
 }
