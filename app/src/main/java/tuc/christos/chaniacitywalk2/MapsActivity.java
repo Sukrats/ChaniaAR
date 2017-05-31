@@ -24,6 +24,7 @@ import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.Button;
@@ -37,7 +38,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
@@ -46,14 +46,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
-import com.wikitude.architect.StartupConfiguration;
 
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
+import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.data.RestClient;
 import tuc.christos.chaniacitywalk2.model.ArScene;
@@ -98,12 +96,17 @@ public class MapsActivity extends AppCompatActivity implements
             .target(new LatLng(35.514388, 24.020335)).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
 
     private ImageButton pushButton;
-
+    private boolean isFenceTriggered = false;
+    private String fenceTriggered = "";
+    public OnInfoWindowElemTouchListener InfoButtonListener;
+    MapWrapperLayout mapWrapperLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps_custom);
+        //setContentView(R.layout.activity_maps_custom);
+        setContentView(R.layout.custom_map_layout_test);
+
         //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
@@ -157,6 +160,7 @@ public class MapsActivity extends AppCompatActivity implements
                 mDataManager.updatePlayer(player , getApplicationContext());
                 mDataManager.printPlaces();*/
                     Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
+                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY,"ArNavigation/index.html");
                     aSyncActivity(intent);
                 }
             });
@@ -166,7 +170,7 @@ public class MapsActivity extends AppCompatActivity implements
             @Override
             public void onClick(View v) {
                 if(mCurrentLocation != null ){
-                    setCameraPosition(mCurrentLocation.getLatitude(),mCurrentLocation.getLongitude());
+                    setCameraPosition(mCurrentLocation.getLatitude(),mCurrentLocation.getLongitude(),mMap.getCameraPosition().zoom);
                 }else{
                     Toast.makeText(MapsActivity.this.getApplicationContext(),"Please enable Location",Toast.LENGTH_LONG).show();
                 }
@@ -189,6 +193,7 @@ public class MapsActivity extends AppCompatActivity implements
             camToStart = true;
         }
         mapFragment.getMapAsync(this);
+
     }
 
     @Override
@@ -206,6 +211,7 @@ public class MapsActivity extends AppCompatActivity implements
                 mDataManager.updatePlayer(player , getApplicationContext());
                 mDataManager.printPlaces();*/
                         Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
+                        intent.putExtra(Constants.ARCHITECT_WORLD_KEY,"ArNavigation/index.html");
                         startActivity(intent);
                     }
                 });
@@ -226,7 +232,16 @@ public class MapsActivity extends AppCompatActivity implements
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        mapWrapperLayout = (MapWrapperLayout)findViewById(R.id.map_container);
+        mapWrapperLayout.init(googleMap, getPixelsFromDp(this, 39 + 20));
+
         mMap = googleMap;
+        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+
+            }
+        });
         mMap.setPadding(0,0,0,100);
 
         //mUiSettings = mMap.getUiSettings();
@@ -244,14 +259,14 @@ public class MapsActivity extends AppCompatActivity implements
                 //marker.showInfoWindow();
                 if(!marker.equals(mLocationMarker)) {
                     Scene scene = markerToSceneMap.get(marker);
-                    if (scene.isHasAR()) {
-                        /*Polyline line = mDataManager.getLineFromScene(scene);
+                   /* if (scene.isHasAR()) {
+                        Polyline line = mDataManager.getLineFromScene(scene);
                         if (line.getColor() == Color.BLUE) {
                             line.setColor(Color.GREEN);
                         } else if (line.getColor() == Color.GREEN) {
                             line.setColor(Color.BLUE);
-                        }*/
-                    }
+                        }
+                    }*/
                     if (marker.equals(mSelectedMarker)) {
                         mSelectedMarker = null;
                         return true;
@@ -371,7 +386,7 @@ public class MapsActivity extends AppCompatActivity implements
 
             if(player.getScore() <= 1000 || player.getScore() == null){
                 Log.i("Score",player.getScore()+ " < 1000");
-                for(ArScene temp: mDataManager.getRoute()){
+                for(ArScene temp: mDataManager.getRoute().values()){
                     Marker marker;
                     LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
                     marker = mMap.addMarker(new MarkerOptions()
@@ -591,14 +606,16 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     public void userEnteredArea(String areaID){
-        Scene scene = mDataManager.getScene(areaID);
-        //Toast.makeText(this,"User Entered Area: "+ scene.getName(), Toast.LENGTH_LONG).show();
-
+        Scene scene = mDataManager.getRoute().get(areaID);
+        isFenceTriggered = true;
+        fenceTriggered = areaID;
+        sceneToMarkerMap.get(scene).showInfoWindow();
         setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
     }
 
     public void userLeftArea(String areaID) {
-
+        isFenceTriggered = false;
+        fenceTriggered = "";
         //if (circleMap.containsKey(areaID)){
             //Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
             //Circle circle = circleMap.get(areaID);
@@ -637,15 +654,11 @@ public class MapsActivity extends AppCompatActivity implements
 
         @Override
         public View getInfoWindow(Marker marker) {
+            ImageButton ar_button =(ImageButton) mContents.findViewById(R.id.ar_button);
+            ImageButton det_button = (ImageButton) mContents.findViewById(R.id.details_button);
 
-            return null;
-        }
-
-        @Override
-        public View getInfoContents(Marker marker) {
-
-            Scene scene = markerToSceneMap.get(marker);
-            if (scene.getId() == 1)
+            final Scene scene = markerToSceneMap.get(marker);
+            /*if (scene.getId() == 1)
                 ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(R.drawable.giali_thumb);
             else if (scene.getId() == 2)
                 ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(R.drawable.byzantine_thumb);
@@ -654,16 +667,68 @@ public class MapsActivity extends AppCompatActivity implements
             else if (scene.getId() == 4)
                 ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(R.drawable.rocco_thumb);
             else
-                ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(0);
+                ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(0);*/
 
             TextView titleUi = ((TextView) mContents.findViewById(R.id.title));
             titleUi.setText(marker.getTitle());
 
             TextView snippetUi = ((TextView) mContents.findViewById(R.id.snippet));
-            snippetUi.setText(marker.getSnippet());
+            LatLng markerPosition  = marker.getPosition();
+            Location markerLocation = new Location("");
+            markerLocation.setLatitude(markerPosition.latitude);
+            markerLocation.setLongitude(markerPosition.longitude);
+            String distance = "Distance: "+(int)mCurrentLocation.distanceTo(markerLocation)+"m";
+            snippetUi.setText(distance);
 
+            boolean isfence = String.valueOf(markerToSceneMap.get(marker).getId()).equals(fenceTriggered);
+            if(!scene.isVisited() && isFenceTriggered && isfence){
+                ar_button.setVisibility(View.VISIBLE);
+
+                InfoButtonListener = new OnInfoWindowElemTouchListener(ar_button,
+                        getResources().getDrawable(android.R.drawable.btn_default),
+                        getResources().getDrawable(android.R.drawable.btn_default)) {
+                    @Override
+                    protected void onClickConfirmed(View v, Marker marker) {
+                        Intent intent = new Intent(mContents.getContext(),ArNavigationActivity.class);
+                        intent.putExtra(Constants.ARCHITECT_WORLD_KEY,"ModelAtGeoLocation/index.html");
+                        startActivity(intent);
+                    }
+                };
+                ar_button.setOnTouchListener(InfoButtonListener);
+
+                det_button.setVisibility(View.VISIBLE);
+                OnInfoWindowElemTouchListener infoTouchListener = new OnInfoWindowElemTouchListener(det_button,
+                        getResources().getDrawable(android.R.drawable.btn_default),
+                        getResources().getDrawable(android.R.drawable.btn_default)) {
+                    @Override
+                    protected void onClickConfirmed(View v, Marker marker) {
+                        Intent intent = new Intent(mContents.getContext(),SceneDetailActivity.class);
+                        Log.i("",String.valueOf(scene.getId()));
+                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID,String.valueOf(scene.getId()));
+                        startActivity(intent);
+
+                    }
+                };
+                det_button.setOnTouchListener(infoTouchListener);
+            }
+            else{
+                ar_button.setVisibility(View.GONE);
+                det_button.setVisibility(View.GONE);
+            }
+
+            mapWrapperLayout.setMarkerWithInfoWindow(marker,mContents);
             return mContents;
         }
+
+        @Override
+        public View getInfoContents(Marker marker) {
+            return null;
+        }
+    }
+
+    public static int getPixelsFromDp(Context context, float dp) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int)(dp * scale + 0.5f);
     }
 
 }

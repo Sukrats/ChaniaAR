@@ -71,15 +71,15 @@ public class ArNavigationActivity extends Activity {
 
     protected LocationEventsListener mLocationEventListener;
 
-    protected LocationEventHandler mLocationEventHandler;
+    protected LocationEventHandler mLocationEventHandler = null;
 
-    /**
+    /*
      * JS interface listener handling e.g. 'AR.platform.sendJSONObject({foo:"bar", bar:123})' calls in JavaScript
      */
     //protected ArchitectJavaScriptInterfaceListener mArchitectJavaScriptInterfaceListener;
 
     /**
-     * worldLoadedListener receives calls when the AR world is finished loading or when it failed to laod.
+     * worldLoadedListener receives calls when the AR WorldToLoad is finished loading or when it failed to laod.
      */
     protected ArchitectView.ArchitectWorldLoadedListener worldLoadedListener;
 
@@ -91,6 +91,8 @@ public class ArNavigationActivity extends Activity {
 
     protected boolean isLoading = false;
 
+    protected  String WorldToLoad = "";
+
 
 
     @Override
@@ -98,7 +100,7 @@ public class ArNavigationActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_architect);
         architectView = (ArchitectView) findViewById(R.id.architectView);
-
+        WorldToLoad = getIntent().getStringExtra(Constants.ARCHITECT_WORLD_KEY);
         /*final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
         config.setFeatures(1);
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
@@ -196,11 +198,14 @@ public class ArNavigationActivity extends Activity {
                 Log.i("GeoFence","Fence Removed: "+areaID);
             }
         };
-        mLocationEventHandler = new LocationEventHandler(mLocationEventListener);
-        locationProvider.setLocationCallbackListener(mLocationEventHandler);
+        if(WorldToLoad.contains("ArNav")){
+            mLocationEventHandler = new LocationEventHandler(mLocationEventListener);
+            locationProvider.setLocationCallbackListener(mLocationEventHandler);
+        }
         if(Build.VERSION.SDK_INT >= 19) {
             WebView.setWebContentsDebuggingEnabled(true);
         }
+        Log.i(TAG,"World: "+WorldToLoad);
     }
 
     private void injectData(final List<Scene> scenes) {
@@ -292,8 +297,8 @@ public class ArNavigationActivity extends Activity {
             try {
                 // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
                 // have a look at wikitude.com's developer section for API references
-                architectView.load("ArNavigation/index.html");
-                injectData(mDataManager.getScenes());
+                architectView.load(WorldToLoad);
+                if(WorldToLoad.contains("ArNav"))   injectData(mDataManager.getScenes());
 
             } catch (IOException e1) {
                 e1.printStackTrace();
@@ -311,7 +316,8 @@ public class ArNavigationActivity extends Activity {
         if (locationProvider != null) {
             locationProvider.connect(this);
             locationProvider.setLocationCallbackListener(LocationListener);
-            locationProvider.setLocationCallbackListener(mLocationEventHandler);
+            if(mLocationEventHandler != null)
+                locationProvider.setLocationCallbackListener(mLocationEventHandler);
         }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {

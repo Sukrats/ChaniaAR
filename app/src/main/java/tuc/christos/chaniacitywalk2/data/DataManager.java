@@ -44,14 +44,14 @@ public class DataManager {
     private boolean instantiated = false;
     private Player activePlayer;
 
-    private ArrayList<ArScene> Route = new ArrayList<>();
-    private HashMap<String, Scene> routeMap = new HashMap<>();
+   // private ArrayList<ArScene> routeList = new ArrayList<>();
+    private HashMap<String, ArScene> Route = new HashMap<>();
 
     private HashMap<Polyline, Scene> lineToSceneMap = new HashMap<>();
     private HashMap<Scene, Polyline> sceneToLineMap = new HashMap<>();
 
     private HashMap<Scene, ArrayList<LatLng>> sceneToPointsMap = new HashMap<>();
-    private HashMap<ArrayList<LatLng>, Scene> pointsToSceneMap = new HashMap<>();
+    //private HashMap<ArrayList<LatLng>, Scene> pointsToSceneMap = new HashMap<>();
 
     private String TAG = "Data Manager";
     private mDBHelper mDBh;
@@ -247,7 +247,7 @@ public class DataManager {
 
     /**********************************************************PERIOD METHODS*****************************************************************/
 
-    public boolean isPeriodsEmpty() {
+    private boolean isPeriodsEmpty() {
         return mDBh.isPeriodsEmpty();
     }
 
@@ -328,7 +328,7 @@ public class DataManager {
 
     /**********************************************************SCENE METHODS*****************************************************************/
 
-    public boolean isScenesEmpty() {
+    private boolean isScenesEmpty() {
         return mDBh.isScenesEmpty();
     }
 
@@ -464,22 +464,22 @@ public class DataManager {
 
         polyListGlass.add(new LatLng(35.517398, 24.01779));//Glass Mosque
 
-        for (Scene temp : Route) {
+        for (Scene temp : Route.values()) {
             if (temp.getId() == 1) {
                 sceneToPointsMap.put(temp, polyListGlass);
-                pointsToSceneMap.put(polyListGlass, temp);
+                //pointsToSceneMap.put(polyListGlass, temp);
             }
             if (temp.getId() == 2) {
                 sceneToPointsMap.put(temp, polyListByz);
-                pointsToSceneMap.put(polyListByz, temp);
+                //pointsToSceneMap.put(polyListByz, temp);
             }
             if (temp.getId() == 3) {
                 sceneToPointsMap.put(temp, polyListKast);
-                pointsToSceneMap.put(polyListKast, temp);
+                //pointsToSceneMap.put(polyListKast, temp);
             }
             if (temp.getId() == 4) {
                 sceneToPointsMap.put(temp, polyListRocco);
-                pointsToSceneMap.put(polyListRocco, temp);
+                //pointsToSceneMap.put(polyListRocco, temp);
             }
         }
 
@@ -494,17 +494,20 @@ public class DataManager {
         mRoute.add(new ArScene(35.5164899,24.021208,39,3,"Church of St. Rocco","","assets/earth.wt3"));
         for(ArScene temp : mRoute){
             temp.setHasAR(true);
+            Route.put(String.valueOf(temp.getId()),temp);
         }
-        Route = mRoute;
     }
 
-    public ArrayList<ArScene> getRoute(){
+    public ArrayList<ArScene> getRouteAsList(){
+        return new ArrayList<>( Route.values() );
+    }
+    public HashMap<String,ArScene> getRoute(){
         return Route;
     }
 
     /**********************************************************POPULATE DB TASK*************************************************************************/
 
-    public void populateUserData(JSONArray jsonArray, String tableName){
+    void populateUserData(JSONArray jsonArray, String tableName){
         PopulateDBTask myTask = new PopulateDBTask(jsonArray, tableName);
         myTask.execute();
     }

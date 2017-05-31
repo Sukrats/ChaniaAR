@@ -12,8 +12,9 @@ import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
 /**
- * Created by Christos on 16-Mar-17.
  *
+ *
+ * Created by Christos on 16-Mar-17.
  */
 
 public class LocationEventHandler implements LocationCallback {
@@ -35,7 +36,7 @@ public class LocationEventHandler implements LocationCallback {
      * Creator activity context for Toasts
      * Can be removed
      */
-    public LocationEventHandler(LocationEventsListener listener){
+    public LocationEventHandler(LocationEventsListener listener) {
         setLocationEventListener(listener);
         mDataManager = DataManager.getInstance();
     }
@@ -43,39 +44,39 @@ public class LocationEventHandler implements LocationCallback {
 
     /**
      * Register Listeners to the EventHandler
-     * @param listener
-     * Activity that implements LocationEventListener Interface to Listen to LocationEvents
+     *
+     * @param listener Activity that implements LocationEventListener Interface to Listen to LocationEvents
      */
 
-    public void setLocationEventListener(LocationEventsListener listener){
+    public void setLocationEventListener(LocationEventsListener listener) {
 
         this.iLocationEventListener.add(listener);
-        Log.i("Event Handler","Listeners Registered: " + this.iLocationEventListener );
+        Log.i("Event Handler", "Listeners Registered: " + this.iLocationEventListener);
 
     }
 
     /**
      * Remove Listener From EventHandler
-     * @param listener
-     * Listener to be removed from the EventHandler
+     *
+     * @param listener Listener to be removed from the EventHandler
      */
-    public void removeLocationEventListener(LocationEventsListener listener){
+    public void removeLocationEventListener(LocationEventsListener listener) {
         iLocationEventListener.remove(listener);
-        Log.i("Event Handler","Listeners Removed: " + listener );
+        Log.i("Event Handler", "Listeners Removed: " + listener);
     }
 
 
     /**
      * Called when Location Provider fires a new location
-     * @param location
-     * new location
+     *
+     * @param location new location
      */
-    public void handleNewLocation(Location location){
+    public void handleNewLocation(Location location) {
         /*
          *      Set GeoFences based on User Location
          *COVER_RADIUS is the distance in which we enable the fences
          */
-        if( location.distanceTo(lastKnownLocation) >= ( COVER_RADIUS - COVER_RADIUS/2 ) ) {
+        if (location.distanceTo(lastKnownLocation) >= (COVER_RADIUS - COVER_RADIUS / 2)) {
             this.lastKnownLocation = location;
             setGeoFences(location);
         }
@@ -84,17 +85,16 @@ public class LocationEventHandler implements LocationCallback {
          *  if a fence is triggered we fire the event on the Listeners
          *  else we check when the user leaves the area to fire the event
          */
-        if(!fenceTriggered){
-            for(GeoFence temp: GeoFences) {
-                if (location.distanceTo(temp.getLocation()) <= MIN_RADIUS ){
+        if (!fenceTriggered) {
+            for (GeoFence temp : GeoFences) {
+                if (location.distanceTo(temp.getLocation()) <= MIN_RADIUS) {
                     activeFenceLocation = temp.getLocation();
                     activeFenceID = temp.getID();
                     fenceTriggered = true;
                     triggerUserEnteredArea(activeFenceID);
                 }
             }
-        }else
-        if (location.distanceTo(activeFenceLocation) >= MIN_RADIUS ){
+        } else if (location.distanceTo(activeFenceLocation) >= MIN_RADIUS) {
             fenceTriggered = false;
             triggerUserLeftArea(activeFenceID);
         }
@@ -103,32 +103,43 @@ public class LocationEventHandler implements LocationCallback {
     /**
      * Fired when the user left the Cover Radius
      * Initiates new GeoFences based on the new Location
-     * @param location
-     * current user location
+     *
+     * @param location current user location
      */
-    private void setGeoFences(Location location){
+    private void setGeoFences(Location location) {
         GeoFences.clear();
         /*
          *      A Fence is made for each scene in the database acquired from the data Manager
          */
-        for(Scene scene: mDataManager.getScenes()){
-            String id = Long.toString(scene.getId());
-            Location loc = new Location("");
-            loc.setLatitude(scene.getLatitude());
-            loc.setLongitude(scene.getLongitude());
+        if (mDataManager.getActivePlayer().getScore() < 1000) {
+            for (Scene scene : mDataManager.getRoute().values()) {
+                String id = Long.toString(scene.getId());
+                Location loc = new Location("");
+                loc.setLatitude(scene.getLatitude());
+                loc.setLongitude(scene.getLongitude());
+                if (location.distanceTo(loc) <= COVER_RADIUS) {
+                    GeoFences.add(new GeoFence(loc, id));
+                }
+            }
+        } else {
 
-            if(location.distanceTo(loc) <= COVER_RADIUS) {
-                GeoFences.add(new GeoFence(loc, id));
+            for (Scene scene : mDataManager.getScenes()) {
+                String id = Long.toString(scene.getId());
+                Location loc = new Location("");
+                loc.setLatitude(scene.getLatitude());
+                loc.setLongitude(scene.getLongitude());
+
+                if (location.distanceTo(loc) <= COVER_RADIUS) {
+                    GeoFences.add(new GeoFence(loc, id));
+                }
             }
         }
-        /*
+
+    /*
          * If no fence is active we show the corresponding message
          */
-        if(GeoFences.isEmpty()){
-            //Toast.makeText(mContext,"NO GEO FENCE ACTIVE ", Toast.LENGTH_LONG).show();
-
-        }
-        else{
+        if (!GeoFences.isEmpty())
+        {
             /*
              * Else we prepare the data for the map display
              * and trigger the event
@@ -136,8 +147,8 @@ public class LocationEventHandler implements LocationCallback {
             final int size = GeoFences.size();
             String[] areaIds = new String[size];
             int i = 0;
-            for(GeoFence fence: GeoFences){
-                areaIds[i]=fence.getID();
+            for (GeoFence fence : GeoFences) {
+                areaIds[i] = fence.getID();
                 i++;
             }
             triggerDrawGeoFences(areaIds);
@@ -148,46 +159,46 @@ public class LocationEventHandler implements LocationCallback {
 
     /**
      * Fire User Entered GeoFence Event for every Listener
-     * @param id
-     * id of triggered GeoFence
+     *
+     * @param id id of triggered GeoFence
      */
 
-    private void triggerUserEnteredArea(String id){
-        Log.i("EventHandler","GeoFenceTriggered: " + mDataManager.getScene(id).getName());
-        for(LocationEventsListener temp: iLocationEventListener)
+    private void triggerUserEnteredArea(String id) {
+        Log.i("EventHandler", "GeoFenceTriggered: " + mDataManager.getScene(id).getName());
+        for (LocationEventsListener temp : iLocationEventListener)
             temp.userEnteredArea(id);
     }
 
     /**
      * Fire User Left GeoFence Event for every Listener
-     * @param id
-     * id for GeoFence left
+     *
+     * @param id id for GeoFence left
      */
-    private void triggerUserLeftArea(String id){
-        Log.i("EventHandler","GeoFenceClosed: " + mDataManager.getScene(id).getName());
-        for(LocationEventsListener temp: iLocationEventListener)
+    private void triggerUserLeftArea(String id) {
+        Log.i("EventHandler", "GeoFenceClosed: " + mDataManager.getScene(id).getName());
+        for (LocationEventsListener temp : iLocationEventListener)
             temp.userLeftArea(id);
     }
 
     /**
      * Fired when the GeoFences are updated
-     * @param areaIds
-     * IDs of the scenes that are active
+     *
+     * @param areaIds IDs of the scenes that are active
      */
-    private void triggerDrawGeoFences(String[] areaIds){
-        Log.i("EventHandler",iLocationEventListener +" Draw GeoFences Called");
-        for(LocationEventsListener temp: iLocationEventListener)
+    private void triggerDrawGeoFences(String[] areaIds) {
+        Log.i("EventHandler", iLocationEventListener + " Draw GeoFences Called");
+        for (LocationEventsListener temp : iLocationEventListener)
             temp.drawGeoFences(areaIds, MIN_RADIUS);
     }
 
     /**
      * Private GeoFence Implementation
      */
-    private class GeoFence{
+    private class GeoFence {
         private Location location;
         private String ID;
 
-        public GeoFence (Location location, String id){
+        GeoFence(Location location, String id) {
             this.location = location;
             this.ID = id;
         }
@@ -200,7 +211,7 @@ public class LocationEventHandler implements LocationCallback {
             this.location = location;
         }
 
-        public String getID() {
+        String getID() {
             return ID;
         }
 

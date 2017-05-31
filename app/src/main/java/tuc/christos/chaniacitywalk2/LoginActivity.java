@@ -84,11 +84,6 @@ public class LoginActivity extends AppCompatActivity {
                 public void onCompleted(boolean success, int httpCode, String msg) {
                     if(success) {
                         progressView.setText(msg);
-                        Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
-                        Log.i("Activity","Started");
-                        startActivity(intent);
-                    }else{
-                        handleResponse(httpCode,msg);
                     }
                 }
 
