@@ -338,6 +338,7 @@ final class mDBHelper extends SQLiteOpenHelper {
                 PlayerEntry.COLUMN_USERNAME + " = '" + player.getUsername() + "'," +
                 PlayerEntry.COLUMN_FIRST_NAME + " = '" + player.getFirstname() + "'," +
                 PlayerEntry.COLUMN_LAST_NAME + " = '" + player.getLastname() + "'," +
+                PlayerEntry.COLUMN_SCORE + " = '" + player.getScore() + "'," +
                 PlayerEntry.COLUMN_RECENT_ACTIVITY + " =  current_timestamp " +
                 " WHERE " + PlayerEntry.COLUMN_ACTIVE + " = '1' ";
         db.execSQL(updateQ);

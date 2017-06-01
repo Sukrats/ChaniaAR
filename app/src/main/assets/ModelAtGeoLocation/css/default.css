@@ -21,8 +21,7 @@ body
     position: fixed;
     top: 0px;
     left: 0px;
-    height: 28px;
-    width: 28px;
+    display: none;
 }
 #overflow
 {

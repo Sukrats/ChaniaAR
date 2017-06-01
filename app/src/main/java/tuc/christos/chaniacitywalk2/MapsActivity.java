@@ -20,6 +20,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.DrawableRes;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -258,15 +259,6 @@ public class MapsActivity extends AppCompatActivity implements
                 // Since we return true, we have to show the info window manually
                 //marker.showInfoWindow();
                 if(!marker.equals(mLocationMarker)) {
-                    Scene scene = markerToSceneMap.get(marker);
-                   /* if (scene.isHasAR()) {
-                        Polyline line = mDataManager.getLineFromScene(scene);
-                        if (line.getColor() == Color.BLUE) {
-                            line.setColor(Color.GREEN);
-                        } else if (line.getColor() == Color.GREEN) {
-                            line.setColor(Color.BLUE);
-                        }
-                    }*/
                     if (marker.equals(mSelectedMarker)) {
                         mSelectedMarker = null;
                         return true;
@@ -274,8 +266,9 @@ public class MapsActivity extends AppCompatActivity implements
                     mSelectedMarker = marker;
                     // We have handled the click, so don't centre again and return true
                     return false;
+                }else{
+                    return false;
                 }
-                return true;
             }
 
         });
@@ -383,7 +376,6 @@ public class MapsActivity extends AppCompatActivity implements
             if (mLocationMarker !=null) mLocationMarker.setVisible(false);
             if(camToStart) mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
             Player player = mDataManager.getActivePlayer();
-
             if(player.getScore() <= 1000 || player.getScore() == null){
                 Log.i("Score",player.getScore()+ " < 1000");
                 for(ArScene temp: mDataManager.getRoute().values()){
@@ -654,72 +646,76 @@ public class MapsActivity extends AppCompatActivity implements
 
         @Override
         public View getInfoWindow(Marker marker) {
-            ImageButton ar_button =(ImageButton) mContents.findViewById(R.id.ar_button);
-            ImageButton det_button = (ImageButton) mContents.findViewById(R.id.details_button);
 
-            final Scene scene = markerToSceneMap.get(marker);
-            /*if (scene.getId() == 1)
-                ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(R.drawable.giali_thumb);
-            else if (scene.getId() == 2)
-                ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(R.drawable.byzantine_thumb);
-            else if (scene.getId() == 3)
-                ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(R.drawable.kasteli_thumb);
-            else if (scene.getId() == 4)
-                ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(R.drawable.rocco_thumb);
-            else
-                ((ImageView) mContents.findViewById(R.id.badge)).setImageResource(0);*/
+            if (!marker.equals(mLocationMarker)) {
+                ImageButton ar_button = (ImageButton) mContents.findViewById(R.id.ar_button);
+                ImageButton det_button = (ImageButton) mContents.findViewById(R.id.details_button);
 
-            TextView titleUi = ((TextView) mContents.findViewById(R.id.title));
-            titleUi.setText(marker.getTitle());
+                final Scene scene = markerToSceneMap.get(marker);
+                TextView titleUi = ((TextView) mContents.findViewById(R.id.title));
+                titleUi.setText(marker.getTitle());
 
-            TextView snippetUi = ((TextView) mContents.findViewById(R.id.snippet));
-            LatLng markerPosition  = marker.getPosition();
-            Location markerLocation = new Location("");
-            markerLocation.setLatitude(markerPosition.latitude);
-            markerLocation.setLongitude(markerPosition.longitude);
-            String distance = "Distance: "+(int)mCurrentLocation.distanceTo(markerLocation)+"m";
-            snippetUi.setText(distance);
+                TextView snippetUi = ((TextView) mContents.findViewById(R.id.snippet));
+                LatLng markerPosition = marker.getPosition();
+                Location markerLocation = new Location("");
+                markerLocation.setLatitude(markerPosition.latitude);
+                markerLocation.setLongitude(markerPosition.longitude);
+                String distance = "";
+                if (mCurrentLocation != null)
+                    distance = "Distance: " + (int) mCurrentLocation.distanceTo(markerLocation) + "m";
+                snippetUi.setText(distance);
 
-            boolean isfence = String.valueOf(markerToSceneMap.get(marker).getId()).equals(fenceTriggered);
-            if(!scene.isVisited() && isFenceTriggered && isfence){
-                ar_button.setVisibility(View.VISIBLE);
+                boolean isfence = String.valueOf(markerToSceneMap.get(marker).getId()).equals(fenceTriggered);
+                if (!scene.isVisited() && isFenceTriggered && isfence) {
+                    mContents.findViewById(R.id.ar_panel).setVisibility(View.VISIBLE);
+                    InfoButtonListener = new OnInfoWindowElemTouchListener(ar_button,
+                            ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
+                            ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {
+                        @Override
+                        protected void onClickConfirmed(View v, Marker marker) {
+                            Intent intent = new Intent(mContents.getContext(), ArNavigationActivity.class);
+                            intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
+                            intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY,String.valueOf(scene.getId()));
+                            startActivity(intent);
+                        }
+                    };
+                    ar_button.setOnTouchListener(InfoButtonListener);
 
-                InfoButtonListener = new OnInfoWindowElemTouchListener(ar_button,
-                        getResources().getDrawable(android.R.drawable.btn_default),
-                        getResources().getDrawable(android.R.drawable.btn_default)) {
-                    @Override
-                    protected void onClickConfirmed(View v, Marker marker) {
-                        Intent intent = new Intent(mContents.getContext(),ArNavigationActivity.class);
-                        intent.putExtra(Constants.ARCHITECT_WORLD_KEY,"ModelAtGeoLocation/index.html");
-                        startActivity(intent);
-                    }
-                };
-                ar_button.setOnTouchListener(InfoButtonListener);
+                    mContents.findViewById(R.id.detail_panel).setVisibility(View.VISIBLE);
+                    OnInfoWindowElemTouchListener infoTouchListener = new OnInfoWindowElemTouchListener(det_button,
+                            ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
+                            ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {
+                        @Override
+                        protected void onClickConfirmed(View v, Marker marker) {
+                            Intent intent = new Intent(mContents.getContext(), SceneDetailActivity.class);
+                            Log.i("", String.valueOf(scene.getId()));
+                            intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(scene.getId()));
+                            startActivity(intent);
 
-                det_button.setVisibility(View.VISIBLE);
-                OnInfoWindowElemTouchListener infoTouchListener = new OnInfoWindowElemTouchListener(det_button,
-                        getResources().getDrawable(android.R.drawable.btn_default),
-                        getResources().getDrawable(android.R.drawable.btn_default)) {
-                    @Override
-                    protected void onClickConfirmed(View v, Marker marker) {
-                        Intent intent = new Intent(mContents.getContext(),SceneDetailActivity.class);
-                        Log.i("",String.valueOf(scene.getId()));
-                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID,String.valueOf(scene.getId()));
-                        startActivity(intent);
+                        }
+                    };
+                    det_button.setOnTouchListener(infoTouchListener);
+                } else {
+                    mContents.findViewById(R.id.ar_panel).setVisibility(View.GONE);
+                    mContents.findViewById(R.id.detail_panel).setVisibility(View.GONE);
+                }
 
-                    }
-                };
-                det_button.setOnTouchListener(infoTouchListener);
+                mapWrapperLayout.setMarkerWithInfoWindow(marker, mContents);
+                return mContents;
+            }else{
+                mContents.findViewById(R.id.ar_panel).setVisibility(View.GONE);
+                mContents.findViewById(R.id.detail_panel).setVisibility(View.GONE);
+
+                Player player = mDataManager.getActivePlayer();
+                TextView titleUi = ((TextView) mContents.findViewById(R.id.title));
+                titleUi.setText(player.getUsername());
+
+                String score = "Score: "+player.getScore();
+                TextView snippetUi = ((TextView) mContents.findViewById(R.id.snippet));
+                snippetUi.setText(score);
+                return mContents;
             }
-            else{
-                ar_button.setVisibility(View.GONE);
-                det_button.setVisibility(View.GONE);
-            }
-
-            mapWrapperLayout.setMarkerWithInfoWindow(marker,mContents);
-            return mContents;
         }
-
         @Override
         public View getInfoContents(Marker marker) {
             return null;

@@ -21,6 +21,7 @@ import com.wikitude.architect.StartupConfiguration;
 import org.json.JSONArray;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import tuc.christos.chaniacitywalk2.LocationCallback;
@@ -92,6 +93,7 @@ public class ArNavigationActivity extends Activity {
     protected boolean isLoading = false;
 
     protected  String WorldToLoad = "";
+    protected String scene_id = "";
 
 
 
@@ -101,6 +103,7 @@ public class ArNavigationActivity extends Activity {
         setContentView(R.layout.activity_architect);
         architectView = (ArchitectView) findViewById(R.id.architectView);
         WorldToLoad = getIntent().getStringExtra(Constants.ARCHITECT_WORLD_KEY);
+        scene_id = getIntent().getStringExtra(Constants.ARCHITECT_AR_SCENE_KEY);
         /*final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
         config.setFeatures(1);
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
@@ -137,6 +140,8 @@ public class ArNavigationActivity extends Activity {
                     case "mark":
                         try {
                             architectView.load("ModelAtGeoLocation/index.html");
+                            callJavaScript("World.ShowBackBtn",new String[]{});
+                            injectArgs("World.getScene",new String[]{JsonHelper.sceneToJson(mDataManager.getScene(String.valueOf(invokedUri.getQueryParameter("id")))).toString()});
                         }catch(IOException e){
                             e.printStackTrace();
                         }
@@ -206,6 +211,33 @@ public class ArNavigationActivity extends Activity {
             WebView.setWebContentsDebuggingEnabled(true);
         }
         Log.i(TAG,"World: "+WorldToLoad);
+    }
+
+    private void injectArgs(final String method,final String[] args) {
+        if (!isLoading) {
+            final Thread t = new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    isLoading = true;
+                    final int WAIT_FOR_LOCATION_STEP_MS = 2000;
+
+                    while (lastKnownLocaton == null ) {
+
+                        try {
+                            Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                    if (lastKnownLocaton != null) {
+                        callJavaScript(method, args);
+                    }
+                    isLoading = false;
+                }
+            });
+            t.start();
+        }
     }
 
     private void injectData(final List<Scene> scenes) {
@@ -299,6 +331,7 @@ public class ArNavigationActivity extends Activity {
                 // have a look at wikitude.com's developer section for API references
                 architectView.load(WorldToLoad);
                 if(WorldToLoad.contains("ArNav"))   injectData(mDataManager.getScenes());
+                else injectArgs("World.getScene",new String[]{JsonHelper.sceneToJson(mDataManager.getScene(scene_id)).toString()});
 
             } catch (IOException e1) {
                 e1.printStackTrace();

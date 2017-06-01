@@ -206,16 +206,7 @@ public class RestClient implements ContentListener {
         Log.i(TAG, "STARTING...");
         ByteArrayEntity entity = null;
         AsyncHttpClient client = new AsyncHttpClient();
-        JSONObject json = new JSONObject();
-        try {
-            json.put("username", player.getUsername());
-            json.put("email", player.getEmail());
-            json.put("password", player.getPassword());
-            json.put("firstname", player.getFirstname());
-            json.put("lastname", player.getLastname());
-        } catch (JSONException e) {
-            Log.i(TAG, e.getMessage());
-        }
+        JSONObject json = JsonHelper.playerToJson(player);
         try {
             entity = new ByteArrayEntity(json.toString().getBytes("UTF-8"));
         } catch (UnsupportedEncodingException es) {

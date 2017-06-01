@@ -41,7 +41,7 @@ abstract class OnInfoWindowElemTouchListener implements View.OnTouchListener {
                 case MotionEvent.ACTION_DOWN: startPress(); break;
 
                 // We need to delay releasing of the view a little so it shows the pressed state on the screen
-                case MotionEvent.ACTION_UP: handler.postDelayed(confirmClickRunnable, 150); break;
+                case MotionEvent.ACTION_UP: handler.postDelayed(confirmClickRunnable, 20); break;
 
                 case MotionEvent.ACTION_CANCEL: endPress(); break;
                 default: break;

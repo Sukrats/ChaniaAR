@@ -5,48 +5,87 @@
     android:layout_height="wrap_content"
     android:padding="5dp"
     android:orientation="horizontal"
-    android:background="@drawable/markerbordermap"
+    android:background="@drawable/markerbordermapwhite"
     android:clickable="false">
+
+    <LinearLayout
+        android:id="@+id/ar_panel"
+        android:layout_gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone">
         <ImageButton
             android:id="@+id/ar_button"
+            android:layout_gravity="center_vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@android:drawable/ic_menu_camera"
             style="@style/Widget.AppCompat.ImageButton"
-            android:contentDescription="@android:string/ok"
-            android:visibility="gone"/>
+            android:background="@color/transparent"
+            android:contentDescription="@android:string/ok"/>
 
-        <LinearLayout
-            android:id="@+id/info"
+        <View
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:layout_gravity="center_vertical"
+            android:background="@color/divider"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/info"
+        android:layout_gravity="center_vertical"
+        android:paddingLeft="2dp"
+        android:paddingRight="2dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:clickable="false">
+
+        <TextView
+            android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:clickable="false">
+            android:layout_gravity="center_horizontal"
+            android:ellipsize="end"
+            android:textColor="@color/Accent"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:ellipsize="end"
-                android:textColor="#ff000000"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+        <TextView
+            android:id="@+id/snippet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:textColor="@color/Accent"
+            android:textSize="12sp" />
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/snippet"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:textColor="#ff7f7f7f"
-                android:textSize="14sp" />
-        </LinearLayout>
+    <LinearLayout
+        android:id="@+id/detail_panel"
+        android:layout_gravity="center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone">
+        <View
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:layout_gravity="center_vertical"
+            android:background="@color/divider"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"/>
+
         <ImageButton
             android:id="@+id/details_button"
+            android:layout_gravity="center_vertical"
             android:contentDescription="@android:string/ok"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@android:drawable/ic_menu_info_details"
-            style="@style/Widget.AppCompat.ImageButton"
-            android:visibility="gone"/>
+            android:background="@color/transparent"
+            style="@style/Widget.AppCompat.ImageButton"/>
+        </LinearLayout>
 </LinearLayout>

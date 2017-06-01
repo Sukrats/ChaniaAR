@@ -4,10 +4,11 @@ var World = {
 	objList:[],
 	currentModelShown: null,
 	controlsShown: false,
+    scene:null,
 
-	init: function initFn() {
+	/*init: function initFn() {
 		this.createModelAtLocation();
-	},
+	},*/
 
 	createModelAtLocation: function createModelAtLocationFn() {
 	    World.objList = [];
@@ -23,6 +24,7 @@ var World = {
 		locations.push(location1);
 		locations.push(location2);
 		locations.push(location3);
+
 		/*
 			Next the model object is loaded.
 		*/
@@ -42,9 +44,18 @@ var World = {
 			Putting it all together the location and 3D model is added to an AR.GeoObject.
 		*/
 		for(var i = 0; i < locations.length; i++){
+		    var snippet = World.scene.title.trunc(10)+i;
+            var titleLabel = new AR.Label(snippet, 1, {
+                zOrder: 1,
+                offsetY: 0.55,
+                style: {
+                    textColor: '#FFFFFF',
+                    fontStyle: AR.CONST.FONT_STYLE.BOLD
+                }
+            });
             World.objList.push(new AR.GeoObject(locations[i], {
                 drawables: {
-                   cam: [modelEarth],
+                   cam: [modelEarth,titleLabel],
                    indicator: [indicatorDrawable]
                 },
                 enabled:false
@@ -52,6 +63,18 @@ var World = {
         }
 
 	},
+
+    getScene: function getSceneFn(args) {
+        var singlePoi = {
+        	"id": args.id,
+        	"latitude": parseFloat(args.latitude),
+        	"longitude": parseFloat(args.longitude),
+        	"title": args.name,
+        	"description": args.description
+        };
+        World.scene = singlePoi;
+		this.createModelAtLocation();
+    },
 
 	worldLoaded: function worldLoadedFn() {
 		World.loaded = true;
@@ -79,7 +102,10 @@ var World = {
                 icon: iconToUse
             });
 		});
+	},
 
+	ShowBackBtn: function ShowBackBtnFn(){
+        $("#backBtn").show();
         $("#backBtn").click(function(){
             document.location = "architectsdk://arNav";
         });
@@ -101,7 +127,12 @@ var World = {
     */
     }
 };
-
-World.init();
+/*
+World.init();*/
 
 AR.context.onLocationChanged = World.locationChanged;
+
+// will truncate all strings longer than given max-length "n". e.g. "foobar".trunc(3) -> "foo..."
+String.prototype.trunc = function(n) {
+    return this.substr(0, n - 1) + (this.length > n ? '...' : '');
+};

@@ -442,6 +442,8 @@ public class LoginActivity extends AppCompatActivity {
                 } else if (mPlayer.getRecentActivity().before(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
                     mDataManager.setActivePlayer(mPlayer);
                     mDataManager.syncRemoteToLocal();
+                }else{
+                    mDataManager.setActivePlayer(mPlayer);
                 }
             }
             if (mDataManager.isInitialised()) {
