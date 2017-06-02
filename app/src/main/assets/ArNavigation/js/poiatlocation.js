@@ -7,11 +7,13 @@ var World = {
 	markerDrawable_idle: null,
 	markerDrawable_selected: null,
 
+    question:null,
 	// The last selected marker
 	currentMarker: null,
     // Last Area Triggered
+    isInArea: false,
 	currentArea: 0,
-
+    areaMarker:null,
     //POI-Marker List
 	markerList: [],
 
@@ -45,8 +47,12 @@ var World = {
         		"latitude": parseFloat(poiData[currentPlaceNr].latitude),
         		"longitude": parseFloat(poiData[currentPlaceNr].longitude),
         		"title": poiData[currentPlaceNr].name,
-        		"description": poiData[currentPlaceNr].description
+        		"period_id": poiData[currentPlaceNr].period_id,
+        		"description": poiData[currentPlaceNr].description,
+        		"visited":poiData[currentPlaceNr].visited,
+        		"saved":poiData[currentPlaceNr].saved,
         	};
+        	singlePoi.description = "Lorem ipsum dolor sit amet, ei justo commune vim, cu legere euripidis vulputate vim";
         	/*
         		To be able to deselect a marker while the user taps on the empty screen,
         		the World object holds an array that contains each marker.
@@ -82,6 +88,8 @@ var World = {
     onMarkerDeSelected: function onMarkerDeSelectedFn(marker){
         $("#panel-poidetail").slideToggle();
         panelOpen = false;
+        $("#ar-panel").hide();
+
         World.currentMarker = null;
     },
 	// fired when user pressed maker in cam
@@ -140,6 +148,11 @@ var World = {
                     document.location = architectSdkUrl;
         });
 
+        $("#ar-btn").click(function(){
+                World.question = new QuestionObject(marker.poiData);
+                World.areaMarker.enabled = false;
+        });
+
 		if (World.currentMarker != null) {
             if (World.currentMarker.poiData.id == marker.poiData.id) {
                 return;
@@ -147,22 +160,34 @@ var World = {
             World.currentMarker.setDeselected(World.currentMarker);
             $("#panel-poidetail").slideToggle();
             panelOpen = false;
+            if(!marker.poiData.visited){
+                $("#ar-panel").show();
+            }else{
+                $("#ar-panel").hide();
+            }
         }
         if(!World.panelOpen){
             $("#panel-poidetail").slideToggle();
             panelOpen = true;
+            if(!marker.poiData.visited){
+                $("#ar-panel").show();
+            }else{
+                $("#ar-panel").hide();
+            }
         }
     	marker.setSelected(marker);
     	World.currentMarker = marker;
     },
 
     userEnteredArea: function userEnteredAreaFn(areaId){
+        World.isInArea = true
+        World.currentArea = areaId;
         if(World.initiallyLoadedData){
-            World.currentArea = areaId;
             for(var i=0; i < World.markerList.length; i++){
                 World.markerList[i].markerObject.enabled = false;
                 if(World.markerList[i].poiData.id == areaId){
                     World.markerList[i].markerObject.enabled = true;
+                    World.areaMarker = World.markerList[i].markerObject;
                 }
             }
         }
@@ -170,6 +195,8 @@ var World = {
 
     userLeftArea: function userLeftAreaFn(areaId){
         World.currentArea = null;
+        World.isInArea = false;
+        World.areaMarker = null;
         for(var i=0; i < World.markerList.length; i++){
             World.markerList[i].markerObject.enabled = true;
         }

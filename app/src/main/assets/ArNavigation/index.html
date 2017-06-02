@@ -19,6 +19,7 @@
 
     <!-- jquery mobile CSS -->
     <link rel="stylesheet" href="../jquery/jquery.mobile-1.3.2.min.css" />
+    <link rel="stylesheet" href="../jquery/icon-pack-custom.css"/>
     <!-- required to set background transparent & enable "click through" -->
     <link rel="stylesheet" href="../jquery/jquery-mobile-transparent-ui-overlay.css" />
 
@@ -29,6 +30,7 @@
 
     <!-- marker representation-->
     <script src="js/marker.js"></script>
+    <script src="js/questionObject.js"></script>
     <!-- radar component -->
     <script type="text/javascript" src="js/radar.js"></script>
     <!-- World logic-->
@@ -74,12 +76,17 @@
 
                 <div class="ui-block-b" data-role="controlgroup" data-type="vertical" style="width:20%;align-self:stretch;">
                     <a id="open-details-activity"
-                       data-icon="bars" data-role="button" data-iconpos="notext" data-theme="d">Details</a>
+                       data-icon="info" data-role="button" data-iconpos="notext" data-theme="d">Details</a>
                     <a id="open-map"
                        data-icon="back" data-role="button" data-iconpos="notext" data-theme="d">Map</a>
                     <a id="mark-place"
                        data-icon="star" data-role="button" data-iconpos="notext" data-theme="d">Mark</a>
+                </div>
+            </div>
 
+            <div id="ar-panel" class="ui-grid-solo">
+                <div class="ui-block-a">
+                    <button id="ar-btn" data-iconpos="bottom" data-icon="camera-white" type="button" data-inline="true" data-theme="d">AR</button>
                 </div>
             </div>
         </div>

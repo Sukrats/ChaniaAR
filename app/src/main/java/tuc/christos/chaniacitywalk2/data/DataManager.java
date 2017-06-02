@@ -7,30 +7,22 @@ import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import cz.msebera.android.httpclient.Header;
-import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.ClientListener;
-import tuc.christos.chaniacitywalk2.ContentListener;
 import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
-import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.utils.JsonHelper;
 
 /**
@@ -132,7 +124,13 @@ public class DataManager {
         Log.i("DB_SYNC", "UPDATED REMOTE DATABASE");
     }
 
+    /*********************************************************CONTENT METHODS**************************************************************/
+    public void getContent(Player player){
+        ArrayList<Scene> scenes = new ArrayList<>(getScenes());
+        for(Scene temp : scenes){
 
+        }
+    }
     /**********************************************************PLAYER METHODS*****************************************************************/
 
     //Login and autocomplete methods
@@ -316,7 +314,7 @@ public class DataManager {
             String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
             Scene temp = new Scene(lat, lon, id, period_id, name, description);
-            temp.setVisible(true);
+            temp.setSaved(true);
             temp.setHasAR(false);
             temp.setVisited(false);
             temp.setUriImages(images);
@@ -349,9 +347,9 @@ public class DataManager {
             s.setPeriod_id(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID)));
             s.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL)));
             s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
-            s.setVisible(true);
+            s.setSaved(hasSaved(s.getId()));
+            s.setVisited(hasVisited(s.getId()));
             s.setHasAR(false);
-            s.setVisited(false);
         }
         return s;
     }
@@ -373,11 +371,11 @@ public class DataManager {
             String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
             Scene temp = new Scene(lat, lon, id, period_id, name, description);
-            temp.setVisible(true);
-            temp.setHasAR(false);
-            temp.setVisited(false);
+            temp.setSaved(hasSaved(temp.getId()));
+            temp.setVisited(hasVisited(temp.getId()));
             temp.setUriImages(images);
             temp.setUriThumb(thumbnail);
+            temp.setHasAR(false);
             scenes.add(temp);
         }
         Log.i(TAG, "Fetched: " + i + " Scenes");

@@ -16,9 +16,8 @@ public class Scene {
     private double latitude;
     private double longitude;
     private boolean visited;
-    private boolean visible;
+    private boolean saved;
     private boolean hasAR;
-    private boolean unlocked;
 
     private Map<String,String> links = new HashMap<>();
 
@@ -69,13 +68,13 @@ public class Scene {
         this.description = description;
     }
 
-    public Scene( double latitude, double longitude, long id, String name, boolean visited, boolean visible, boolean hasAR, String description, String TAG) {
+    public Scene( double latitude, double longitude, long id, String name, boolean visited, boolean saved, boolean hasAR, String description, String TAG) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
         this.name = name;
         this.visited = visited;
-        this.visible = visible;
+        this.saved = saved;
         this.briefDesc = description;
         this.hasAR = hasAR;
         this.TAG = TAG;
@@ -121,20 +120,12 @@ public class Scene {
         this.visited = visited;
     }
 
-    public boolean isVisible() {
-        return visible;
+    public boolean isSaved() {
+        return saved;
     }
 
-    public void setVisible(boolean visible) {
-        this.visible = visible;
-    }
-
-    public boolean isUnlocked() {
-        return unlocked;
-    }
-
-    public void setUnlocked(boolean unlocked) {
-        this.unlocked = unlocked;
+    public void setSaved(boolean saved) {
+        this.saved = saved;
     }
 
     public String getBriefDesc() {

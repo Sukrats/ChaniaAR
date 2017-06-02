@@ -25,7 +25,6 @@ import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.Button;
@@ -403,7 +402,7 @@ public class MapsActivity extends AppCompatActivity implements
             }else{
                 Log.i("Score",player.getScore()+ " > 1000");
                 for (Scene temp : mDataManager.getScenes()) {
-                    if (temp.isVisible() && !temp.isHasAR()) {
+                    if (temp.isSaved() && !temp.isHasAR()) {
                         LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
                         Marker marker = mMap.addMarker(new MarkerOptions()
                                 .position(pos)

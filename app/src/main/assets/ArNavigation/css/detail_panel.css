@@ -17,6 +17,13 @@ body
     display: none;
     align-self: baseline|center;
 }
+#ar-panel
+{
+    text-align: center;
+    display: none;
+    align-self: baseline|center;
+}
+
 .radarContainer_left {
 	position:absolute;
 	top:0px;
