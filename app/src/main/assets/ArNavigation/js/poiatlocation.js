@@ -160,7 +160,7 @@ var World = {
             World.currentMarker.setDeselected(World.currentMarker);
             $("#panel-poidetail").slideToggle();
             panelOpen = false;
-            if(!marker.poiData.visited){
+            if(!marker.poiData.visited && World.currentArea == marker.poiData.id){
                 $("#ar-panel").show();
             }else{
                 $("#ar-panel").hide();
@@ -169,7 +169,7 @@ var World = {
         if(!World.panelOpen){
             $("#panel-poidetail").slideToggle();
             panelOpen = true;
-            if(!marker.poiData.visited){
+            if(!marker.poiData.visited && World.currentArea == marker.poiData.id){
                 $("#ar-panel").show();
             }else{
                 $("#ar-panel").hide();

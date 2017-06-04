@@ -18,24 +18,26 @@ function QuestionObject(poiData){
 	*/
 	var imgButton_otto = new AR.ImageResource("assets/buttons/Otto_idle.png");
 	var imgButton_otto_sel = new AR.ImageResource("assets/buttons/Otto_selected.png");
+
 	var imgButton_venn = new AR.ImageResource("assets/buttons/Ven_idle.png");
 	var imgButton_venn_sel = new AR.ImageResource("assets/buttons/Ven_selected.png");
+
 	var imgButton_mdrn = new AR.ImageResource("assets/buttons/Byz_idle.png");
 	var imgButton_mdrn_sel = new AR.ImageResource("assets/buttons/Byz_selected.png");
 
-    var ottoman = new Button(imgButton_otto, imgButton_otto_sel, poiData.period_id, 4, 1.25, {
+    var ottoman = new Button(imgButton_otto, imgButton_otto_sel, 4, 1.25, {
         offsetX: 0,
         offsetY: -0.6,
         zOrder: 2
     });
 
-	var venetian = new Button(imgButton_venn, imgButton_venn_sel, poiData.period_id, 3, 1.25, {
+	var venetian = new Button(imgButton_venn, imgButton_venn_sel, 3, 1.25, {
         offsetX: -1.65,
         offsetY: -0.7,
         zOrder: 2
     });
 
-	var modern = new Button(imgButton_mdrn, imgButton_mdrn_sel, poiData.period_id, 5, 1.25, {
+	var modern = new Button(imgButton_mdrn, imgButton_mdrn_sel, 5, 1.25, {
         offsetX: 1.65,
         offsetY: -0.7,
         zOrder: 2
@@ -43,10 +45,13 @@ function QuestionObject(poiData){
 
 	this.ottomanBtn = ottoman.idleDrawable;
 	this.ottomanBtn_selected = ottoman.selectedDrawable;
+
 	this.venetianBtn = venetian.idleDrawable;
 	this.venetianBtn_selected = venetian.selectedDrawable;
+
 	this.modernBtn = modern.idleDrawable;
     this.modernBtn_selected = modern.selectedDrawable;
+
 
     // create the AR.GeoLocation from the poi data
     var markerLocation = new AR.GeoLocation(poiData.latitude, poiData.longitude, poiData.altitude);
@@ -119,7 +124,8 @@ function QuestionObject(poiData){
     return this;
 }
 
-Button = function(idle, selected, q_id, m_id, size, options ) {
+
+function Button(idle, selected, m_id, size, options ) {
 
     this.animationGroup_idle = null;
     this.animationGroup_selected = null;
@@ -129,12 +135,11 @@ Button = function(idle, selected, q_id, m_id, size, options ) {
 		In general each drawable can be made clickable by defining its onClick trigger.
      */
     this.id = m_id;
-	options.onClick = function() {
-	    if(q_id == m_id ){
-            QuestionObject.prototype.getOnClickTrigger(this)
-	    }
-	};
+
+	options.onClick = Button.prototype.getOnClickTrigger(this);
 	this.idleDrawable =  new AR.ImageDrawable(idle, size, options);
+
+	options.onClick = null;
 	options.opacity = 0;
 	this.selectedDrawable =  new AR.ImageDrawable(selected, size, options);
 
@@ -143,34 +148,38 @@ Button = function(idle, selected, q_id, m_id, size, options ) {
 
 
 
-QuestionObject.prototype.getOnClickTrigger = function(question){
-    if (!QuestionObject.prototype.isAnyAnimationRunning(question)) {
-        if (question.isSelected) {
+Button.prototype.getOnClickTrigger = function(button){
 
-            QuestionObject.prototype.setDeselected(question);
-            alert("setDeselected");
-            /*try {
-                World.onQuestionDeSelected(question);
-            } catch (err) {
-                alert(err);
-            }*/
+    return function() {
+
+    if(button.id == World.question.poiData.period_id){
+        if (!Button.prototype.isAnyAnimationRunning(button)) {
+            if (button.isSelected) {
+
+                Button.prototype.setDeselected(button);
+                /*try {
+                    World.onQuestionDeSelected(question);
+                } catch (err) {
+                    alert(err);
+                }*/
+            } else {
+                Button.prototype.setSelected(button);
+                /*try {
+                    World.onQuestionSelected(question);
+                } catch (err) {
+                    alert(err);
+                }*/
+
+            }
         } else {
-            QuestionObject.prototype.setSelected(question);
-            alert("setSelected");
-            /*try {
-                World.onQuestionSelected(question);
-            } catch (err) {
-                alert(err);
-            }*/
-
+            AR.logger.debug('a animation is already running');
         }
-    } else {
-        AR.logger.debug('a animation is already running');
+        return true;
     }
-    return true;
+    };
 };
 
-QuestionObject.prototype.setSelected = function(question) {
+Button.prototype.setSelected = function(question) {
 
     question.isSelected = true;
 
@@ -181,7 +190,6 @@ QuestionObject.prototype.setSelected = function(question) {
         var hideIdleDrawableAnimation = new AR.PropertyAnimation(question.idleDrawable, "opacity", null, 0.0, kMarker_AnimationDuration_ChangeDrawable);
         // create AR.PropertyAnimation that animates the opacity to 1.0 in order to show the selected-state-drawable
         var showSelectedDrawableAnimation = new AR.PropertyAnimation(question.selectedDrawable, "opacity", null, 1.0, kMarker_AnimationDuration_ChangeDrawable);
-
         // create AR.PropertyAnimation that animates the scaling of the idle-state-drawable to 1.2
         var idleDrawableResizeAnimation = new AR.PropertyAnimation(question.idleDrawable, 'scaling', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
@@ -199,13 +207,13 @@ QuestionObject.prototype.setSelected = function(question) {
     // removes function that is set on the onClick trigger of the idle-state marker
     question.idleDrawable.onClick = null;
     // sets the click trigger function for the selected state marker
-    question.selectedDrawable.onClick = Marker.prototype.getOnClickTrigger(marker);
+    question.selectedDrawable.onClick = Button.prototype.getOnClickTrigger(question);
     // starts the selected-state animation
     question.animationGroup_selected.start();
 };
 
 
-QuestionObject.prototype.setDeselected = function(question) {
+Button.prototype.setDeselected = function(question) {
 
     question.isSelected = false;
 
@@ -230,7 +238,7 @@ QuestionObject.prototype.setDeselected = function(question) {
     }
 
     // sets the click trigger function for the idle state question
-    question.idleDrawable.onClick = QuestionObject.prototype.getOnClickTrigger(question);
+    question.idleDrawable.onClick = Button.prototype.getOnClickTrigger(question);
     // removes function that is set on the onClick trigger of the selected-state marker
     question.selectedDrawable.onClick = null;
 
@@ -238,7 +246,7 @@ QuestionObject.prototype.setDeselected = function(question) {
     question.animationGroup_idle.start();
 };
 
-QuestionObject.prototype.isAnyAnimationRunning = function(question) {
+Button.prototype.isAnyAnimationRunning = function(question) {
 
     if (question.animationGroup_idle === null || question.animationGroup_selected === null) {
         return false;
