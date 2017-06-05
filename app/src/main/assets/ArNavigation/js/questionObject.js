@@ -12,10 +12,17 @@ function QuestionObject(poiData){
 
     this.animationGroup_idle = null;
     this.animationGroup_selected = null;
+
+    var buttonDrawable_idle = new AR.ImageResource("assets/buttons/button_idle.png");
+    var buttonDrawable_correct = new AR.ImageResource("assets/buttons/button_correct.png");
+    var buttonDrawable_wrong = new AR.ImageResource("assets/buttons/button_wrong.png");
+
+    var modern_logo = new AR.ImageResource("assets/buttons/modern_logo.png");
+    var ottoman_logo = new AR.ImageResource("assets/buttons/ottoman_logo.png");
+    var venetian_logo = new AR.ImageResource("assets/buttons/venetian_logo.png");
     /*
 		The button is created similar to the overlay feature.
 		An AR.ImageResource defines the look of the button and is reused for both buttons.
-	*/
 	var imgButton_otto = new AR.ImageResource("assets/buttons/Otto_idle.png");
 	var imgButton_otto_sel = new AR.ImageResource("assets/buttons/Otto_selected.png");
 
@@ -25,32 +32,39 @@ function QuestionObject(poiData){
 	var imgButton_mdrn = new AR.ImageResource("assets/buttons/Byz_idle.png");
 	var imgButton_mdrn_sel = new AR.ImageResource("assets/buttons/Byz_selected.png");
 
-    var ottoman = new Button(imgButton_otto, imgButton_otto_sel, 4, 1.25, {
+	*/
+    var ottoman = new Button(buttonDrawable_idle, buttonDrawable_correct, buttonDrawable_wrong, ottoman_logo, 4, 0.75, {
         offsetX: 0,
-        offsetY: -0.6,
-        zOrder: 2
-    });
-
-	var venetian = new Button(imgButton_venn, imgButton_venn_sel, 3, 1.25, {
-        offsetX: -1.65,
         offsetY: -0.7,
         zOrder: 2
     });
 
-	var modern = new Button(imgButton_mdrn, imgButton_mdrn_sel, 5, 1.25, {
-        offsetX: 1.65,
+	var venetian = new Button(buttonDrawable_idle, buttonDrawable_correct, buttonDrawable_wrong, venetian_logo, 3, 0.75, {
+        offsetX: -1.5,
+        offsetY: -0.7,
+        zOrder: 2
+    });
+
+	var modern = new Button(buttonDrawable_idle, buttonDrawable_correct, buttonDrawable_wrong, modern_logo, 5, 0.75, {
+        offsetX: 1.5,
         offsetY: -0.7,
         zOrder: 2
     });
 
 	this.ottomanBtn = ottoman.idleDrawable;
-	this.ottomanBtn_selected = ottoman.selectedDrawable;
+	this.ottomanBtn_log = ottoman.logo;
+	this.ottomanBtn_correct = ottoman.correctDrawable;
+	this.ottomanBtn_wrong = ottoman.wrongDrawable;
 
 	this.venetianBtn = venetian.idleDrawable;
-	this.venetianBtn_selected = venetian.selectedDrawable;
+	this.venetianBtn_log = venetian.logo;
+	this.venetianBtn_correct = venetian.correctDrawable;
+	this.venetianBtn_wrong = venetian.wrongDrawable;
 
 	this.modernBtn = modern.idleDrawable;
-    this.modernBtn_selected = modern.selectedDrawable;
+	this.modernBtn_log = modern.logo;
+	this.modernBtn_correct = modern.correctDrawable;
+	this.modernBtn_wrong = modern.wrongDrawable;
 
 
     // create the AR.GeoLocation from the poi data
@@ -113,8 +127,10 @@ function QuestionObject(poiData){
 
     this.GeoObject = new AR.GeoObject(markerLocation, {
         drawables: {
-            cam: [this.markerDrawable_idle, this.markerDrawable_selected, this.titleLabel, this.descriptionLabel, this.ottomanBtn,
-                  this.ottomanBtn_selected, this.venetianBtn, this.venetianBtn_selected, this.modernBtn, this.modernBtn_selected],
+            cam: [this.markerDrawable_idle, this.markerDrawable_selected, this.titleLabel, this.descriptionLabel,
+                  this.ottomanBtn, this.ottomanBtn_correct, this.ottomanBtn_wrong, this.ottomanBtn_log,
+                  this.venetianBtn, this.venetianBtn_correct, this.venetianBtn_wrong, this.venetianBtn_log,
+                  this.modernBtn, this.modernBtn_correct, this.modernBtn_wrong, this.modernBtn_log ],
             radar: this.radardrawables
         }
     });
@@ -125,7 +141,7 @@ function QuestionObject(poiData){
 }
 
 
-function Button(idle, selected, m_id, size, options ) {
+function Button(idle, correct, wrong, logo, m_id, size, options ) {
 
     this.animationGroup_idle = null;
     this.animationGroup_selected = null;
@@ -141,7 +157,11 @@ function Button(idle, selected, m_id, size, options ) {
 
 	options.onClick = null;
 	options.opacity = 0;
-	this.selectedDrawable =  new AR.ImageDrawable(selected, size, options);
+	this.correctDrawable =  new AR.ImageDrawable(correct, size, options);
+	this.wrongDrawable =  new AR.ImageDrawable(wrong, size, options);
+
+	options.zOrder = 5;
+	this.logo = new AR.ImageDrawable(logo, 1, options);
 
 	return this;
 }
@@ -152,32 +172,49 @@ Button.prototype.getOnClickTrigger = function(button){
 
     return function() {
 
-    if(button.id == World.question.poiData.period_id){
-        if (!Button.prototype.isAnyAnimationRunning(button)) {
-            if (button.isSelected) {
-
-                Button.prototype.setDeselected(button);
-                /*try {
-                    World.onQuestionDeSelected(question);
-                } catch (err) {
-                    alert(err);
-                }*/
-            } else {
-                Button.prototype.setSelected(button);
-                /*try {
-                    World.onQuestionSelected(question);
-                } catch (err) {
-                    alert(err);
-                }*/
-
-            }
-        } else {
-            AR.logger.debug('a animation is already running');
+        if(button.id == World.question.poiData.period_id){
+            button.idleDrawable.opacity = 0;
+            button.correctDrawable.opacity = 1;
+            World.question.ottomanBtn.idleDrawable.onClick = null;
+            World.question.venetianBtn.idleDrawable.onClick = null;
+            World.question.modernBtn.idleDrawable.onClick = null;
+        }
+        else{
+            button.idleDrawable.opacity = 0;
+            button.wrongDrawable.opacity = 1;
+            button.idleDrawable.onClick = null;
+            button.correctDrawable.onClick = null;
+            button.wrongDrawable.onClick = null;
         }
         return true;
-    }
     };
 };
+
+/*if (!Button.prototype.isAnyAnimationRunning(button)) {
+
+              if (button.isSelected) {
+
+                  Button.prototype.setDeselected(button);
+                  /*try {
+                      World.onQuestionDeSelected(question);
+                  } catch (err) {
+                      alert(err);
+                  }*/
+          /*    } else {
+                  Button.prototype.setSelected(button);
+                  /*try {
+                      World.onQuestionSelected(question);
+                  } catch (err) {
+                      alert(err);
+                  }*/
+
+   /*           }
+          } else {
+              AR.logger.debug('a animation is already running');
+          }
+          return true;
+          */
+
 
 Button.prototype.setSelected = function(question) {
 
