@@ -21,31 +21,34 @@ function QuestionObject(poiData){
     var ottoman_logo = new AR.ImageResource("assets/buttons/ottoman_logo.png");
     var venetian_logo = new AR.ImageResource("assets/buttons/venetian_logo.png");
     /*
-		The button is created similar to the overlay feature.
-		An AR.ImageResource defines the look of the button and is reused for both buttons.
-	var imgButton_otto = new AR.ImageResource("assets/buttons/Otto_idle.png");
-	var imgButton_otto_sel = new AR.ImageResource("assets/buttons/Otto_selected.png");
 
-	var imgButton_venn = new AR.ImageResource("assets/buttons/Ven_idle.png");
-	var imgButton_venn_sel = new AR.ImageResource("assets/buttons/Ven_selected.png");
+        The button is created similar to the overlay feature.
+        An AR.ImageResource defines the look of the button and is reused for both buttons.
 
-	var imgButton_mdrn = new AR.ImageResource("assets/buttons/Byz_idle.png");
-	var imgButton_mdrn_sel = new AR.ImageResource("assets/buttons/Byz_selected.png");
+        var imgButton_otto = new AR.ImageResource("assets/buttons/Otto_idle.png");
+        var imgButton_otto_sel = new AR.ImageResource("assets/buttons/Otto_selected.png");
+
+        var imgButton_venn = new AR.ImageResource("assets/buttons/Ven_idle.png");
+        var imgButton_venn_sel = new AR.ImageResource("assets/buttons/Ven_selected.png");
+
+        var imgButton_mdrn = new AR.ImageResource("assets/buttons/Byz_idle.png");
+        var imgButton_mdrn_sel = new AR.ImageResource("assets/buttons/Byz_selected.png");
 
 	*/
-    var ottoman = new Button(buttonDrawable_idle, buttonDrawable_correct, buttonDrawable_wrong, ottoman_logo, 4, 0.75, {
+
+    var ottoman = new Button(buttonDrawable_idle, buttonDrawable_correct, buttonDrawable_wrong, ottoman_logo, 4, 1, {
         offsetX: 0,
         offsetY: -0.7,
         zOrder: 2
     });
 
-	var venetian = new Button(buttonDrawable_idle, buttonDrawable_correct, buttonDrawable_wrong, venetian_logo, 3, 0.75, {
+	var venetian = new Button(buttonDrawable_idle, buttonDrawable_correct, buttonDrawable_wrong, venetian_logo, 3, 1, {
         offsetX: -1.5,
         offsetY: -0.7,
         zOrder: 2
     });
 
-	var modern = new Button(buttonDrawable_idle, buttonDrawable_correct, buttonDrawable_wrong, modern_logo, 5, 0.75, {
+	var modern = new Button(buttonDrawable_idle, buttonDrawable_correct, buttonDrawable_wrong, modern_logo, 5, 1, {
         offsetX: 1.5,
         offsetY: -0.7,
         zOrder: 2
@@ -101,6 +104,7 @@ function QuestionObject(poiData){
             textColor: '#FFFFFF'
         }
     });
+
     this.radarCircle = new AR.Circle(0.03, {
         horizontalAnchor: AR.CONST.HORIZONTAL_ANCHOR.CENTER,
         opacity: 0.8,
@@ -121,6 +125,7 @@ function QuestionObject(poiData){
     this.radardrawables.push(this.radarCircle);
     this.radardrawablesSelected = [];
     this.radardrawablesSelected.push(this.radarCircleSelected);
+
     /*
         Create the AR.GeoObject with the drawable objects and define the AR.ImageDrawable as an indicator target on the marker AR.GeoObject. The direction indicator is displayed automatically when necessary. AR.Drawable subclasses (e.g. AR.Circle) can be used as direction indicators.
     */
