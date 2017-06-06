@@ -5,7 +5,6 @@ function QuestionObject(poiData){
 
     this.poiData = poiData;
     this.isSelected = false;
-
     /*
         With AR.PropertyAnimations you are able to animate almost any property of ARchitect objects. This sample will animate the opacity of both background drawables so that one will fade out while the other one fades in. The scaling is animated too. The marker size changes over time so the labels need to be animated too in order to keep them relative to the background drawable. AR.AnimationGroups are used to synchronize all animations in parallel or sequentially.
     */
@@ -76,7 +75,7 @@ function QuestionObject(poiData){
     // create an AR.ImageDrawable for the marker in idle state
     this.markerDrawable_idle = new AR.ImageDrawable(World.markerDrawable_idle, 2.5, {
         zOrder: 0,
-        opacity: 1.0,
+        opacity: 1.0
     });
 
     // create an AR.ImageDrawable for the marker in selected state
@@ -165,7 +164,8 @@ function Button(idle, correct, wrong, logo, m_id, size, options ) {
 	this.correctDrawable =  new AR.ImageDrawable(correct, size, options);
 	this.wrongDrawable =  new AR.ImageDrawable(wrong, size, options);
 
-	options.zOrder = 5;
+	options.zOrder = 3;
+	options.opacity = 1;
 	this.logo = new AR.ImageDrawable(logo, 1, options);
 
 	return this;
@@ -180,6 +180,8 @@ Button.prototype.getOnClickTrigger = function(button){
         if(button.id == World.question.poiData.period_id){
             button.idleDrawable.opacity = 0;
             button.correctDrawable.opacity = 1;
+            World.questionAnswered(true);
+
             World.question.ottomanBtn.idleDrawable.onClick = null;
             World.question.venetianBtn.idleDrawable.onClick = null;
             World.question.modernBtn.idleDrawable.onClick = null;
@@ -190,6 +192,7 @@ Button.prototype.getOnClickTrigger = function(button){
             button.idleDrawable.onClick = null;
             button.correctDrawable.onClick = null;
             button.wrongDrawable.onClick = null;
+            World.questionAnswered(false);
         }
         return true;
     };

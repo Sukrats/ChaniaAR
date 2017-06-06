@@ -26,7 +26,7 @@
     <string name="compass_accuracy_low">Please re-calibrate compass by waving your device in a figure 8 motion.</string>
 
     <!-- WIKITUDE -->
-    <string name ="location_fetching">Trying to find out where you are...</string>
+    <string name="location_fetching">Trying to find out where you are...</string>
 
     <!-- LOGIN -->
     <string name="remember_me">Remember me </string>
@@ -55,7 +55,7 @@
 
     <string name="text_login">Don\'t have an account?</string>
     <string name="text_register">Already have an account?</string>
-    
+
     <!--   MAP PREFERENCES     -->
     <string name="pref_maps">Map Settings</string>
 
@@ -100,5 +100,9 @@
 
     <string name="pref_keep_logged_in">Keep me Logged In</string>
     <string name="pref_keep_logged_in_summary">Auto Sign in when App starts</string>
+
+    <string name="title_activity_splash">SplashActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">Fetching Content</string>
 
 </resources>

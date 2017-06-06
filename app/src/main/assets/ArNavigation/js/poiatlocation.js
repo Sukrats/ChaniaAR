@@ -8,6 +8,7 @@ var World = {
 	markerDrawable_selected: null,
 
     question:null,
+    isAnswering:false,
 	// The last selected marker
 	currentMarker: null,
     // Last Area Triggered
@@ -32,8 +33,8 @@ var World = {
 			This sample loads an AR.ImageResource when the World variable was defined.
 			It will be reused for each marker that we will create afterwards.
 		*/
-		World.markerDrawable_idle = new AR.ImageResource("assets/marker_idle.png");
-		World.markerDrawable_selected = new AR.ImageResource("assets/marker_selected.png");
+		World.markerDrawable_idle = new AR.ImageResource("assets/marker_idle_stretch.png");
+		World.markerDrawable_selected = new AR.ImageResource("assets/marker_selected_stretch.png");
 		/*
 			For creating the marker a new object AR.GeoObject will be created at the specified geolocation.
 			An AR.GeoObject connects one or more AR.GeoLocations with multiple AR.Drawables.
@@ -150,6 +151,13 @@ var World = {
 
         $("#ar-btn").click(function(){
                 World.question = new QuestionObject(marker.poiData);
+                World.isAnswering = true;
+
+                $("#backBtn").show();
+                $("#backBtn").click(function(){
+                    $("#backBtn").hide();
+                    World.resume();
+                })
                 World.areaMarker.enabled = false;
         });
 
@@ -194,15 +202,44 @@ var World = {
     },
 
     userLeftArea: function userLeftAreaFn(areaId){
-        World.currentArea = null;
         World.isInArea = false;
-        World.areaMarker = null;
-        for(var i=0; i < World.markerList.length; i++){
-            World.markerList[i].markerObject.enabled = true;
+        World.currentArea = null;
+        if(!World.isAnswering){
+            World.areaMarker = null;
+            for(var i=0; i < World.markerList.length; i++){
+                World.markerList[i].markerObject.enabled = true;
+            }
         }
     },
     // screen was clicked but no geo-object was hit
     onScreenClick: function onScreenClickFn() {
+    },
+
+    questionAnswered: function questionAnsweredFn(success){
+        if(success){
+            //update SCORE
+            alert("Answered Correctly!")
+            document.location = "architectsdk://score?id=" + encodeURIComponent(World.question.poiData.id)+"&success=true";
+            World.resume();
+        }else{
+            alert("Nope!")
+            //update SCORE NEGATIVE
+            document.location = "architectsdk://score?id=" + encodeURIComponent(World.question.poiData.id)+"&success=false";
+        }
+    },
+    resume: function resumeFn(){
+        if(World.isAnswering){
+            World.isAnswering = false;
+            World.question.destroy();
+        }
+        if(World.isInArea){
+            World.areaMarker.enabled = true;
+        }else{
+            for(var it=0; World.markerList.length;it++){
+                World.markerList[it].markerObject.enabled = true;
+            }
+        }
+
     }
 };
 

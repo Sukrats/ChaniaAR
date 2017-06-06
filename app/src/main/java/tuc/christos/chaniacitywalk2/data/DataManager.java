@@ -103,6 +103,7 @@ public class DataManager {
     public boolean isInitialised(){
         return !isScenesEmpty() && !isPeriodsEmpty();
     }
+
     public void syncLocalToRemote() {
         RestClient rs = RestClient.getInstance();
         rs.getPlayerData(new ClientListener() {
@@ -190,8 +191,11 @@ public class DataManager {
     }
 
 
-    // Active Player Methods
+    // Player Methods
 
+    public boolean playerExists(String username){
+        return mDBh.getPlayer(username).moveToNext();
+    }
 
     public boolean isPlayersEmpty() {
         return mDBh.isPlayersEmpty();

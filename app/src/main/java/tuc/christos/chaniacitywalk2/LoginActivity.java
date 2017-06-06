@@ -78,21 +78,6 @@ public class LoginActivity extends AppCompatActivity {
         mDataManager.init(this);
         mRestClient = RestClient.getInstance();
 
-        if(!mDataManager.isInitialised()){
-            mRestClient.getInitialContent( new ClientListener() {
-                @Override
-                public void onCompleted(boolean success, int httpCode, String msg) {
-                    if(success) {
-                        progressView.setText(msg);
-                    }
-                }
-
-                @Override
-                public void onUpdate(int progress, String msg) {
-                    progressView.setText(msg+progress+"%");
-                }
-            });
-        }
         formsContainer = (LinearLayout) findViewById(R.id.forms_container);
         btnPanel = (LinearLayout) findViewById(R.id.btn_panel);
         mProgressView = findViewById(R.id.login_progress);
@@ -428,47 +413,27 @@ public class LoginActivity extends AppCompatActivity {
             if (focusView != null) focusView.requestFocus();
             mDataManager.clearActivePlayer();
         } else {
+            Intent intent = new Intent(getApplicationContext(), SplashActivity.class);
             mDataManager.printPlayers();
-            if (mDataManager.isPlayersEmpty()) {
+
+            if (!mDataManager.playerExists(mPlayer.getUsername())) {
                 Log.i("DB_SYNC", "Inserted new Player on: " + mPlayer.getRecentActivity().toString());
                 mDataManager.insertPlayer(mPlayer);
-                mDataManager.syncLocalToRemote();
+                intent.putExtra("sync_key","local");
             } else {
                 Log.i("DB_SYNC", "MYSQL last update: " + mPlayer.getRecentActivity().toString());
                 Log.i("DB_SYNC", "SQLite last update: " + mDataManager.getPlayerLastActivity(mPlayer.getUsername()));
                 if (mPlayer.getRecentActivity().after(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
+                    intent.putExtra("sync_key","local");
                     mDataManager.insertPlayer(mPlayer);
-                    mDataManager.syncLocalToRemote();
                 } else if (mPlayer.getRecentActivity().before(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
+                    intent.putExtra("sync_key","remote");
                     mDataManager.setActivePlayer(mPlayer);
-                    mDataManager.syncRemoteToLocal();
                 }else{
                     mDataManager.setActivePlayer(mPlayer);
                 }
             }
-            if (mDataManager.isInitialised()) {
-                Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
-                Log.i("Activity","Started");
-                startActivity(intent);
-            }else{
-                mRestClient.getInitialContent( new ClientListener() {
-                    @Override
-                    public void onCompleted(boolean success, int httpCode, String msg) {
-                        if(success) {
-                            progressView.setText(msg);
-                            Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
-                            Log.i("Activity","Started");
-                            startActivity(intent);
-                        }else{
-                            handleResponse(httpCode,msg);
-                        }
-                    }
-                    @Override
-                    public void onUpdate(int progress, String msg) {
-                        progressView.setText(msg+progress+"%");
-                    }
-                });
-            }
+            startActivity(intent);
         }
     }
 

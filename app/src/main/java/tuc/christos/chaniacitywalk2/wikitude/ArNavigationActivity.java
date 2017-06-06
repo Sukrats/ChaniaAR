@@ -154,6 +154,17 @@ public class ArNavigationActivity extends Activity {
                             e.printStackTrace();
                         }
                         break;
+                    case "score":
+                        if(invokedUri.getBooleanQueryParameter("success",false)){
+                            Log.i("Answer","correct");
+                            mDataManager.getActivePlayer().updateScore(true);
+                            mDataManager.addVisit(Long.valueOf(invokedUri.getQueryParameter("id")));
+                        }else{
+                            Log.i("Answer","wrong");
+                            mDataManager.getActivePlayer().updateScore(false);
+                        }
+                        break;
+
                     default:
                         Toast.makeText(getApplicationContext(),"Got url: "+invokedUri.getHost(), Toast.LENGTH_SHORT).show();
                         return true;

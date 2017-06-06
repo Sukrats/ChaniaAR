@@ -174,4 +174,11 @@ public class Player {
     public void setScore(Long score) {
         this.score = score;
     }
+
+    public void updateScore(boolean success){
+        if(success)
+            this.score += 250;
+        else
+            this.score -= 250;
+    }
 }

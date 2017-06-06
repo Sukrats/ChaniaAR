@@ -127,7 +127,7 @@ public class RestClient implements ContentListener {
     }
     /**********************************************************GET PERIODS***********************************************************************/
 
-    private void downloadPeriods(final ContentListener cl) {
+    public void downloadPeriods(final ContentListener cl) {
         Log.i(TAG, "Downloading Periods");
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(Constants.URL_PERIODS, null, new AsyncHttpResponseHandler() {
