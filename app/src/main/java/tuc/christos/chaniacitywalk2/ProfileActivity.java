@@ -106,7 +106,7 @@ public class ProfileActivity extends AppCompatActivity {
         public CharSequence getPageTitle(int position) {
         String page = "";
             switch (position){
-                case 0: page ="DETAILS"; break;
+                case 0: page ="INFO"; break;
                 case 1: page ="PROGRESS"; break;
                 case 2: page ="SAVED PLACES"; break;
                 case 3: page ="VISITED"; break;
@@ -249,7 +249,21 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void onBindViewHolder(final SimpleItemRecyclerViewAdapter.ViewHolder holder, int position) {
                 final Scene item = mValues.get(position);
-                DataManager dm = DataManager.getInstance();
+                holder.save.setVisibility(View.GONE);
+
+                holder.mView.setText(item.getName());
+                holder.mIdView.setText(String.valueOf(position + 1));
+                holder.cardView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Context context = v.getContext();
+                        Intent intent = new Intent(context, SceneDetailActivity.class);
+                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
+
+                        context.startActivity(intent);
+
+                    }
+                });
 
             }
 

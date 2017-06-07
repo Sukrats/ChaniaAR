@@ -104,6 +104,7 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i("ACTIVITY","CREATED MAPS ACTIVITY");
         //setContentView(R.layout.activity_maps_custom);
         setContentView(R.layout.custom_map_layout_test);
 
@@ -111,6 +112,7 @@ public class MapsActivity extends AppCompatActivity implements
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
+        Log.i("LOADED","?"+mDataManager.scenesLoaded);
         RestClient mRestClient = RestClient.getInstance();
         if(!mDataManager.isInitialised()){
             mRestClient.getInitialContent(new ClientListener() {

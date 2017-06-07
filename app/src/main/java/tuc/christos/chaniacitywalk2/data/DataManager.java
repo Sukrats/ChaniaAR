@@ -36,9 +36,10 @@ public class DataManager {
     private static DataManager INSTANCE = null;
     private boolean instantiated = false;
     private Player activePlayer;
-
-   // private ArrayList<ArScene> routeList = new ArrayList<>();
+    public boolean scenesLoaded = false;
+    // private ArrayList<ArScene> routeList = new ArrayList<>();
     private HashMap<String, ArScene> Route = new HashMap<>();
+    private HashMap<String, Scene> ScenesMap = new HashMap<>();
 
     private HashMap<Polyline, Scene> lineToSceneMap = new HashMap<>();
     private HashMap<Scene, Polyline> sceneToLineMap = new HashMap<>();
@@ -101,7 +102,7 @@ public class DataManager {
     }
 
     /**********************************************************DB SYNCING********************************************************************/
-    public boolean isInitialised(){
+    public boolean isInitialised() {
         return !isScenesEmpty() && !isPeriodsEmpty();
     }
 
@@ -110,12 +111,12 @@ public class DataManager {
         rs.getPlayerData(new ClientListener() {
             @Override
             public void onCompleted(boolean success, int httpCode, String msg) {
-                Log.i(TAG,msg);
+                Log.i(TAG, msg);
             }
 
             @Override
             public void onUpdate(int progress, String msg) {
-                Log.i(TAG,msg);
+                Log.i(TAG, msg);
             }
         });
         Log.i("DB_SYNC", "UPDATED LOCAL DATABASE");
@@ -127,12 +128,13 @@ public class DataManager {
     }
 
     /*********************************************************CONTENT METHODS**************************************************************/
-    public void getContent(Player player){
+    public void getContent(Player player) {
         ArrayList<Scene> scenes = new ArrayList<>(getScenes());
-        for(Scene temp : scenes){
+        for (Scene temp : scenes) {
 
         }
     }
+
     /**********************************************************PLAYER METHODS*****************************************************************/
 
     //Login and autocomplete methods
@@ -157,7 +159,8 @@ public class DataManager {
         activePlayer = null;
         mDBh.clearActivePlayer();
     }
-    public Player getActivePlayer(){
+
+    public Player getActivePlayer() {
         return this.activePlayer;
     }
 
@@ -194,7 +197,7 @@ public class DataManager {
 
     // Player Methods
 
-    public boolean playerExists(String username){
+    public boolean playerExists(String username) {
         return mDBh.getPlayer(username).moveToNext();
     }
 
@@ -231,10 +234,10 @@ public class DataManager {
         return player;
     }
 
-    public void printPlayers(){
+    public void printPlayers() {
         Cursor c = mDBh.getPlayers();
         Player player = new Player();
-        while(c.moveToNext()){
+        while (c.moveToNext()) {
             player.setEmail(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
             player.setUsername(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_USERNAME)));
             player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_PASSWORD)));
@@ -244,7 +247,7 @@ public class DataManager {
             player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
             player.setScore(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_SCORE)));
             player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
-            Log.i("Players",player.getEmail()+player.getUsername()+player.getRecentActivity()+" ACTIVE?: "+ String.valueOf(active));
+            Log.i("Players", player.getEmail() + player.getUsername() + player.getRecentActivity() + " ACTIVE?: " + String.valueOf(active));
         }
     }
 
@@ -254,7 +257,7 @@ public class DataManager {
         return mDBh.isPeriodsEmpty();
     }
 
-    boolean populatePeriods(JSONArray jsonArray){
+    boolean populatePeriods(JSONArray jsonArray) {
         PopulateDBTask myTask = new PopulateDBTask(jsonArray, mDBHelper.PeriodEntry.TABLE_NAME);
         myTask.execute();
         return true;
@@ -307,24 +310,32 @@ public class DataManager {
 
     public List<Scene> getPeriodScenes(long periodid) {
         List<Scene> scenes = new ArrayList<>();
-        Cursor c = mDBh.getPeriodScenes(periodid);
-        while (c.moveToNext()) {
-            String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
-            double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
-            double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
-            int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID));
-            int period_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID));
-            String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
-            String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL));
-            String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
+        if (!scenesLoaded) {
+            Cursor c = mDBh.getPeriodScenes(periodid);
+            while (c.moveToNext()) {
+                String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
+                double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
+                double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
+                int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID));
+                int period_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID));
+                String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
+                String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL));
+                String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
-            Scene temp = new Scene(lat, lon, id, period_id, name, description);
-            temp.setHasAR(false);
-            temp.setSaved(hasSaved(temp.getId()));
-            temp.setVisited(hasVisited(temp.getId()));
-            temp.setUriImages(images);
-            temp.setUriThumb(thumbnail);
-            scenes.add(temp);
+                Scene temp = new Scene(lat, lon, id, period_id, name, description);
+                temp.setHasAR(false);
+                temp.setSaved(hasSaved(temp.getId()));
+                temp.setVisited(hasVisited(temp.getId()));
+                temp.setUriImages(images);
+                temp.setUriThumb(thumbnail);
+                scenes.add(temp);
+            }
+        } else {
+            for (Scene temp : ScenesMap.values()) {
+                if (temp.getPeriod_id() == periodid)
+                    scenes.add(temp);
+            }
+
         }
         return scenes;
     }
@@ -335,133 +346,170 @@ public class DataManager {
         return mDBh.isScenesEmpty();
     }
 
-    void populateScenes(JSONArray jsonArray){
+    void populateScenes(JSONArray jsonArray) {
         PopulateDBTask myTask = new PopulateDBTask(jsonArray, mDBHelper.SceneEntry.TABLE_NAME);
         myTask.execute();
     }
 
     public Scene getScene(String id) {
-        Cursor c = mDBh.getScene(Long.valueOf(id));
-        Scene s = new Scene();
-        if (c.moveToNext()) {
-            s.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID)));
-            s.setName(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME)));
-            s.setDescription(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION)));
-            s.setLatitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE)));
-            s.setLongitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE)));
-            s.setPeriod_id(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID)));
-            s.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL)));
-            s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
-            s.setSaved(hasSaved(s.getId()));
-            s.setVisited(hasVisited(s.getId()));
-            s.setHasAR(false);
-        }
-        return s;
+        if (scenesLoaded) {
+            Cursor c = mDBh.getScene(Long.valueOf(id));
+            Scene s = new Scene();
+            if (c.moveToNext()) {
+                s.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID)));
+                s.setName(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME)));
+                s.setDescription(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION)));
+                s.setLatitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE)));
+                s.setLongitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE)));
+                s.setPeriod_id(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID)));
+                s.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL)));
+                s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
+                s.setSaved(hasSaved(s.getId()));
+                s.setVisited(hasVisited(s.getId()));
+                s.setHasAR(false);
+            }
+            return s;
+        } else
+            return ScenesMap.get(id);
     }
+
 
     public List<Scene> getScenes() {
-        Cursor c = mDBh.getScenes();
-        List<Scene> scenes = new ArrayList<>();
-        int i = 0;
-        Log.i(TAG, "Fetching Scenes from local db");
-        while (c.moveToNext()) {
-            i++;
-            String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
-            double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
-            double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
-            int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID));
-            int period_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID));
-            String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
-            String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL));
-            String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
+        if (!scenesLoaded) {
+            Cursor c = mDBh.getScenes();
+            List<Scene> scenes = new ArrayList<>();
+            int i = 0;
+            Log.i(TAG, "Fetching Scenes from local db");
+            while (c.moveToNext()) {
+                i++;
+                String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
+                double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
+                double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
+                int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID));
+                int period_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID));
+                String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
+                String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL));
+                String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
-            Scene temp = new Scene(lat, lon, id, period_id, name, description);
-            temp.setSaved(hasSaved(temp.getId()));
-            temp.setVisited(hasVisited(temp.getId()));
-            temp.setUriImages(images);
-            temp.setUriThumb(thumbnail);
-            temp.setHasAR(false);
-            scenes.add(temp);
-        }
-        Log.i(TAG, "Fetched: " + i + " Scenes");
-        return scenes;
+                Scene temp = new Scene(lat, lon, id, period_id, name, description);
+                temp.setSaved(hasSaved(temp.getId()));
+                temp.setVisited(hasVisited(temp.getId()));
+                temp.setUriImages(images);
+                temp.setUriThumb(thumbnail);
+                temp.setHasAR(false);
+                scenes.add(temp);
+                ScenesMap.put(String.valueOf(temp.getId()), temp);
+            }
+            scenesLoaded = true;
+            Log.i(TAG, "Fetched: " + i + " Scenes");
+            return scenes;
+        } else
+            return new ArrayList<>(ScenesMap.values());
     }
+
     /*****************************************************PLACES METHODS************************************************************************/
 
-    public void savePlace(long id){
+    public void savePlace(long id) {
         Player p = getPlayer();
-        mDBh.insertPlace(id,p.getUsername());
-    }
-    public void clearPlace(long id){
-        Player p = getPlayer();
-        mDBh.deletePlace(id,p.getUsername());
+        mDBh.insertPlace(id, p.getUsername());
+        if(scenesLoaded)
+            ScenesMap.get(String.valueOf(id)).setSaved(true);
     }
 
-    public boolean hasSaved(long scene_id){
+    public void clearPlace(long id) {
         Player p = getPlayer();
-        Cursor c = mDBh.getPlace(scene_id,p.getUsername());
-        return c.moveToNext();
+        mDBh.deletePlace(id, p.getUsername());
+        if(scenesLoaded)
+            ScenesMap.get(String.valueOf(id)).setSaved(false);
     }
-    public void printPlaces(){
+
+    public boolean hasSaved(long scene_id) {
+        if(!scenesLoaded) {
+            Player p = getPlayer();
+            Cursor c = mDBh.getPlace(scene_id, p.getUsername());
+            return c.moveToNext();
+        } else
+            return ScenesMap.get(String.valueOf(scene_id)).isSaved();
+    }
+
+    public void printPlaces() {
         Player p = getPlayer();
         Cursor c = mDBh.getPlaces(p.getUsername());
-        String username ;
+        String username;
         int scene_id;
-        Timestamp created ;
-        Log.i("Place","Attempt Print: "+c.getCount());
-        while (c.moveToNext()){
+        Timestamp created;
+        Log.i("Place", "Attempt Print: " + c.getCount());
+        while (c.moveToNext()) {
             username = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_USERNAME));
             scene_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
             created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_CREATED)));
-            Log.i("Place","Username: "+username+"\tScene: "+scene_id+"\tCreated: "+created.toString());
+            Log.i("Place", "Username: " + username + "\tScene: " + scene_id + "\tCreated: " + created.toString());
         }
     }
 
-    public ArrayList<Scene> getPlaces(String username){
+    public ArrayList<Scene> getPlaces(String username) {
         ArrayList<Scene> scenes = new ArrayList<>();
-
-        Cursor c = mDBh.getPlaces(username);
-        while(c.moveToNext()){
-            long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
-            scenes.add(getScene(String.valueOf(scene_id)));
+        if (!scenesLoaded) {
+            Cursor c = mDBh.getPlaces(username);
+            while (c.moveToNext()) {
+                long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
+                scenes.add(getScene(String.valueOf(scene_id)));
+            }
+        } else {
+            for (Scene temp : ScenesMap.values()) {
+                if (temp.isSaved()) scenes.add(temp);
+            }
         }
         return scenes;
     }
 
     /*****************************************************VISITS METHODS************************************************************************/
 
-    public void addVisit(long id){
+    public void addVisit(long id) {
         Player p = getPlayer();
-        mDBh.insertVisit(id,p.getUsername());
+        mDBh.insertVisit(id, p.getUsername());
+        if(scenesLoaded)
+            ScenesMap.get(String.valueOf(id)).setVisited(true);
     }
 
-    public boolean hasVisited(long scene_id){
+    public boolean hasVisited(long scene_id) {
         Player p = getPlayer();
-        Cursor c = mDBh.getVisit(scene_id,p.getUsername());
-        return c.moveToNext();
+        if (!scenesLoaded) {
+            Cursor c = mDBh.getVisit(scene_id, p.getUsername());
+            return c.moveToNext();
+        }
+        else    return ScenesMap.get(String.valueOf(scene_id)).isVisited();
     }
-    public void printVisits(){
+
+    public void printVisits() {
         Player p = getPlayer();
         Cursor c = mDBh.getVisits(p.getUsername());
-        String username ;
+        String username;
         int scene_id;
-        Timestamp created ;
-        Log.i("Visit","Attempt Print: "+c.getCount());
-        while (c.moveToNext()){
+        Timestamp created;
+        Log.i("Visit", "Attempt Print: " + c.getCount());
+        while (c.moveToNext()) {
             username = c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_USERNAME));
             scene_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
             created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_CREATED)));
-            Log.i("Visit","Username: "+username+"\tScene: "+scene_id+"\tCreated: "+created.toString());
+            Log.i("Visit", "Username: " + username + "\tScene: " + scene_id + "\tCreated: " + created.toString());
         }
     }
 
-    public ArrayList<Scene> getVisits(String username){
+    public ArrayList<Scene> getVisits(String username) {
         ArrayList<Scene> scenes = new ArrayList<>();
 
-        Cursor c = mDBh.getVisits(username);
-        while(c.moveToNext()){
-            long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
-            scenes.add(getScene(String.valueOf(scene_id)));
+        if (!scenesLoaded) {
+            Cursor c = mDBh.getVisits(username);
+            while (c.moveToNext()) {
+                long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
+                scenes.add(getScene(String.valueOf(scene_id)));
+            }
+        } else {
+            for (Scene temp : ScenesMap.values()) {
+                if (temp.isVisited()) scenes.add(temp);
+            }
+
         }
         return scenes;
     }
@@ -511,28 +559,29 @@ public class DataManager {
     }
 
     /**********************************************************ROUTE HARD CODED *************************************************************/
-    private void initRoute(){
+    private void initRoute() {
         ArrayList<ArScene> mRoute = new ArrayList<>();
-        mRoute.add(new ArScene(35.517398,24.01779,36,4,"Glass Mosque","","assets/earth.wt3"));
-        mRoute.add(new ArScene(35.51711,24.020557,37,2,"The Byzantine Wall","","assets/earth.wt3"));
-        mRoute.add(new ArScene(35.5171461,24.019581,38,1,"Minoiki Kidonia","","assets/earth.wt3"));
-        mRoute.add(new ArScene(35.5164899,24.021208,39,3,"Church of St. Rocco","","assets/earth.wt3"));
-        for(ArScene temp : mRoute){
+        mRoute.add(new ArScene(35.517398, 24.01779, 36, 4, "Glass Mosque", "", "assets/earth.wt3"));
+        mRoute.add(new ArScene(35.51711, 24.020557, 37, 2, "The Byzantine Wall", "", "assets/earth.wt3"));
+        mRoute.add(new ArScene(35.5171461, 24.019581, 38, 1, "Minoiki Kidonia", "", "assets/earth.wt3"));
+        mRoute.add(new ArScene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "", "assets/earth.wt3"));
+        for (ArScene temp : mRoute) {
             temp.setHasAR(true);
-            Route.put(String.valueOf(temp.getId()),temp);
+            Route.put(String.valueOf(temp.getId()), temp);
         }
     }
 
-    public ArrayList<ArScene> getRouteAsList(){
-        return new ArrayList<>( Route.values() );
+    public ArrayList<ArScene> getRouteAsList() {
+        return new ArrayList<>(Route.values());
     }
-    public HashMap<String,ArScene> getRoute(){
+
+    public HashMap<String, ArScene> getRoute() {
         return Route;
     }
 
     /**********************************************************POPULATE DB TASK*************************************************************************/
 
-    void populateUserData(JSONArray jsonArray, String tableName){
+    void populateUserData(JSONArray jsonArray, String tableName) {
         PopulateDBTask myTask = new PopulateDBTask(jsonArray, tableName);
         myTask.execute();
     }

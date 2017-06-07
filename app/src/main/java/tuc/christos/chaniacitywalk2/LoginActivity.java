@@ -59,6 +59,8 @@ public class LoginActivity extends AppCompatActivity {
     private LinearLayout btnPanel;
     private AppCompatCheckBox remember;
 
+    private ProgressDialog progressBar;
+
     private String mActiveView = "login";
 
     private TextView progressView;
@@ -68,6 +70,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
+        progressBar = new ProgressDialog(this);
+        progressBar.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 
         remember = (AppCompatCheckBox) findViewById(R.id.remember);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -152,6 +157,14 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mRestClient != null) {
+            mRestClient.cancel();
+        }
     }
 
     @Override
@@ -432,8 +445,8 @@ public class LoginActivity extends AppCompatActivity {
                     mDataManager.setActivePlayer(mPlayer);
                     downloadContent("remote");
                 } else {
-                    downloadContent("");
                     mDataManager.setActivePlayer(mPlayer);
+                    downloadContent("");
                 }
             }
             //startActivity(intent);
@@ -578,11 +591,8 @@ public class LoginActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private ProgressDialog progressBar;
 
     void downloadContent(final String sync) {
-        progressBar = new ProgressDialog(this);
-        progressBar.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         progressBar.show();
         if (!mDataManager.isInitialised()) {
             progressBar.setMessage("Downloading Periods...");
@@ -608,11 +618,11 @@ public class LoginActivity extends AppCompatActivity {
                                 //startMapsActivity();
                             } else if (!sync.isEmpty() && sync.equals("remote")) {
                                 Toast.makeText(getApplicationContext(), "TODO: Upload to remote DB", Toast.LENGTH_LONG).show();
-                                startMapsActivity();
+                                startMapsActivity("Scenes Remote");
                             } else {
                                 progressBar.setProgress(100);
                                 progressBar.setMessage("Downloade Complete...");
-                                startMapsActivity();
+                                startMapsActivity("Scenes no sync");
                             }
                             break;
 
@@ -630,10 +640,9 @@ public class LoginActivity extends AppCompatActivity {
                         case "Places":
                             progressBar.setProgress(100);
                             progressBar.setMessage("Downloade Complete!");
-                            startMapsActivity();
+                            startMapsActivity("Not Initiated/Places");
                             break;
                         case "Player":
-                            startMapsActivity();
                             break;
 
                     }
@@ -648,18 +657,16 @@ public class LoginActivity extends AppCompatActivity {
                     switch (TAG) {
 
                         case "Visits":
-
-                                mRestClient.downloadData(mPlayer.getLinks().get("places"), this, "Places");
-                                progressBar.setProgress(50);
-                                progressBar.setMessage("Downloading Places...");
-
+                            mRestClient.downloadData(mPlayer.getLinks().get("places"), this, "Places");
+                            progressBar.setProgress(50);
+                            progressBar.setMessage("Downloading Places...");
+                            break;
                         case "Places":
                             progressBar.setProgress(100);
                             progressBar.setMessage("Downloade Complete!");
-                            startMapsActivity();
+                            startMapsActivity("Initiated/Places");
                             break;
                         case "Player":
-                            startMapsActivity();
                             break;
 
                     }
@@ -668,7 +675,10 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    void startMapsActivity() {
+    void startMapsActivity(String tag) {
+        mDataManager.getScenes();
+        Log.i("LOADED","?"+mDataManager.scenesLoaded);
+        progressBar.dismiss();
         Intent intent = new Intent(this, MapsActivity.class);
         startActivity(intent);
     }
