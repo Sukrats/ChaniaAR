@@ -112,7 +112,6 @@ public class MapsActivity extends AppCompatActivity implements
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
-        Log.i("LOADED","?"+mDataManager.scenesLoaded);
         RestClient mRestClient = RestClient.getInstance();
         if(!mDataManager.isInitialised()){
             mRestClient.getInitialContent(new ClientListener() {

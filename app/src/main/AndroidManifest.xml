@@ -96,12 +96,9 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
         </activity>
-        <activity
-            android:name=".SplashActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:label="@string/title_activity_splash"
-            android:theme="@style/SplashTheme"
-            android:noHistory="true"/>
+
+        <service android:name=".LocationService"
+            android:exported="false" />
     </application>
 
 </manifest>
