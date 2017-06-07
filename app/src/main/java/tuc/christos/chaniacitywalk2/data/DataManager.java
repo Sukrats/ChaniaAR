@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.Array;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -304,7 +305,7 @@ public class DataManager {
         return p;
     }
 
-    private List<Scene> getPeriodScenes(long periodid) {
+    public List<Scene> getPeriodScenes(long periodid) {
         List<Scene> scenes = new ArrayList<>();
         Cursor c = mDBh.getPeriodScenes(periodid);
         while (c.moveToNext()) {
@@ -318,9 +319,9 @@ public class DataManager {
             String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
             Scene temp = new Scene(lat, lon, id, period_id, name, description);
-            temp.setSaved(true);
             temp.setHasAR(false);
-            temp.setVisited(false);
+            temp.setSaved(hasSaved(temp.getId()));
+            temp.setVisited(hasVisited(temp.getId()));
             temp.setUriImages(images);
             temp.setUriThumb(thumbnail);
             scenes.add(temp);
@@ -416,6 +417,17 @@ public class DataManager {
         }
     }
 
+    public ArrayList<Scene> getPlaces(String username){
+        ArrayList<Scene> scenes = new ArrayList<>();
+
+        Cursor c = mDBh.getPlaces(username);
+        while(c.moveToNext()){
+            long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
+            scenes.add(getScene(String.valueOf(scene_id)));
+        }
+        return scenes;
+    }
+
     /*****************************************************VISITS METHODS************************************************************************/
 
     public void addVisit(long id){
@@ -441,6 +453,17 @@ public class DataManager {
             created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_CREATED)));
             Log.i("Visit","Username: "+username+"\tScene: "+scene_id+"\tCreated: "+created.toString());
         }
+    }
+
+    public ArrayList<Scene> getVisits(String username){
+        ArrayList<Scene> scenes = new ArrayList<>();
+
+        Cursor c = mDBh.getVisits(username);
+        while(c.moveToNext()){
+            long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
+            scenes.add(getScene(String.valueOf(scene_id)));
+        }
+        return scenes;
     }
 
     /*****************************************************POLYLINES************************************************************************/

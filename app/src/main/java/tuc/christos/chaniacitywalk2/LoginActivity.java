@@ -2,6 +2,7 @@ package tuc.christos.chaniacitywalk2;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -113,21 +114,21 @@ public class LoginActivity extends AppCompatActivity {
             if (credentials != null) {
                 String[] tokens = credentials.split(":");// 0 -> email, 1->password, 2-> username
                 Log.i("REMEMBER", "uname: " + tokens[2] + "pass: " + tokens[1]);
-                mRestClient.login(tokens[0], tokens[1],new ClientListener() {
+                mRestClient.login(tokens[0], tokens[1], new ClientListener() {
                     @Override
                     public void onCompleted(boolean success, int httpCode, String code) {
-                        if(success) {
+                        if (success) {
                             try {
                                 mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
                                 handleResponse(httpCode, "ok");
                             } catch (JSONException e) {
                                 progressView.setText(e.getMessage());
                             }
-                        }
-                        else{
-                            handleResponse(httpCode,code);
+                        } else {
+                            handleResponse(httpCode, code);
                         }
                     }
+
                     @Override
                     public void onUpdate(int progress, String msg) {
                     }
@@ -149,7 +150,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onPause(){
+    public void onPause() {
         super.onPause();
     }
 
@@ -224,19 +225,18 @@ public class LoginActivity extends AppCompatActivity {
                     editor.apply();
                 }
                 showProgress(true);
-                mRestClient.login(email, password,new ClientListener() {
+                mRestClient.login(email, password, new ClientListener() {
                     @Override
                     public void onCompleted(boolean success, int httpCode, String code) {
-                        if(success) {
+                        if (success) {
                             try {
                                 mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
                                 handleResponse(httpCode, "ok");
-                                } catch (JSONException e) {
-                                    progressView.setText(e.getMessage());
-                                }
-                        }
-                        else{
-                            handleResponse(httpCode,code);
+                            } catch (JSONException e) {
+                                progressView.setText(e.getMessage());
+                            }
+                        } else {
+                            handleResponse(httpCode, code);
                         }
                     }
 
@@ -332,21 +332,20 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 // Show a progress spinner, and kick off a background task to
                 // perform the user login attempt.
-                JSONObject json = JsonHelper.playerToJson(new Player(email,username,password,fName,lName));
+                JSONObject json = JsonHelper.playerToJson(new Player(email, username, password, fName, lName));
                 showProgress(true);
                 mRestClient.register(json, new ClientListener() {
                     @Override
                     public void onCompleted(boolean success, int httpCode, String code) {
-                        if(success) {
+                        if (success) {
                             try {
                                 mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
                                 handleResponse(httpCode, "ok");
                             } catch (JSONException e) {
                                 progressView.setText(e.getMessage());
                             }
-                        }
-                        else{
-                            handleResponse(httpCode,code);
+                        } else {
+                            handleResponse(httpCode, code);
                         }
                     }
 
@@ -374,7 +373,7 @@ public class LoginActivity extends AppCompatActivity {
                 progressView.setText(R.string.action_sign_in_successful);
                 cancel = false;
                 break;
-            case 201 :
+            case 201:
                 progressView.setText(R.string.action_register_successful);
                 cancel = false;
                 break;
@@ -413,27 +412,31 @@ public class LoginActivity extends AppCompatActivity {
             if (focusView != null) focusView.requestFocus();
             mDataManager.clearActivePlayer();
         } else {
-            Intent intent = new Intent(getApplicationContext(), SplashActivity.class);
+            //Intent intent = new Intent(getApplicationContext(), SplashActivity.class);
             mDataManager.printPlayers();
 
             if (!mDataManager.playerExists(mPlayer.getUsername())) {
                 Log.i("DB_SYNC", "Inserted new Player on: " + mPlayer.getRecentActivity().toString());
                 mDataManager.insertPlayer(mPlayer);
-                intent.putExtra("sync_key","local");
+                //intent.putExtra("sync_key","local");
+                downloadContent("local");
             } else {
                 Log.i("DB_SYNC", "MYSQL last update: " + mPlayer.getRecentActivity().toString());
                 Log.i("DB_SYNC", "SQLite last update: " + mDataManager.getPlayerLastActivity(mPlayer.getUsername()));
                 if (mPlayer.getRecentActivity().after(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
-                    intent.putExtra("sync_key","local");
+                    //intent.putExtra("sync_key","local");
                     mDataManager.insertPlayer(mPlayer);
+                    downloadContent("local");
                 } else if (mPlayer.getRecentActivity().before(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
-                    intent.putExtra("sync_key","remote");
+                    //intent.putExtra("sync_key","remote");
                     mDataManager.setActivePlayer(mPlayer);
-                }else{
+                    downloadContent("remote");
+                } else {
+                    downloadContent("");
                     mDataManager.setActivePlayer(mPlayer);
                 }
             }
-            startActivity(intent);
+            //startActivity(intent);
         }
     }
 
@@ -553,26 +556,121 @@ public class LoginActivity extends AppCompatActivity {
 
             }
         });
-        if(!DataManager.getInstance().isInitialised()) {
+        if (!DataManager.getInstance().isInitialised()) {
             builder.setMessage("In order to initialise your profile as well as some content an internet connection is required!" +
                     "you can continue as Guest with access to some of the content!");
             builder.setNeutralButton("Guest", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
-                    Toast.makeText(builder.getContext(),"Guest",Toast.LENGTH_LONG).show();
+                    Toast.makeText(builder.getContext(), "Guest", Toast.LENGTH_LONG).show();
                 }
             });
-        }else{
+        } else {
             builder.setMessage("We need an internet connection to keep your progress in sync with our servers, if you choose to continue" +
                     "you should manually sync your progress from the App's Settings menu, the next time you have access to the internet!" +
-                    " enjoy :)" );
+                    " enjoy :)");
             builder.setNeutralButton("Continue Offline!", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
-                    Toast.makeText(builder.getContext(),"Offline",Toast.LENGTH_LONG).show();
+                    Toast.makeText(builder.getContext(), "Offline", Toast.LENGTH_LONG).show();
                 }
             });
 
         }
         builder.show();
+    }
+
+    private ProgressDialog progressBar;
+
+    void downloadContent(final String sync) {
+        progressBar = new ProgressDialog(this);
+        progressBar.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressBar.show();
+        if (!mDataManager.isInitialised()) {
+            progressBar.setMessage("Downloading Periods...");
+            progressBar.setProgress(0);
+            mRestClient.downloadPeriods(new ContentListener() {
+                @Override
+                public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                    switch (TAG) {
+
+                        case "Periods":
+                            mRestClient.downloadScenes(this);
+                            progressBar.setProgress(25);
+                            progressBar.setMessage("Downloading Scenes...");
+                            break;
+
+                        case "Scenes":
+                            Log.i("SYNC", sync);
+                            if (!sync.isEmpty() && sync.equals("local")) {
+                                mRestClient.downloadData(mDataManager.getActivePlayer().getLinks().get("visits"), this, "Visits");
+                                progressBar.setProgress(50);
+                                progressBar.setMessage("Downloading Visits...");
+                                //Toast.makeText(getApplicationContext(),"TODO: Download player data", Toast.LENGTH_LONG).show();
+                                //startMapsActivity();
+                            } else if (!sync.isEmpty() && sync.equals("remote")) {
+                                Toast.makeText(getApplicationContext(), "TODO: Upload to remote DB", Toast.LENGTH_LONG).show();
+                                startMapsActivity();
+                            } else {
+                                progressBar.setProgress(100);
+                                progressBar.setMessage("Downloade Complete...");
+                                startMapsActivity();
+                            }
+                            break;
+
+                        case "Visits":
+                            if (success) {
+                                mRestClient.downloadData(mDataManager.getActivePlayer().getLinks().get("places"), this, "Places");
+                                progressBar.setProgress(75);
+                                progressBar.setMessage("Downloading Places...");
+                                break;
+                            } else {
+                                mRestClient.downloadData(mDataManager.getActivePlayer().getLinks().get("places"), this, "Places");
+                                progressBar.setProgress(75);
+                                progressBar.setMessage("Downloading Places...");
+                            }
+                        case "Places":
+                            progressBar.setProgress(100);
+                            progressBar.setMessage("Downloade Complete!");
+                            startMapsActivity();
+                            break;
+                        case "Player":
+                            startMapsActivity();
+                            break;
+
+                    }
+                }
+            });
+        } else {
+            progressBar.setProgress(0);
+            progressBar.setMessage("Downloading Visits...");
+            mRestClient.downloadData(mPlayer.getLinks().get("visits"), new ContentListener() {
+                @Override
+                public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                    switch (TAG) {
+
+                        case "Visits":
+
+                                mRestClient.downloadData(mPlayer.getLinks().get("places"), this, "Places");
+                                progressBar.setProgress(50);
+                                progressBar.setMessage("Downloading Places...");
+
+                        case "Places":
+                            progressBar.setProgress(100);
+                            progressBar.setMessage("Downloade Complete!");
+                            startMapsActivity();
+                            break;
+                        case "Player":
+                            startMapsActivity();
+                            break;
+
+                    }
+                }
+            }, "Visits");
+        }
+    }
+
+    void startMapsActivity() {
+        Intent intent = new Intent(this, MapsActivity.class);
+        startActivity(intent);
     }
 
 }

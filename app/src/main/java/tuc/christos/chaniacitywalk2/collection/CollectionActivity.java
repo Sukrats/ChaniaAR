@@ -95,7 +95,6 @@ public class CollectionActivity extends AppCompatActivity {
         tabLayout.setSelectedTabIndicatorColor(ContextCompat.getColor(this, R.color.colorPrimary));
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        final SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         // Set up the ViewPager with the sections adapter.
 
         /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -108,6 +107,7 @@ public class CollectionActivity extends AppCompatActivity {
         });*/
         final ProgressBar progressbar = (ProgressBar) findViewById(R.id.progress);
 
+        final SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         final ViewPager mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
