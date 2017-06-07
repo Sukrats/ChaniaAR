@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
@@ -25,8 +26,8 @@ import tuc.christos.chaniacitywalk2.data.RestClient;
  */
 public class SplashActivity extends AppCompatActivity {
 
-    DataManager mDataManager = DataManager.getInstance();
-    RestClient mRestClient = RestClient.getInstance();
+    DataManager mDataManager ;
+    RestClient mRestClient;
 
     ContentLoadingProgressBar progressBar;
     TextView progressMsg ;
@@ -35,6 +36,10 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        mDataManager = DataManager.getInstance();
+        mDataManager.init(this);
+        mRestClient  = RestClient.getInstance();
+
         final String sync = getIntent().getStringExtra("sync_key");
         long Overall = 400;
         if(!mDataManager.isInitialised() && sync != null){
@@ -58,10 +63,15 @@ public class SplashActivity extends AppCompatActivity {
                             case "Scenes":
                                 if(sync!=null && sync.equals("local")){
                                     //mRestClient.getPlayerData(this); break;
+                                    Toast.makeText(getApplicationContext(),"TODO: Download player data", Toast.LENGTH_LONG).show();
+                                    startMapsActivity();
+                                }else if(sync!=null && sync.equals("remote")){
+                                    Toast.makeText(getApplicationContext(),"TODO: Upload to remote DB", Toast.LENGTH_LONG).show();
+                                    startMapsActivity();
                                 }else
                                     startMapsActivity();
                                 break;
-                            case "Players":
+                            case "Player":
                                     startMapsActivity();
                                 break;
 
@@ -70,7 +80,7 @@ public class SplashActivity extends AppCompatActivity {
                 }
             });
 
-
+/*
             mRestClient.getInitialContent( new ClientListener() {
                 @Override
                 public void onCompleted(boolean success, int httpCode, String msg) {
@@ -89,13 +99,15 @@ public class SplashActivity extends AppCompatActivity {
                     progressMsg.setText("Downloading..."+progress+"%");
                     progressBar.setProgress(progress);
                 }
-            });
+            });*/
+        }else {
+            startMapsActivity();
         }
-
     }
 
     void startMapsActivity(){
-
+        Intent intent = new Intent(this, MapsActivity.class);
+        startActivity(intent);
     }
 
 }

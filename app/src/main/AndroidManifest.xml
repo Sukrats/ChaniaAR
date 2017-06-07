@@ -100,7 +100,8 @@
             android:name=".SplashActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_splash"
-            android:theme="@style/SplashTheme"/>
+            android:theme="@style/SplashTheme"
+            android:noHistory="true"/>
     </application>
 
 </manifest>
