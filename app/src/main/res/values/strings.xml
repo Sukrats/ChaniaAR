@@ -56,6 +56,12 @@
     <string name="text_login">Don\'t have an account?</string>
     <string name="text_register">Already have an account?</string>
 
+    <!-- PROFILE VIEW -->
+    <string name="overall_title">Overall</string>
+    <string name="ottoman_title">Ottoman</string>
+    <string name="Venetian_title">Venetian</string>
+    <string name="modern_title">Modern</string>
+
     <!--   MAP PREFERENCES     -->
     <string name="pref_maps">Map Settings</string>
 

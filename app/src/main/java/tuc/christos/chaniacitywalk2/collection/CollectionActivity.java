@@ -2,8 +2,6 @@ package tuc.christos.chaniacitywalk2.collection;
 
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.ContextCompat;
@@ -35,17 +33,11 @@ import android.widget.ToggleButton;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
-import org.w3c.dom.Text;
-
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 import tuc.christos.chaniacitywalk2.ClientListener;
-import tuc.christos.chaniacitywalk2.ContentListener;
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.data.RestClient;
@@ -71,7 +63,6 @@ public class CollectionActivity extends AppCompatActivity {
     static int mImageSize;
 
     public static List<Period> periods;
-    public final String PAGER_POSITION_KEY = "position";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

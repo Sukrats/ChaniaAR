@@ -411,9 +411,9 @@ final class mDBHelper extends SQLiteOpenHelper {
         return db.rawQuery(selectQ, null);
     }
 
-    Cursor getPeriod(String name) {
+    Cursor getPeriod(String period_id) {
         SQLiteDatabase db = this.getWritableDatabase();
-        String selectQ = "SELECT * FROM " + PeriodEntry.TABLE_NAME + " WHERE " + PeriodEntry.PERIODS_COLUMN_NAME + " = '" + name + "'";
+        String selectQ = "SELECT * FROM " + PeriodEntry.TABLE_NAME + " WHERE " + PeriodEntry.PERIODS_COLUMN_ID + " = '" + period_id + "'";
         return db.rawQuery(selectQ, null);
     }
 

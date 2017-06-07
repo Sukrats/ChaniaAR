@@ -2,16 +2,13 @@ package tuc.christos.chaniacitywalk2;
 
 import android.content.Context;
 import android.content.Intent;
-import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.AppCompatTextView;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -24,17 +21,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-
-import java.util.ArrayList;
 import java.util.List;
 
-import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.data.DataManager;
-import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
@@ -104,7 +95,7 @@ public class ProfileActivity extends AppCompatActivity {
 
         @Override
         public CharSequence getPageTitle(int position) {
-        String page = "";
+        String page ;
             switch (position){
                 case 0: page ="INFO"; break;
                 case 1: page ="PROGRESS"; break;
@@ -146,7 +137,7 @@ public class ProfileActivity extends AppCompatActivity {
             int index = getArguments().getInt(ARG_SECTION_NUMBER);
             View rootView;
             if(index == 2){
-                rootView = inflater.inflate(R.layout.fragment_collection_siblings, container, false);
+                rootView = inflater.inflate(R.layout.fragment_profile_siblings, container, false);
                 RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
                 recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(
                         DataManager.getInstance().getPlaces(
@@ -155,7 +146,7 @@ public class ProfileActivity extends AppCompatActivity {
                 ));
 
             }else if(index == 3){
-                rootView = inflater.inflate(R.layout.fragment_collection_siblings, container, false);
+                rootView = inflater.inflate(R.layout.fragment_profile_siblings, container, false);
                 RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
                 recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(
                         DataManager.getInstance().getVisits(
@@ -178,53 +169,71 @@ public class ProfileActivity extends AppCompatActivity {
                 created.setText(mPlayer.getCreated().toString());
                 final String activeTime = "Last Active on: " + mPlayer.getRecentActivity();
                 recentActivity.setText(activeTime);
-                score.setText(mPlayer.getScore().toString());
+                score.setText(String.valueOf(mPlayer.getScore()));
+
             }else{
                 rootView = inflater.inflate(R.layout.progress_details, container, false);
+
                 ProgressBar overall =(ProgressBar) rootView.findViewById(R.id.overall);
                 ProgressBar venetian =(ProgressBar) rootView.findViewById(R.id.venetian);
                 ProgressBar ottoman =(ProgressBar) rootView.findViewById(R.id.ottoman);
                 ProgressBar modern =(ProgressBar) rootView.findViewById(R.id.modern);
 
-                long overProg = 0;
-                int overControl = 0;
+                TextView overall_tx = (TextView) rootView.findViewById(R.id.overall_tx);
+                TextView venetian_tx = (TextView) rootView.findViewById(R.id.venetian_tx);
+                TextView ottoman_tx = (TextView) rootView.findViewById(R.id.ottoman_tx);
+                TextView modern_tx = (TextView) rootView.findViewById(R.id.modern_tx);
+
+
+                int overProg ;
+                float overControl = 0;
                 List<Scene> o = DataManager.getInstance().getScenes();
                 for(Scene scene: o){
                     if(scene.isVisited())
                         overControl++;
                 }
-                overProg = overControl/o.size()*100;
+                overall_tx.setText((int)overControl+"/"+o.size());
+                Log.i("PROGRESS","overall: "+overControl);
+                Log.i("PROGRESS","overall: "+o.size());
 
-                long ottoProg = 0;
-                long modernProg = 0;
-                long venProg = 0;
+
+                float t = overControl/o.size();
+                overProg = Math.round(t*100);
+
+                int ottoProg = 0;
+                int modernProg = 0;
+                int venProg = 0;
 
                 for(int i =3; i<=5;i++){
                     List<Scene> scenes =DataManager.getInstance().getPeriodScenes(i);
-                    int control = 0;
+                    float control = 0;
                     for(Scene temp: scenes){
                         if(temp.isVisited()){
                             control ++;
-                            if(temp.getPeriod_id()==3)
-                                venProg = control/scenes.size()*100;
-                            else if(temp.getPeriod_id() == 4)
-                                ottoProg = control/scenes.size()*100;
-                            else if(temp.getPeriod_id() == 5)
-                                modernProg = control/scenes.size()*100;
+                            if(temp.getPeriod_id()==3) {
+                                venProg = Math.round(control / scenes.size() * 100);
+                                venetian_tx.setText((int)control+"/"+scenes.size());
+                            }else if(temp.getPeriod_id() == 4) {
+                                ottoProg = Math.round(control / scenes.size() * 100);
+                                ottoman_tx.setText((int)control+"/"+scenes.size());
+                            }else if(temp.getPeriod_id() == 5) {
+                                modernProg = Math.round(control / scenes.size() * 100);
+                                modern_tx.setText((int)control+"/"+scenes.size());
+                            }
                         }
                     }
                 }
                 overall.setMax(100);
-                overall.setProgress((int)overProg);
+                overall.setProgress(overProg);
 
                 venetian.setMax(100);
-                venetian.setProgress((int)venProg);
+                venetian.setProgress(venProg);
 
                 ottoman.setMax(100);
-                ottoman.setProgress((int)ottoProg);
+                ottoman.setProgress(ottoProg);
 
                 modern.setMax(100);
-                modern.setProgress((int)modernProg);
+                modern.setProgress(modernProg);
             }
 
             return rootView;

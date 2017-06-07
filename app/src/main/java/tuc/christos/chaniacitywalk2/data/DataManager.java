@@ -5,21 +5,17 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Polyline;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.sql.Array;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import tuc.christos.chaniacitywalk2.ClientListener;
 import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
@@ -37,14 +33,14 @@ public class DataManager {
     private boolean instantiated = false;
     private Player activePlayer;
     public boolean scenesLoaded = false;
-    // private ArrayList<ArScene> routeList = new ArrayList<>();
+
     private HashMap<String, ArScene> Route = new HashMap<>();
     private HashMap<String, Scene> ScenesMap = new HashMap<>();
 
-    private HashMap<Polyline, Scene> lineToSceneMap = new HashMap<>();
-    private HashMap<Scene, Polyline> sceneToLineMap = new HashMap<>();
+    //private HashMap<Polyline, Scene> lineToSceneMap = new HashMap<>();
+    //private HashMap<Scene, Polyline> sceneToLineMap = new HashMap<>();
 
-    private HashMap<Scene, ArrayList<LatLng>> sceneToPointsMap = new HashMap<>();
+    //private HashMap<Scene, ArrayList<LatLng>> sceneToPointsMap = new HashMap<>();
     //private HashMap<ArrayList<LatLng>, Scene> pointsToSceneMap = new HashMap<>();
 
     private String TAG = "Data Manager";
@@ -67,26 +63,8 @@ public class DataManager {
         }
     }
 
-
-    public boolean mapLineToScene(Polyline line, Scene scene) {
-        lineToSceneMap.put(line, scene);
-        return true;
-    }
-
-    public boolean mapScenetoLine(Scene scene, Polyline line) {
-        sceneToLineMap.put(scene, line);
-        return true;
-    }
-
-    public Scene getSceneFromLine(Polyline line) {
-        return lineToSceneMap.get(line);
-    }
-
-    public Polyline getLineFromScene(Scene scene) {
-        return sceneToLineMap.get(scene);
-    }
-
     /**********************************************************MODIFICATIONS******************************************************************/
+
     public Timestamp getLastUpdate(String table_name) {
         Cursor c = mDBh.getModification(table_name);
         String update = "";
@@ -97,16 +75,17 @@ public class DataManager {
         return Timestamp.valueOf(update);
     }
 
-    public void printModsTable() {
-        mDBh.printModsTable();
-    }
+      public void printModsTable() {
+          mDBh.printModsTable();
+      }
 
     /**********************************************************DB SYNCING********************************************************************/
+
     public boolean isInitialised() {
         return !isScenesEmpty() && !isPeriodsEmpty();
     }
 
-    public void syncLocalToRemote() {
+  /*  public void syncLocalToRemote() {
         RestClient rs = RestClient.getInstance();
         rs.getPlayerData(new ClientListener() {
             @Override
@@ -127,13 +106,13 @@ public class DataManager {
         Log.i("DB_SYNC", "UPDATED REMOTE DATABASE");
     }
 
-    /*********************************************************CONTENT METHODS**************************************************************/
-    public void getContent(Player player) {
+  /*  /*********************************************************CONTENT METHODS**************************************************************/
+   /* public void getContent(Player player) {
         ArrayList<Scene> scenes = new ArrayList<>(getScenes());
         for (Scene temp : scenes) {
 
         }
-    }
+    }*/
 
     /**********************************************************PLAYER METHODS*****************************************************************/
 
@@ -201,7 +180,7 @@ public class DataManager {
         return mDBh.getPlayer(username).moveToNext();
     }
 
-    public boolean isPlayersEmpty() {
+   /* public boolean isPlayersEmpty() {
         return mDBh.isPlayersEmpty();
     }
 
@@ -209,7 +188,7 @@ public class DataManager {
         mDBh.updatePlayer(player);
         RestClient rs = RestClient.getInstance();
         rs.putPlayer(player, context);
-    }
+    }*/
 
     public void insertPlayer(Player player) {
         activePlayer = player;
@@ -291,8 +270,8 @@ public class DataManager {
         return periodsGet;
     }
 
-    public Period getPeriod(String name) {
-        Cursor c = mDBh.getPeriod(name);
+   public Period getPeriod(String period_id) {
+        Cursor c = mDBh.getPeriod(period_id);
         Period p = new Period();
         if (c.moveToNext()) {
             p.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ID)));
@@ -432,7 +411,7 @@ public class DataManager {
             return ScenesMap.get(String.valueOf(scene_id)).isSaved();
     }
 
-    public void printPlaces() {
+ /*   public void printPlaces() {
         Player p = getPlayer();
         Cursor c = mDBh.getPlaces(p.getUsername());
         String username;
@@ -445,7 +424,7 @@ public class DataManager {
             created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_CREATED)));
             Log.i("Place", "Username: " + username + "\tScene: " + scene_id + "\tCreated: " + created.toString());
         }
-    }
+    }*/
 
     public ArrayList<Scene> getPlaces(String username) {
         ArrayList<Scene> scenes = new ArrayList<>();
@@ -472,7 +451,7 @@ public class DataManager {
             ScenesMap.get(String.valueOf(id)).setVisited(true);
     }
 
-    public boolean hasVisited(long scene_id) {
+    private boolean hasVisited(long scene_id) {
         Player p = getPlayer();
         if (!scenesLoaded) {
             Cursor c = mDBh.getVisit(scene_id, p.getUsername());
@@ -480,7 +459,7 @@ public class DataManager {
         }
         else    return ScenesMap.get(String.valueOf(scene_id)).isVisited();
     }
-
+/*
     public void printVisits() {
         Player p = getPlayer();
         Cursor c = mDBh.getVisits(p.getUsername());
@@ -494,7 +473,7 @@ public class DataManager {
             created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_CREATED)));
             Log.i("Visit", "Username: " + username + "\tScene: " + scene_id + "\tCreated: " + created.toString());
         }
-    }
+    }*/
 
     public ArrayList<Scene> getVisits(String username) {
         ArrayList<Scene> scenes = new ArrayList<>();
@@ -514,8 +493,8 @@ public class DataManager {
         return scenes;
     }
 
-    /*****************************************************POLYLINES************************************************************************/
-
+   /* /*****************************************************POLYLINES************************************************************************/
+/*
     public ArrayList<LatLng> getPolyPoints(Scene scene) {
         return sceneToPointsMap.get(scene);
     }
@@ -556,7 +535,7 @@ public class DataManager {
             }
         }
 
-    }
+    }*/
 
     /**********************************************************ROUTE HARD CODED *************************************************************/
     private void initRoute() {
@@ -571,9 +550,9 @@ public class DataManager {
         }
     }
 
-    public ArrayList<ArScene> getRouteAsList() {
+    /*public ArrayList<ArScene> getRouteAsList() {
         return new ArrayList<>(Route.values());
-    }
+    }*/
 
     public HashMap<String, ArScene> getRoute() {
         return Route;
