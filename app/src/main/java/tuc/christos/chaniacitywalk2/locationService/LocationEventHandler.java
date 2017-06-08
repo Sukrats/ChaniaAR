@@ -1,10 +1,8 @@
-package tuc.christos.chaniacitywalk2;
+package tuc.christos.chaniacitywalk2.locationService;
 
 import android.content.Context;
 import android.location.Location;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -17,7 +15,7 @@ import tuc.christos.chaniacitywalk2.model.Scene;
  * Created by Christos on 16-Mar-17.
  */
 
-public class LocationEventHandler implements LocationCallback {
+class LocationEventHandler implements LocationCallback {
 
     private DataManager mDataManager;
     private Location lastKnownLocation = new Location("");

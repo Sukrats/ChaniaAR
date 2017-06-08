@@ -30,4 +30,6 @@ public class Constants {
     public static final String ARCHITECT_WORLD_KEY = "WorldToLoad";
     public static final String ARCHITECT_AR_SCENE_KEY = "scene";
 
+    public static final String BROADCAST_INTENT_LOCATION_ACTION = "tuc.arapp.LOCATION_INTENT";
+    public static final String BROADCAST_INTENT_FENCE_ACTION = "tuc.arapp.FENCE_INTENT";
 }

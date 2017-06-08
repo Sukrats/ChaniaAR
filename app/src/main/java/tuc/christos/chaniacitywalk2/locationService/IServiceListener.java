@@ -1,13 +1,13 @@
-package tuc.christos.chaniacitywalk2;
+package tuc.christos.chaniacitywalk2.locationService;
 
 import android.location.Location;
 
 /**
- * Created by Christos on 16-Mar-17.
+ * Created by Christos on 08-Jun-17.
  *
  */
 
-public interface LocationEventsListener {
+public interface IServiceListener {
 
     void drawGeoFences(String[] areaIds, int radius);
 
@@ -15,4 +15,5 @@ public interface LocationEventsListener {
 
     void userLeftArea(String areaID);
 
+    void handleNewLocation(Location location);
 }

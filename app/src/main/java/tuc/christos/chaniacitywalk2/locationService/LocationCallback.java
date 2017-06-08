@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2;
+package tuc.christos.chaniacitywalk2.locationService;
 
 import android.location.Location;
 /**
@@ -6,7 +6,7 @@ import android.location.Location;
  *
  */
 
-public interface LocationCallback {
+interface LocationCallback {
 
     void handleNewLocation(Location location);
 }

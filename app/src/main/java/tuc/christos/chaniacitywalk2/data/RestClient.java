@@ -35,6 +35,7 @@ public class RestClient implements ContentListener {
 
     private static RestClient INSTANCE = null;
 
+    private AsyncHttpClient mClient;
     private DataManager mDataManager = DataManager.getInstance();
     private boolean isLoading = false;
     private ClientListener currentListener;
@@ -161,6 +162,7 @@ public class RestClient implements ContentListener {
                 cl.downloadComplete(false, i, mDBHelper.PeriodEntry.TABLE_NAME,result);
             }
         });
+        mClient = client;
     }
 
     /**********************************************************GET SCENES*************************************************************************/
@@ -199,6 +201,7 @@ public class RestClient implements ContentListener {
                 cl.downloadComplete(false, i, mDBHelper.SceneEntry.TABLE_NAME, result);
             }
         });
+        mClient = client;
     }
     /**********************************************************UPDATE PLAYER*************************************************************************/
 
@@ -235,6 +238,7 @@ public class RestClient implements ContentListener {
                     Log.i("Response Body: ", code);
                 }
             });
+        mClient = client;
 
     }
 
@@ -295,6 +299,7 @@ public class RestClient implements ContentListener {
                 }
             }
         });
+        mClient = client;
 
     }
     //GET PLAYER VISITS
@@ -361,6 +366,7 @@ public class RestClient implements ContentListener {
                     }
                 }
             });
+            mClient = client;
 
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -403,9 +409,10 @@ public class RestClient implements ContentListener {
                 contentListener.downloadComplete(false, i, tag, result);
             }
         });
+        mClient = client;
 
     }
     public void cancel(){
-        currentListener = null;
+        mClient.cancelAllRequests(true);
     }
 }

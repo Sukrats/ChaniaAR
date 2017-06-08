@@ -23,6 +23,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static final String pref_key_location_update_interval = "pref_key_location_update_interval";
 
+    public static final String pref_key_allow_background_locations = "pref_key_allow_background_locations";
+
     public static final String pref_key_user_draw_radius = "pref_key_user_draw_radius";
 
     @Override
@@ -108,6 +110,11 @@ public class SettingsActivity extends AppCompatActivity {
                 // Set summary to be the user-description for the selected value
                 connectionPref.setSummary(sharedPreferences.getString(key, ""));
             }
+
+            /*if (key.equals(pref_key_allow_background_locations)){
+                Preference notification = findPreference(key);
+
+            }*/
         }
     }
 }

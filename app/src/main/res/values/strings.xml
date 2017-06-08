@@ -101,6 +101,9 @@
     <string name="pref_geo_fence_culling_distance">Draw Distance</string>
     <string name="pref_geo_fence_culling_distance_summary">Set Max Drawing Distance</string>
 
+    <string name="allow_background_locations_title">Notifications</string>
+    <string name="allow_background_locations">Get Location Notifications when app is in the background</string>
+
     <!-- LOGIN PREFERENCES -->
     <string name="pref_user_settings">User Settings</string>
 

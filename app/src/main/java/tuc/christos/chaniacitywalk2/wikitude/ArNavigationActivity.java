@@ -1,12 +1,17 @@
 package tuc.christos.chaniacitywalk2.wikitude;
 
 import android.app.Activity;
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.webkit.WebView;
@@ -21,17 +26,14 @@ import com.wikitude.architect.StartupConfiguration;
 import org.json.JSONArray;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import tuc.christos.chaniacitywalk2.LocationCallback;
-import tuc.christos.chaniacitywalk2.LocationEventHandler;
-import tuc.christos.chaniacitywalk2.LocationEventsListener;
-import tuc.christos.chaniacitywalk2.LocationProvider;
+import tuc.christos.chaniacitywalk2.locationService.IServiceListener;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.data.DataManager;
+import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.utils.JsonHelper;
@@ -61,19 +63,6 @@ public class ArNavigationActivity extends Activity {
      * last known location of the user, used internally for content-loading after user location was fetched
      */
     protected Location lastKnownLocaton;
-    /**
-     * location listener receives location updates and must forward them to the architectView
-     */
-    protected LocationCallback LocationListener;
-    /**
-     * sample location strategy, you may implement a more sophisticated approach too
-     */
-    protected LocationProvider locationProvider;
-
-    protected LocationEventsListener mLocationEventListener;
-
-    protected LocationEventHandler mLocationEventHandler = null;
-
     /*
      * JS interface listener handling e.g. 'AR.platform.sendJSONObject({foo:"bar", bar:123})' calls in JavaScript
      */
@@ -92,6 +81,49 @@ public class ArNavigationActivity extends Activity {
 
     protected boolean isLoading = false;
 
+    protected LocationService mService;
+    final ServiceConnection mConnection =  new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            LocationService.mIBinder binder = (LocationService.mIBinder) service;
+            mService = binder.getService();
+            mService.registerServiceListener(mLocationServiceListener);
+            mBount = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBount = false;
+            mService.removeListener(mLocationServiceListener);
+        }
+    };
+    final IServiceListener mLocationServiceListener = new IServiceListener() {
+        @Override
+        public void drawGeoFences(String[] areaIds, int radius) {
+
+        }
+
+        @Override
+        public void userEnteredArea(String areaID) {
+            callJavaScript("World.userEnteredArea",new String[]{areaID});
+            Log.i("GeoFence","Fence Triggered: "+areaID);
+        }
+
+        @Override
+        public void userLeftArea(String areaID) {
+            callJavaScript("World.userLeftArea",new String[]{areaID});
+            Log.i("GeoFence","Fence Removed: "+areaID);
+        }
+
+        @Override
+        public void handleNewLocation(Location location) {
+            ArNavigationActivity.this.lastKnownLocaton = location;
+            //update JS Location
+            ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
+        }
+    };
+
+    protected boolean mBount = false;
     protected  String WorldToLoad = "";
     protected String scene_id = "";
 
@@ -186,38 +218,8 @@ public class ArNavigationActivity extends Activity {
         architectView.registerSensorAccuracyChangeListener(sensorAccuracyListener);
 
 
-        LocationListener = new LocationCallback() {
-            @Override
-            public void handleNewLocation(Location location) {
-                ArNavigationActivity.this.lastKnownLocaton = location;
-                //update JS Location
-                ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
-            }
-        };
-        locationProvider = new LocationProvider(this, LocationListener);
+        bindService(new Intent(this, LocationService.class),mConnection, Context.BIND_NOT_FOREGROUND);
 
-        mLocationEventListener = new LocationEventsListener() {
-            @Override
-            public void drawGeoFences(String[] areaIds, int radius) {
-
-            }
-
-            @Override
-            public void userEnteredArea(String areaID) {
-                callJavaScript("World.userEnteredArea",new String[]{areaID});
-                Log.i("GeoFence","Fence Triggered: "+areaID);
-            }
-
-            @Override
-            public void userLeftArea(String areaID) {
-                callJavaScript("World.userLeftArea",new String[]{areaID});
-                Log.i("GeoFence","Fence Removed: "+areaID);
-            }
-        };
-        if(WorldToLoad.contains("ArNav")){
-            mLocationEventHandler = new LocationEventHandler(mLocationEventListener);
-            locationProvider.setLocationCallbackListener(mLocationEventHandler);
-        }
         if(Build.VERSION.SDK_INT >= 19) {
             WebView.setWebContentsDebuggingEnabled(true);
         }
@@ -354,14 +356,9 @@ public class ArNavigationActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (mLocationEventHandler != null) {
-            mLocationEventHandler.setLocationEventListener(mLocationEventListener);
-        }
-        if (locationProvider != null) {
-            locationProvider.connect(this);
-            locationProvider.setLocationCallbackListener(LocationListener);
-            if(mLocationEventHandler != null)
-                locationProvider.setLocationCallbackListener(mLocationEventHandler);
+        if( !mBount && mService !=null ){
+            bindService(new Intent(this,LocationService.class),mConnection,Context.BIND_NOT_FOREGROUND);
+            mService.registerServiceListener(mLocationServiceListener);
         }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {
@@ -378,13 +375,10 @@ public class ArNavigationActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (mLocationEventHandler != null) {
-            mLocationEventHandler.removeLocationEventListener(mLocationEventListener);
-        }
-        if (locationProvider != null) {
-            locationProvider.disconnect();
-            locationProvider.removeLocationCallbackListener(LocationListener);
-            locationProvider.removeLocationCallbackListener(mLocationEventHandler);
+        if(mBount && mService != null){
+            mService.removeListener(mLocationServiceListener);
+            unbindService(mConnection);
+            mBount = false;
         }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {

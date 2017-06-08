@@ -97,7 +97,7 @@
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
         </activity>
 
-        <service android:name=".LocationService"
+        <service android:name=".locationService.LocationService"
             android:exported="false" />
     </application>
 

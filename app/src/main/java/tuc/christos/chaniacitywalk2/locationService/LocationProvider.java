@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2;
+package tuc.christos.chaniacitywalk2.locationService;
 
 import android.Manifest;
 import android.app.Activity;
@@ -13,7 +13,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -32,9 +31,10 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.util.ArrayList;
 
+import tuc.christos.chaniacitywalk2.SettingsActivity;
 import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 
-public class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListener, LocationListener  {
+class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListener, LocationListener  {
 
     private static final String TAG = "LocationProvider";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -122,7 +122,7 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
         long SLOW_INTERVAL = 10000;
         long SLOW_FASTEST_INTERVAL = SLOW_INTERVAL/2;
         int SLOW_PRIORITY = LocationRequest.PRIORITY_LOW_POWER;
-
+        Log.i("requestmode",mode);
         switch(mode){
             case "High Accuracy":
                 createLocationRequest(HIGH_INTERVAL, HIGH_FASTEST_INTERVAL, HIGH_PRIORITY);
@@ -133,9 +133,16 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
             case "Battery Saver":
                 createLocationRequest(SLOW_INTERVAL, SLOW_FASTEST_INTERVAL, SLOW_PRIORITY);
                 break;
+            case "Background":
+                createLocationRequest(30000, 30000, LocationRequest.PRIORITY_NO_POWER);
+                break;
             default:
                 createLocationRequest(MEDIUM_INTERVAL, MEDIUM_FASTEST_INTERVAL, MEDIUM_PRIORITY);
         }
+    }
+
+    void setBackgroundMode(){
+        setLocationMode("Background");
     }
     /**
      * LOCATION REQUEST VARIABLES

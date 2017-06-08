@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.preference.PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
+
     <android.support.v7.preference.PreferenceCategory
         android:title="@string/pref_user_settings">
 
@@ -45,6 +46,12 @@
             android:key="pref_key_user_draw_radius"
             android:summary="@string/pref_geo_fence_culling_distance_summary"
             android:title="@string/pref_geo_fence_culling_distance"/>
+
+        <android.support.v7.preference.CheckBoxPreference
+            android:key="pref_key_allow_background_locations"
+            android:summary="@string/allow_background_locations"
+            android:title="@string/allow_background_locations_title"
+            android:defaultValue="true"/>
 
     </android.support.v7.preference.PreferenceCategory>
 

@@ -1,8 +1,10 @@
 package tuc.christos.chaniacitywalk2;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -15,6 +17,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.DrawableRes;
@@ -54,6 +57,8 @@ import java.util.HashMap;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.data.RestClient;
+import tuc.christos.chaniacitywalk2.locationService.IServiceListener;
+import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
@@ -64,8 +69,7 @@ import tuc.christos.chaniacitywalk2.data.DataManager;
 
 
 public class MapsActivity extends AppCompatActivity implements
-        LocationCallback,
-        LocationEventsListener,
+        IServiceListener,
         GoogleMap.OnMapClickListener,
         OnMapReadyCallback {
 
@@ -75,11 +79,11 @@ public class MapsActivity extends AppCompatActivity implements
 
     private DataManager mDataManager;
     private GoogleMap mMap;
-    private LocationProvider mLocationProvider;
-    private LocationEventHandler mEventHandler;
+    //private LocationProvider mLocationProvider;
+    //private LocationEventHandler mEventHandler;
 
-    private HashMap<Scene,Marker> sceneToMarkerMap = new HashMap<>();
-    private HashMap<Marker,Scene> markerToSceneMap = new HashMap<>();
+    private HashMap<Scene, Marker> sceneToMarkerMap = new HashMap<>();
+    private HashMap<Marker, Scene> markerToSceneMap = new HashMap<>();
 
     private Marker mSelectedMarker = null;
 
@@ -87,7 +91,7 @@ public class MapsActivity extends AppCompatActivity implements
     protected String mLastUpdateTime;
     private Marker mLocationMarker = null;
 
-    private HashMap<String,Circle> circleMap =new HashMap<>();
+    private HashMap<String, Circle> circleMap = new HashMap<>();
 
     private boolean camToStart = false;
     private boolean camFollow = false;
@@ -101,33 +105,54 @@ public class MapsActivity extends AppCompatActivity implements
     public OnInfoWindowElemTouchListener InfoButtonListener;
     MapWrapperLayout mapWrapperLayout;
 
+    boolean mBount = false;
+    private LocationService mService;
+    final ServiceConnection mConnection =  new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            LocationService.mIBinder binder = (LocationService.mIBinder) service;
+            mService = binder.getService();
+            mService.registerServiceListener(MapsActivity.this);
+            mBount = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService.removeListener(MapsActivity.this);
+            mBount = false;
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i("ACTIVITY","CREATED MAPS ACTIVITY");
+        startService(new Intent(this, LocationService.class));
+        Log.i("ACTIVITY", "CREATED MAPS ACTIVITY");
         //setContentView(R.layout.activity_maps_custom);
         setContentView(R.layout.custom_map_layout_test);
+        bindService(new Intent(this, LocationService.class),mConnection, Context.BIND_NOT_FOREGROUND);
 
         //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
         RestClient mRestClient = RestClient.getInstance();
-        if(!mDataManager.isInitialised()){
+        if (!mDataManager.isInitialised()) {
             mRestClient.getInitialContent(new ClientListener() {
                 @Override
                 public void onCompleted(boolean success, int httpCode, String msg) {
                     MapsActivity.this.drawMap();
                 }
+
                 @Override
                 public void onUpdate(int progress, String msg) {
-                   Toast.makeText( MapsActivity.this, msg ,Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MapsActivity.this, msg, Toast.LENGTH_SHORT).show();
                 }
             });
         }
         //Registering this activity for locationProvider and Event listener
-        mLocationProvider = new LocationProvider(this);
-        mEventHandler = new LocationEventHandler(this);
+        //mLocationProvider = new LocationProvider(this);
+        //mEventHandler = new LocationEventHandler(this);
 
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -145,11 +170,11 @@ public class MapsActivity extends AppCompatActivity implements
         if (savedInstanceState == null) {
             mapFragment.setRetainInstance(true);
             camToStart = true;
-        }else camToStart = false;
+        } else camToStart = false;
 
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CAMERA);
-        else{
+        else {
             pushButton = (ImageButton) findViewById(R.id.round_button);
             pushButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -161,7 +186,7 @@ public class MapsActivity extends AppCompatActivity implements
                 mDataManager.updatePlayer(player , getApplicationContext());
                 mDataManager.printPlaces();*/
                     Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY,"ArNavigation/index.html");
+                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
                     aSyncActivity(intent);
                 }
             });
@@ -170,15 +195,15 @@ public class MapsActivity extends AppCompatActivity implements
         myloc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mCurrentLocation != null ){
-                    setCameraPosition(mCurrentLocation.getLatitude(),mCurrentLocation.getLongitude(),mMap.getCameraPosition().zoom);
-                }else{
-                    Toast.makeText(MapsActivity.this.getApplicationContext(),"Please enable Location",Toast.LENGTH_LONG).show();
+                if (mCurrentLocation != null) {
+                    setCameraPosition(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), mMap.getCameraPosition().zoom);
+                } else {
+                    Toast.makeText(MapsActivity.this.getApplicationContext(), "Please enable Location", Toast.LENGTH_LONG).show();
                 }
             }
         });
 
-        if(mCurrentLocation != null) {
+        if (mCurrentLocation != null) {
             defaultCameraPosition = new CameraPosition.Builder()
                     .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
                     .bearing(0).tilt(50).build();
@@ -186,11 +211,11 @@ public class MapsActivity extends AppCompatActivity implements
         }
 
         String camToItem = getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID);
-        if(camToItem != null){
+        if (camToItem != null) {
             Scene temp = mDataManager.getScene(camToItem);
             defaultCameraPosition = new CameraPosition.Builder()
                     .target(new LatLng(temp.getLatitude(), temp.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
-            if(sceneToMarkerMap.containsKey(temp)) sceneToMarkerMap.get(temp).showInfoWindow();
+            if (sceneToMarkerMap.containsKey(temp)) sceneToMarkerMap.get(temp).showInfoWindow();
             camToStart = true;
         }
         mapFragment.getMapAsync(this);
@@ -198,8 +223,8 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,String permissions[], int[] grantResults){
-        switch(requestCode){
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
             case MY_PERMISSION_REQUEST_CAMERA:
                 pushButton = (ImageButton) findViewById(R.id.round_button);
                 pushButton.setOnClickListener(new View.OnClickListener() {
@@ -212,16 +237,18 @@ public class MapsActivity extends AppCompatActivity implements
                 mDataManager.updatePlayer(player , getApplicationContext());
                 mDataManager.printPlaces();*/
                         Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                        intent.putExtra(Constants.ARCHITECT_WORLD_KEY,"ArNavigation/index.html");
+                        intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
                         startActivity(intent);
                     }
                 });
-                Toast.makeText(this,"Permission Granted AR experiences are on the ready!",Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Permission Granted AR experiences are on the ready!", Toast.LENGTH_LONG).show();
                 break;
-            default: Toast.makeText(this,"You wont be able to access the AR experiences",Toast.LENGTH_LONG).show();
+            default:
+                Toast.makeText(this, "You wont be able to access the AR experiences", Toast.LENGTH_LONG).show();
                 break;
         }
     }
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -233,7 +260,7 @@ public class MapsActivity extends AppCompatActivity implements
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mapWrapperLayout = (MapWrapperLayout)findViewById(R.id.map_container);
+        mapWrapperLayout = (MapWrapperLayout) findViewById(R.id.map_container);
         mapWrapperLayout.init(googleMap, getPixelsFromDp(this, 39 + 20));
 
         mMap = googleMap;
@@ -243,7 +270,7 @@ public class MapsActivity extends AppCompatActivity implements
 
             }
         });
-        mMap.setPadding(0,0,0,100);
+        mMap.setPadding(0, 0, 0, 100);
 
         //mUiSettings = mMap.getUiSettings();
         //mUiSettings.setZoomControlsEnabled(true);
@@ -258,7 +285,7 @@ public class MapsActivity extends AppCompatActivity implements
 
                 // Since we return true, we have to show the info window manually
                 //marker.showInfoWindow();
-                if(!marker.equals(mLocationMarker)) {
+                if (!marker.equals(mLocationMarker)) {
                     if (marker.equals(mSelectedMarker)) {
                         mSelectedMarker = null;
                         return true;
@@ -266,14 +293,14 @@ public class MapsActivity extends AppCompatActivity implements
                     mSelectedMarker = marker;
                     // We have handled the click, so don't centre again and return true
                     return false;
-                }else{
+                } else {
                     return false;
                 }
             }
 
         });
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type,"");
+        String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type, "");
         setMapStyle(mapStyle);
         setupMapOptions();
         drawMap();
@@ -281,16 +308,15 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
 
-    public void moveMyLocationMarker(Location location){
-        if(mLocationMarker == null || !mLocationMarker.isVisible()){
+    public void moveMyLocationMarker(Location location) {
+        if (mLocationMarker == null || !mLocationMarker.isVisible()) {
 
-            Bitmap bm = BitmapFactory.decodeResource(this.getResources(),R.drawable.angry_thor_512px);
+            Bitmap bm = BitmapFactory.decodeResource(this.getResources(), R.drawable.angry_thor_512px);
             mLocationMarker = mMap.addMarker(new MarkerOptions()
                     .position(new LatLng(location.getLatitude(), location.getLongitude()))
                     .title("mLocationMarker")
-                    .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm,64,64,false))));
-        }else
-            {
+                    .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm, 64, 64, false))));
+        } else {
             Location loc = latLngToLoc(mLocationMarker.getPosition());
             final Handler handler = new Handler();
             final long start = SystemClock.uptimeMillis();
@@ -305,10 +331,10 @@ public class MapsActivity extends AppCompatActivity implements
                     long elapsed = SystemClock.uptimeMillis() - start;
                     float t = Math.max(interpolator.getInterpolation((float) elapsed / duration), 0);
 
-                    double x = currentX + t*(targetX - currentX);
-                    double y = currentY + t*(targetY - currentY);
+                    double x = currentX + t * (targetX - currentX);
+                    double y = currentY + t * (targetY - currentY);
 
-                    mLocationMarker.setPosition(new LatLng( x, y));
+                    mLocationMarker.setPosition(new LatLng(x, y));
 
                     if (t > 0.0 && t < 1.0) {
                         // Post again 16ms later.
@@ -318,13 +344,13 @@ public class MapsActivity extends AppCompatActivity implements
                 }
             });
 
-            if(loc.distanceTo(location) >= 5 && camFollow){
-                setCameraPosition(location.getLatitude(),location.getLongitude(),mMap.getCameraPosition().zoom);
+            if (loc.distanceTo(location) >= 5 && camFollow) {
+                setCameraPosition(location.getLatitude(), location.getLongitude(), mMap.getCameraPosition().zoom);
             }
         }
     }
 
-    public Location latLngToLoc(LatLng latLng){
+    public Location latLngToLoc(LatLng latLng) {
         Location location = new Location("");
         location.setLatitude(latLng.latitude);
         location.setLongitude(latLng.longitude);
@@ -340,13 +366,13 @@ public class MapsActivity extends AppCompatActivity implements
      * And Preferences
      */
 
-    public void setMapStyle( String mapStyle){
+    public void setMapStyle(String mapStyle) {
         // Customise the styling of the base map using a JSON object defined
         // in a raw resource file.
-        if(mMap != null)
+        if (mMap != null)
             try {
                 boolean success;
-                switch (mapStyle){
+                switch (mapStyle) {
                     case "Night Mode":
                         success = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.night_map_json));
                         break;
@@ -369,16 +395,17 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     private void drawMap() {
-        if(mMap != null){
+        if (mMap != null) {
             mMap.clear();
             sceneToMarkerMap.clear();
             markerToSceneMap.clear();
-            if (mLocationMarker !=null) mLocationMarker.setVisible(false);
-            if(camToStart) mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
+            if (mLocationMarker != null) mLocationMarker.setVisible(false);
+            if (camToStart)
+                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
             Player player = mDataManager.getActivePlayer();
-            if(player.getScore() <= 1000 || player.getScore() == null){
-                Log.i("Score",player.getScore()+ " < 1000");
-                for(ArScene temp: mDataManager.getRoute().values()){
+            if (player.getScore() <= 1000 || player.getScore() == null) {
+                Log.i("Score", player.getScore() + " < 1000");
+                for (ArScene temp : mDataManager.getRoute().values()) {
                     Marker marker;
                     LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
                     marker = mMap.addMarker(new MarkerOptions()
@@ -395,13 +422,13 @@ public class MapsActivity extends AppCompatActivity implements
                         marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.rocco_thumb)));
                     else
                         marker = null;
-                    if(marker != null){
+                    if (marker != null) {
                         sceneToMarkerMap.put(temp, marker);
                         markerToSceneMap.put(marker, temp);
                     }
                 }
-            }else{
-                Log.i("Score",player.getScore()+ " > 1000");
+            } else {
+                Log.i("Score", player.getScore() + " > 1000");
                 for (Scene temp : mDataManager.getScenes()) {
                     if (temp.isSaved() && !temp.isHasAR()) {
                         LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
@@ -409,7 +436,7 @@ public class MapsActivity extends AppCompatActivity implements
                                 .position(pos)
                                 .title(temp.getName())
                                 .snippet(temp.getTAG()));
-                        if(temp.isVisited()){
+                        if (temp.isVisited()) {
                             if (temp.getTAG() != null && temp.getTAG().equals("Ottoman")) {
                                 marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
                             } else if (temp.getTAG() != null && temp.getTAG().equals("Venetian")) {
@@ -421,13 +448,13 @@ public class MapsActivity extends AppCompatActivity implements
                             } else {
                                 marker = mMap.addMarker(new MarkerOptions().position(pos).title(temp.getName()));
                             }
-                        }else {
+                        } else {
                             marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.unknown_32));
                         }
                         sceneToMarkerMap.put(temp, marker);
                         markerToSceneMap.put(marker, temp);
                     }
-            }
+                }
             /*else if (temp.isHasAR()){
                     Marker marker;
 
@@ -477,10 +504,10 @@ public class MapsActivity extends AppCompatActivity implements
         }
     }
 
-    public void handleBottomBarSelection(View view){
+    public void handleBottomBarSelection(View view) {
         Intent intent = null;
 
-        switch(view.getId()) {
+        switch (view.getId()) {
             case R.id.profile_activity:
                 intent = new Intent(this, ProfileActivity.class);
                 break;
@@ -491,22 +518,22 @@ public class MapsActivity extends AppCompatActivity implements
                 intent = new Intent(this, CollectionActivity.class);
                 break;
         }
-        if(intent!=null){
+        if (intent != null) {
             aSyncActivity(intent);
         }
     }
 
-    public void aSyncActivity(final Intent intent){
-            Handler mHandler = new Handler();
-            mHandler.postDelayed(new Runnable() {
+    public void aSyncActivity(final Intent intent) {
+        Handler mHandler = new Handler();
+        mHandler.postDelayed(new Runnable() {
 
-                @Override
-                public void run() {
-                    //start your activity here
-                    startActivity(intent);
-                }
+            @Override
+            public void run() {
+                //start your activity here
+                startActivity(intent);
+            }
 
-            }, 200L);
+        }, 200L);
     }
 
     public void setCameraPosition(double latitude, double longitude, float zoomf) {
@@ -518,7 +545,7 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     public void setCameraPosition(double latitude, double longitude) {
-        Log.i(TAG,String.valueOf(latitude)+String.valueOf(longitude));
+        Log.i(TAG, String.valueOf(latitude) + String.valueOf(longitude));
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(latitude, longitude)).bearing(0).zoom(DEFAULT_ZOOM_LEVEL).tilt(50).build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
@@ -528,10 +555,14 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onPause() {
         super.onPause();
-        mLocationProvider.removeLocationCallbackListener(this);
-        mLocationProvider.removeLocationCallbackListener(mEventHandler);
-        mLocationProvider.disconnect();
-        mEventHandler.removeLocationEventListener(this);
+        if(mBount){
+            unbindService(mConnection);
+            mBount = false;
+        }
+        //mLocationProvider.removeLocationCallbackListener(this);
+        //mLocationProvider.removeLocationCallbackListener(mEventHandler);
+        //mLocationProvider.disconnect();
+        //mEventHandler.removeLocationEventListener(this);
 
     }
 
@@ -541,17 +572,21 @@ public class MapsActivity extends AppCompatActivity implements
         super.onResume();
         //Check Preferences File and Update locally
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type,"");
-        Boolean follow = sharedPreferences.getBoolean(SettingsActivity.pref_key_camera_follow,false);
+        String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type, "");
+        Boolean follow = sharedPreferences.getBoolean(SettingsActivity.pref_key_camera_follow, false);
         setMapStyle(mapStyle);
         camFollow = follow;
 
+        if(!mBount) {
+            bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
+            mBount = true;
+        }
         //Resume Location Provider and register
         //the Map activity for location and locationEvent updates
-        mLocationProvider.connect(this);
-        mLocationProvider.setLocationCallbackListener(this);
-        mLocationProvider.setLocationCallbackListener(mEventHandler);
-        mEventHandler.setLocationEventListener(this);
+        //mLocationProvider.connect(this);
+        //mLocationProvider.setLocationCallbackListener(this);
+        //mLocationProvider.setLocationCallbackListener(mEventHandler);
+        //mEventHandler.setLocationEventListener(this);
     }
 
     protected void onStart() {
@@ -564,12 +599,12 @@ public class MapsActivity extends AppCompatActivity implements
 
 
     @Override
-    public void onMapClick(final LatLng point){
+    public void onMapClick(final LatLng point) {
         mSelectedMarker = null;
     }
 
 
-    public void handleNewLocation(Location location){
+    public void handleNewLocation(Location location) {
         mCurrentLocation = location;
         //Toast.makeText(this,"Interval: "+ mLastUpdateTime +"\n"+ DateFormat.getTimeInstance().format(new Date()),Toast.LENGTH_SHORT).show();
         //Toast.makeText(this,"Latitude:"+location.getLatitude()+"\nLongitude:"+location.getLongitude(),Toast.LENGTH_SHORT).show();
@@ -577,27 +612,27 @@ public class MapsActivity extends AppCompatActivity implements
         moveMyLocationMarker(location);
     }
 
-    public void drawGeoFences(String[] areaIds,int radius){
-        for(String key: circleMap.keySet()){
-                circleMap.get(key).remove();
+    public void drawGeoFences(String[] areaIds, int radius) {
+        for (String key : circleMap.keySet()) {
+            circleMap.get(key).remove();
         }
         circleMap.clear();
-        for(String areaID: areaIds){
+        for (String areaID : areaIds) {
             Scene scene = mDataManager.getScene(areaID);
 
             Circle circle = mMap.addCircle(new CircleOptions()
-                    .center(new LatLng(scene.getLatitude(),scene.getLongitude()))
+                    .center(new LatLng(scene.getLatitude(), scene.getLongitude()))
                     .radius(radius)
                     .strokeWidth(2)
                     .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
                     .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
 
-            circleMap.put(areaID,circle);
+            circleMap.put(areaID, circle);
         }
         //Toast.makeText(this, "GeoFences Drawn: " + areaIds.length, Toast.LENGTH_LONG).show();
     }
 
-    public void userEnteredArea(String areaID){
+    public void userEnteredArea(String areaID) {
         Scene scene = mDataManager.getRoute().get(areaID);
         isFenceTriggered = true;
         fenceTriggered = areaID;
@@ -609,13 +644,14 @@ public class MapsActivity extends AppCompatActivity implements
         isFenceTriggered = false;
         fenceTriggered = "";
         //if (circleMap.containsKey(areaID)){
-            //Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
-            //Circle circle = circleMap.get(areaID);
-            //circle.remove();
-            //circleMap.remove(areaID);
+        //Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
+        //Circle circle = circleMap.get(areaID);
+        //circle.remove();
+        //circleMap.remove(areaID);
         //}
 
     }
+
     private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {
 
         View customMarkerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.view_custom_marker, null);
@@ -636,12 +672,12 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
 
-    private class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter{
+    private class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
 
         private final View mContents;
 
-        CustomInfoWindowAdapter(){
-            mContents = getLayoutInflater().inflate(R.layout.custom_info_contents,null);
+        CustomInfoWindowAdapter() {
+            mContents = getLayoutInflater().inflate(R.layout.custom_info_contents, null);
         }
 
         @Override
@@ -675,7 +711,7 @@ public class MapsActivity extends AppCompatActivity implements
                         protected void onClickConfirmed(View v, Marker marker) {
                             Intent intent = new Intent(mContents.getContext(), ArNavigationActivity.class);
                             intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
-                            intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY,String.valueOf(scene.getId()));
+                            intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, String.valueOf(scene.getId()));
                             startActivity(intent);
                         }
                     };
@@ -702,7 +738,7 @@ public class MapsActivity extends AppCompatActivity implements
 
                 mapWrapperLayout.setMarkerWithInfoWindow(marker, mContents);
                 return mContents;
-            }else{
+            } else {
                 mContents.findViewById(R.id.ar_panel).setVisibility(View.GONE);
                 mContents.findViewById(R.id.detail_panel).setVisibility(View.GONE);
 
@@ -710,12 +746,13 @@ public class MapsActivity extends AppCompatActivity implements
                 TextView titleUi = ((TextView) mContents.findViewById(R.id.title));
                 titleUi.setText(player.getUsername());
 
-                String score = "Score: "+player.getScore();
+                String score = "Score: " + player.getScore();
                 TextView snippetUi = ((TextView) mContents.findViewById(R.id.snippet));
                 snippetUi.setText(score);
                 return mContents;
             }
         }
+
         @Override
         public View getInfoContents(Marker marker) {
             return null;
@@ -724,7 +761,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     public static int getPixelsFromDp(Context context, float dp) {
         final float scale = context.getResources().getDisplayMetrics().density;
-        return (int)(dp * scale + 0.5f);
+        return (int) (dp * scale + 0.5f);
     }
 
 }
