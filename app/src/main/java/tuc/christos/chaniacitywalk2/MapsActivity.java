@@ -62,6 +62,7 @@ import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
+import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 import tuc.christos.chaniacitywalk2.wikitude.ArNavigationActivity;
 import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -150,28 +151,17 @@ public class MapsActivity extends AppCompatActivity implements
                 }
             });
         }
-        //Registering this activity for locationProvider and Event listener
-        //mLocationProvider = new LocationProvider(this);
-        //mEventHandler = new LocationEventHandler(this);
-
-        /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayShowHomeEnabled(true);
-            //actionBar.setDisplayHomeAsUpEnabled(true);
-        }*/
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-
-        //BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
-        //bottomNavigationView.setOnNavigationItemSelectedListener(mItemSelectedListener);
 
         if (savedInstanceState == null) {
             mapFragment.setRetainInstance(true);
             camToStart = true;
         } else camToStart = false;
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED) {
+            PermissionUtils.requestPermission(this, 1, Manifest.permission.ACCESS_FINE_LOCATION, true);
+        }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CAMERA);
         else {
@@ -570,6 +560,8 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onResume() {
         super.onResume();
+
+
         //Check Preferences File and Update locally
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type, "");
@@ -763,5 +755,6 @@ public class MapsActivity extends AppCompatActivity implements
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dp * scale + 0.5f);
     }
+
 
 }

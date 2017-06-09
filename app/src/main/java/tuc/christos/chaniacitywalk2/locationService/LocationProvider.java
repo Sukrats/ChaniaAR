@@ -2,6 +2,7 @@ package tuc.christos.chaniacitywalk2.locationService;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Service;
 import android.content.Context;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
@@ -31,13 +32,13 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.util.ArrayList;
 
+import tuc.christos.chaniacitywalk2.MapsActivity;
 import tuc.christos.chaniacitywalk2.SettingsActivity;
 import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 
-class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListener, LocationListener  {
+public class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListener, LocationListener  {
 
     private static final String TAG = "LocationProvider";
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
 
     private ArrayList<LocationCallback> mLocationCallback = new ArrayList<>();
     private GoogleApiClient mGoogleApiClient;
@@ -91,12 +92,6 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
         setLocationMode(mode);
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            // Permission to access the location is missing.
-            PermissionUtils.requestPermission((AppCompatActivity) context, LOCATION_PERMISSION_REQUEST_CODE,
-                    Manifest.permission.ACCESS_FINE_LOCATION, true);
-        }
         mGoogleApiClient.connect();
 
     }
@@ -172,15 +167,13 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                         // Location settings are not satisfied, but this can be fixed
                         // by showing the user a dialog.
-                        try {
+                        //try {
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
-                            status.startResolutionForResult(
-                                    (Activity)mContext,
-                                    1000);
-                        } catch (IntentSender.SendIntentException e) {
+                            //status.startResolutionForResult((AppCompatActivity)mContext, 1000);
+                        //} catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
-                        }
+                        //}
                         break;
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                         // Location settings are not satisfied. However, we have no way
@@ -262,13 +255,16 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
                     mGoogleApiClient, mLocationRequest, this);
 
         }catch(SecurityException e){
-            Log.i(TAG, "PERMISSION EXCEPTION :" + e.getMessage());
+            Log.i(TAG, e.getMessage());
         }
     }
 
     private void stopLocationUpdates() {
         if(mGoogleApiClient.isConnected())
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+    }
+    public void removeListeners(){
+        mLocationCallback = new ArrayList<>();
     }
 
 }

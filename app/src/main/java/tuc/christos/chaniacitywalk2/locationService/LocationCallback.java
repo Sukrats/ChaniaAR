@@ -6,7 +6,7 @@ import android.location.Location;
  *
  */
 
-interface LocationCallback {
+public interface LocationCallback {
 
     void handleNewLocation(Location location);
 }

@@ -24,8 +24,8 @@
         <ImageView
             android:background="@drawable/ic_launcher"
             android:contentDescription="@string/title_activity_maps"
-            android:layout_width="@android:dimen/thumbnail_width"
-            android:layout_height="@android:dimen/thumbnail_width" />
+            android:layout_width="200dp"
+            android:layout_height="200dp" />
 
         <android.support.v7.widget.AppCompatTextView
             android:id="@+id/results"

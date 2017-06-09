@@ -15,7 +15,7 @@ import tuc.christos.chaniacitywalk2.model.Scene;
  * Created by Christos on 16-Mar-17.
  */
 
-class LocationEventHandler implements LocationCallback {
+public class LocationEventHandler implements LocationCallback {
 
     private DataManager mDataManager;
     private Location lastKnownLocation = new Location("");
@@ -187,6 +187,9 @@ class LocationEventHandler implements LocationCallback {
         Log.i("EventHandler", iLocationEventListener + " Draw GeoFences Called");
         for (LocationEventsListener temp : iLocationEventListener)
             temp.drawGeoFences(areaIds, MIN_RADIUS);
+    }
+    public void removeListeners(){
+        iLocationEventListener = new ArrayList<>();
     }
 
     /**

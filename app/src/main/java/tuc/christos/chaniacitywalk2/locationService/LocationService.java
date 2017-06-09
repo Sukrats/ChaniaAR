@@ -5,11 +5,13 @@ package tuc.christos.chaniacitywalk2.locationService;
  *
  */
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Binder;
 import android.os.Handler;
@@ -19,6 +21,8 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -26,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tuc.christos.chaniacitywalk2.SettingsActivity;
+import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 
 public class LocationService extends Service implements LocationCallback, LocationEventsListener {
     final String TAG = "myServiceDebug";
@@ -72,6 +77,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             msg.arg1 = startId;
             mServiceHandler.sendMessage(msg);
             isRunning = true;
+
         }
         Toast.makeText(this, "Service Started", Toast.LENGTH_LONG).show();
         mLocationProvider.connect(this);

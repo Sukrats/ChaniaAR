@@ -7,7 +7,7 @@ import android.location.Location;
  *
  */
 
-interface LocationEventsListener {
+public interface LocationEventsListener {
 
     void drawGeoFences(String[] areaIds, int radius);
 
