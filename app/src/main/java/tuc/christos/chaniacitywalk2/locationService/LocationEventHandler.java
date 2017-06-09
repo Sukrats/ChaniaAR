@@ -21,8 +21,8 @@ public class LocationEventHandler implements LocationCallback {
     private Location lastKnownLocation = new Location("");
     private ArrayList<LocationEventsListener> iLocationEventListener = new ArrayList<>();
     private Context mContext;
-    private int MIN_RADIUS = 20;
-    private long COVER_RADIUS = 200;
+    public static int MIN_RADIUS = 20;
+    public static long COVER_RADIUS = 200;
 
     private ArrayList<GeoFence> GeoFences = new ArrayList<>();
     private Location activeFenceLocation = new Location("");
@@ -187,6 +187,17 @@ public class LocationEventHandler implements LocationCallback {
         Log.i("EventHandler", iLocationEventListener + " Draw GeoFences Called");
         for (LocationEventsListener temp : iLocationEventListener)
             temp.drawGeoFences(areaIds, MIN_RADIUS);
+    }
+
+    public String getTriggeredArea(){
+        return activeFenceID;
+    }
+
+    public String[] getActiveFences(){
+        String[] fences = new String[GeoFences.size()];
+        for(int i = 0; i < GeoFences.size(); i++)
+            fences[i] = GeoFences.get(i).ID;
+        return fences;
     }
     public void removeListeners(){
         iLocationEventListener = new ArrayList<>();

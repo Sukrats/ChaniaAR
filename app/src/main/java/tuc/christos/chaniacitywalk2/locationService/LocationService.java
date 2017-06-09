@@ -1,17 +1,18 @@
 package tuc.christos.chaniacitywalk2.locationService;
 
-/**Created by Christos on 07-Jun-17.
+/**
+ * Created by Christos on 07-Jun-17.
  * asdas
- *
  */
 
-import android.Manifest;
 import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Binder;
 import android.os.Handler;
@@ -20,27 +21,32 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+import android.preference.Preference;
 import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat.Builder;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import tuc.christos.chaniacitywalk2.MapsActivity;
+import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.SettingsActivity;
-import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
+import tuc.christos.chaniacitywalk2.utils.Constants;
 
+//TODO: CHECK IF PERMA NOTIFICATION EXISTS
 public class LocationService extends Service implements LocationCallback, LocationEventsListener {
-    final String TAG = "myServiceDebug";
+    final String TAG = "myLocationService";
 
     Looper mThreadLooper;
     ServiceHandler mServiceHandler;
 
     LocationProvider mLocationProvider;
     LocationEventHandler mEventHandler;
-
+    boolean fenceTriggered = false;
     ArrayList<IServiceListener> listeners = new ArrayList<>();
 
     boolean isRunning = false;
@@ -49,7 +55,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     long lastCheck = System.currentTimeMillis();
 
     /** indicates whether onRebind should be used */
-    boolean mAllowRebind;
+    boolean mAllowRebind = true;
 
     /** Called when the service is being created. */
     @Override
@@ -65,6 +71,12 @@ public class LocationService extends Service implements LocationCallback, Locati
 
             mThreadLooper = thread.getLooper();
             mServiceHandler = new ServiceHandler(mThreadLooper);
+
+            Toast.makeText(LocationService.this, "Service Started", Toast.LENGTH_LONG).show();
+            mLocationProvider.connect();
+            mLocationProvider.setLocationCallbackListener(this);
+            mLocationProvider.setLocationCallbackListener(mEventHandler);
+            mEventHandler.setLocationEventListener(this);
             isRunning = true;
         }
     }
@@ -77,13 +89,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             msg.arg1 = startId;
             mServiceHandler.sendMessage(msg);
             isRunning = true;
-
         }
-        Toast.makeText(this, "Service Started", Toast.LENGTH_LONG).show();
-        mLocationProvider.connect(this);
-        mLocationProvider.setLocationCallbackListener(this);
-        mLocationProvider.setLocationCallbackListener(mEventHandler);
-        mEventHandler.setLocationEventListener(this);
 
         return START_STICKY;
     }
@@ -101,7 +107,6 @@ public class LocationService extends Service implements LocationCallback, Locati
 
     @Override
     public void handleNewLocation(Location location) {
-        getProcessStatus();
         for (IServiceListener l : listeners)
             l.handleNewLocation(location);
     }
@@ -114,14 +119,51 @@ public class LocationService extends Service implements LocationCallback, Locati
 
     @Override
     public void userEnteredArea(String areaID) {
-        for (IServiceListener l : listeners)
-            l.userEnteredArea(areaID);
+        fenceTriggered = true;
+        Toast.makeText(this, "Entered Area: "+ areaID, Toast.LENGTH_SHORT).show();
+        Log.i(TAG,"method: "+applicationInForeground());
+        if (applicationInForeground())
+            for (IServiceListener l : listeners)
+                l.userEnteredArea(areaID);
+        else {
+            Builder mBuilder = new NotificationCompat.Builder(this)
+                                    .setSmallIcon(R.drawable.ic_launcher)
+                                    .setContentTitle("Chania AR")
+                                    .setContentText("Landmark Nearby!");
+
+            Intent resultIntent = new Intent(this, MapsActivity.class);
+
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+            stackBuilder.addParentStack(MapsActivity.class);
+            stackBuilder.addNextIntent(resultIntent);
+
+            PendingIntent resultPendingIntent =
+                    stackBuilder.getPendingIntent(
+                            0,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                    );
+            mBuilder.setContentIntent(resultPendingIntent);
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            Notification notification = mBuilder.build();
+            notification.flags |= Notification.FLAG_AUTO_CANCEL;
+            mNotificationManager.notify(Integer.valueOf(areaID), notification);
+        }
     }
 
     @Override
     public void userLeftArea(String areaID) {
-        for (IServiceListener l : listeners)
-            l.userLeftArea(areaID);
+        Toast.makeText(this, "Left Area: "+ areaID, Toast.LENGTH_SHORT).show();
+        fenceTriggered = false;
+        if (applicationInForeground())
+            for (IServiceListener l : listeners)
+                l.userLeftArea(areaID);
+        else {
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            mNotificationManager.cancel(Integer.valueOf(areaID));
+        }
     }
 
     /** Handler that receives messages from the thread
@@ -130,7 +172,10 @@ public class LocationService extends Service implements LocationCallback, Locati
 
         ServiceHandler(Looper looper) {
             super(looper);
-            mLocationProvider = new LocationProvider(LocationService.this);
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
+
+            mLocationProvider = new LocationProvider(LocationService.this, mode);
             mEventHandler = new LocationEventHandler(LocationService.this);
 
         }
@@ -172,46 +217,53 @@ public class LocationService extends Service implements LocationCallback, Locati
     /** A client is binding to the service with bindService() */
     @Override
     public IBinder onBind(Intent intent) {
-        mLocationProvider.connect(this);
+        Log.i("Binder","onBind called");
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
+        mLocationProvider.setMode(mode);
         return mBinder;
     }
 
-    //TODO: prefs and service
     /** Called when all clients have unbound with unbindService() */
     @Override
     public boolean onUnbind(Intent intent) {
+        Log.i("Binder","onUnbind called");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         boolean keepRunning = sharedPreferences.getBoolean(SettingsActivity.pref_key_allow_background_locations, false);
 
-        if(listeners.isEmpty() && !keepRunning) {
-            mLocationProvider.disconnect();
-            Log.i(TAG,"Suspended");
-        }
-        Log.i(TAG,"Kept Alive");
+        listeners = new ArrayList<>();
 
+        if (!keepRunning) {
+            isRunning = false;
+            Log.i(TAG, "Suspended");
+            stopSelf();
+            NotificationManager mNotificationManager =(NotificationManager) getApplication().getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.cancel(Constants.PERMA_NOTIFICATION_ID);
+            return mAllowRebind;
+        }
+
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle("Location Service is running")
+                .setContentText("Background Location Service is running \nYou will be notified for nearby Landmarks when you exit your application")
+                .setOngoing(true);
+
+        NotificationManager mNotificationManager =(NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(Constants.PERMA_NOTIFICATION_ID, mBuilder.build());
+
+        mLocationProvider.setMode(LocationProvider.MODE_BACKGROUND);
         return mAllowRebind;
     }
 
     /** Called when a client is binding to the service with bindService()*/
     @Override
     public void onRebind(Intent intent) {
-        mLocationProvider.connect(this);
-    }
-    public void getProcessStatus(){
-        Log.i(TAG,"Checking Status");
+        Log.i("Binder","OnRebind called");
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
+        Log.i("Binder",mode);
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean keepRunning = sharedPreferences.getBoolean(SettingsActivity.pref_key_allow_background_locations, false);
-
-        if(System.currentTimeMillis() - lastCheck > 300000 ){
-            lastCheck = System.currentTimeMillis();
-            if(!applicationInForeground()){
-                if(keepRunning)
-                    mLocationProvider.setBackgroundMode();
-                else
-                    stopSelf();
-            }
-        }
+        mLocationProvider.setMode(mode);
     }
 
     private boolean applicationInForeground() {
@@ -224,8 +276,19 @@ public class LocationService extends Service implements LocationCallback, Locati
             isActivityFound = true;
         }
 
-        Log.i(TAG,"Is in Foreground? "+isActivityFound);
+        Log.i(TAG, "Is in Foreground? " + isActivityFound);
         return isActivityFound;
     }
+
+    public boolean isFenceTriggered() {
+        if (fenceTriggered)
+            for (IServiceListener i : listeners){
+                i.userEnteredArea(mEventHandler.getTriggeredArea());
+                i.drawGeoFences(mEventHandler.getActiveFences(),LocationEventHandler.MIN_RADIUS);
+            }
+        return fenceTriggered;
+    }
+
+
 
 }

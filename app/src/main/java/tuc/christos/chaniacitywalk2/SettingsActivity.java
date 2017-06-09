@@ -1,6 +1,10 @@
 package tuc.christos.chaniacitywalk2;
 
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,6 +16,9 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+
+import tuc.christos.chaniacitywalk2.locationService.LocationService;
+import tuc.christos.chaniacitywalk2.utils.Constants;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -111,10 +118,18 @@ public class SettingsActivity extends AppCompatActivity {
                 connectionPref.setSummary(sharedPreferences.getString(key, ""));
             }
 
-            /*if (key.equals(pref_key_allow_background_locations)){
-                Preference notification = findPreference(key);
+            if (key.equals(pref_key_allow_background_locations)){
+                if(sharedPreferences.getBoolean(key,false)) {
+                    getActivity().startService(new Intent(getActivity(), LocationService.class));
 
-            }*/
+                }else {
+                    getActivity().stopService(new Intent(getActivity(), LocationService.class));
+
+                    NotificationManager mNotificationManager =
+                            (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+                    mNotificationManager.cancel(Constants.PERMA_NOTIFICATION_ID);
+                }
+            }
         }
     }
 }

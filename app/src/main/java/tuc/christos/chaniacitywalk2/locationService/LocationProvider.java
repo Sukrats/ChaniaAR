@@ -45,12 +45,17 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
     private LocationRequest mLocationRequest = new LocationRequest();
     private Context mContext;
 
+    public static final String MODE_HIGH_ACCURACY = "High Accuracy";
+    public static final String MODE_BALANCED_POWER_ACCURACY = "Balanced Power Accuracy";
+    public static final String MODE_BATTERY_SAVER = "Battery Saver";
+    public static final String MODE_BACKGROUND = "background";
+    public static final String MODE_GPS_ONLY = "gps_only";
     /**
      * public constructor
      * @param context
      * context of calling activity
      */
-    public LocationProvider (Context context){
+    public LocationProvider (Context context,String mode){
         this.mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -59,8 +64,6 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
 
         mContext = context;
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
         setLocationMode(mode);
 
     }/**
@@ -68,7 +71,7 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
      * @param context
      * context of calling activity
      */
-    public LocationProvider (Context context,LocationCallback locationCallback){
+    public LocationProvider (Context context,LocationCallback locationCallback, String mode){
         this.mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -77,8 +80,6 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
 
         mContext = context;
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
         setLocationMode(mode);
 
         this.mLocationCallback.add(locationCallback);
@@ -87,13 +88,9 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
      * PUBLIC METHODS TO START AND STOP THE LOCATION PROVIDER
      */
 
-    public void connect(Context context){
+    public void connect(){
         //Change Location Provider Settings and then connect to the client
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval,"");
-        setLocationMode(mode);
         mGoogleApiClient.connect();
-
     }
     public void disconnect(){
         stopLocationUpdates();
@@ -106,38 +103,27 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
      * param to select between the 3 available modes
      */
     private void setLocationMode(String mode){
-        long HIGH_INTERVAL = 1000;
-        long HIGH_FASTEST_INTERVAL = HIGH_INTERVAL /2;
-        int HIGH_PRIORITY = LocationRequest.PRIORITY_HIGH_ACCURACY;
-
-        long MEDIUM_INTERVAL = 5000;
-        long MEDIUM_FASTEST_INTERVAL = MEDIUM_INTERVAL/2;
-        int MEDIUM_PRIORITY = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
-
-        long SLOW_INTERVAL = 10000;
-        long SLOW_FASTEST_INTERVAL = SLOW_INTERVAL/2;
-        int SLOW_PRIORITY = LocationRequest.PRIORITY_LOW_POWER;
         Log.i("requestmode",mode);
         switch(mode){
-            case "High Accuracy":
-                createLocationRequest(HIGH_INTERVAL, HIGH_FASTEST_INTERVAL, HIGH_PRIORITY);
+            case MODE_HIGH_ACCURACY:
+                createLocationRequest(1000, 1000/2, LocationRequest.PRIORITY_HIGH_ACCURACY);
                 break;
-            case "Balanced Power Accuracy":
-                createLocationRequest(MEDIUM_INTERVAL, MEDIUM_FASTEST_INTERVAL, MEDIUM_PRIORITY);
+            case MODE_BALANCED_POWER_ACCURACY:
+                createLocationRequest(5000, 5000/2, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
                 break;
-            case "Battery Saver":
-                createLocationRequest(SLOW_INTERVAL, SLOW_FASTEST_INTERVAL, SLOW_PRIORITY);
+            case MODE_BATTERY_SAVER:
+                createLocationRequest(10000, 10000/2, LocationRequest.PRIORITY_LOW_POWER);
                 break;
-            case "Background":
+            case MODE_BACKGROUND:
                 createLocationRequest(30000, 30000, LocationRequest.PRIORITY_NO_POWER);
                 break;
             default:
-                createLocationRequest(MEDIUM_INTERVAL, MEDIUM_FASTEST_INTERVAL, MEDIUM_PRIORITY);
+                createLocationRequest(1000, 1000/2, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         }
     }
 
-    void setBackgroundMode(){
-        setLocationMode("Background");
+    void setMode(String mode){
+        setLocationMode(mode);
     }
     /**
      * LOCATION REQUEST VARIABLES
@@ -182,7 +168,8 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
                 }
             }
         });
-
+        if(mGoogleApiClient.isConnected())
+            mGoogleApiClient.reconnect();
     }
 
     /**

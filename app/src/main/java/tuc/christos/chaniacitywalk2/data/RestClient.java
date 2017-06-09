@@ -413,6 +413,7 @@ public class RestClient implements ContentListener {
 
     }
     public void cancel(){
-        mClient.cancelAllRequests(true);
+        if(mClient != null)
+            mClient.cancelAllRequests(true);
     }
 }

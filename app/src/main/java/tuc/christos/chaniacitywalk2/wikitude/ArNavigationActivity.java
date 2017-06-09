@@ -88,6 +88,7 @@ public class ArNavigationActivity extends Activity {
             LocationService.mIBinder binder = (LocationService.mIBinder) service;
             mService = binder.getService();
             mService.registerServiceListener(mLocationServiceListener);
+            mService.isFenceTriggered();
             mBount = true;
         }
 
@@ -216,9 +217,6 @@ public class ArNavigationActivity extends Activity {
 
         sensorAccuracyListener = getSensorAccuracyListener();
         architectView.registerSensorAccuracyChangeListener(sensorAccuracyListener);
-
-
-        bindService(new Intent(this, LocationService.class),mConnection, Context.BIND_NOT_FOREGROUND);
 
         if(Build.VERSION.SDK_INT >= 19) {
             WebView.setWebContentsDebuggingEnabled(true);
@@ -356,9 +354,10 @@ public class ArNavigationActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if( !mBount && mService !=null ){
+        if( !mBount ){
+            startService(new Intent(this, LocationService.class));
             bindService(new Intent(this,LocationService.class),mConnection,Context.BIND_NOT_FOREGROUND);
-            mService.registerServiceListener(mLocationServiceListener);
+            mBount = true;
         }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {
@@ -375,7 +374,7 @@ public class ArNavigationActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        if(mBount && mService != null){
+        if(mBount ){
             mService.removeListener(mLocationServiceListener);
             unbindService(mConnection);
             mBount = false;

@@ -7,10 +7,6 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
-    <!-- Splash Screen theme. -->
-    <style name="SplashTheme" parent="AppTheme">
-        <item name="android:windowBackground">@color/colorPrimaryDark</item>
-    </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
         <!-- Customize your theme here. -->
@@ -26,39 +22,36 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="PreferenceTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
+    <style name="PreferenceTheme" parent="@style/AppTheme">
         <item name="preferenceTheme">@style/PreferenceThemeOverlayCustom</item>
     </style>
 
     <style name="PreferenceThemeOverlayCustom" parent="@style/PreferenceThemeOverlay">
         <item name="preferenceScreenStyle">@style/Preference.PreferenceScreen.Material</item>
         <item name="preferenceFragmentStyle">@style/PreferenceFragment.Material</item>
-
         <item name="preferenceCategoryStyle">@style/Preference.Category.Material</item>
-
         <item name="preferenceStyle">@style/Preference.Material</item>
         <item name="preferenceInformationStyle">@style/Preference.Information.Material</item>
         <item name="checkBoxPreferenceStyle">@style/Preference.CheckBoxPreference.Material</item>
-        <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.Material
-        </item>
+        <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.Material</item>
         <item name="dialogPreferenceStyle">@style/Preference.DialogPreference.Material</item>
-        <item name="editTextPreferenceStyle">
-            @style/Preference.DialogPreference.EditTextPreference.Material
-        </item>
+        <item name="editTextPreferenceStyle">@style/Preference.DialogPreference.EditTextPreference.Material</item>
         <item name="preferenceFragmentListStyle">@style/PreferenceFragmentList.Material</item>
         <item name="seekBarPreferenceStyle">@style/Preference.SeekBarPreference</item>
         <item name="dropdownPreferenceStyle">@style/Preference.DropDown.Material</item>
     </style>
 
-    <style name="preferenceCategoryCustom" parent="@style/Preference.Category.Material">
-        <!--      <item name="android:layout">@layout/custom_preference_category</item>
-    --></style>
+    <!--    <style name="preferenceCategoryCustom" parent="@style/Preference.Category.Material">
+            <!-      <item name="android:layout">@layout/custom_preference_category</item>
+        -->
+<!--</style>
 
     <style name="CustomPreferenceCategoryText" parent="@android:style/Widget.TextView">
-        <!-- Style your PreferenceCategory here. -->
-        <item name="android:textStyle">bold</item>
+        <!- Style your PreferenceCategory here. -->
+ <!--       <item name="android:textStyle">bold</item>
         <item name="android:textSize">12dp</item>
     </style>
+    -->
 
     <style name="FullscreenTheme" parent="AppTheme">
         <item name="android:actionBarStyle">@style/FullscreenActionBarStyle</item>

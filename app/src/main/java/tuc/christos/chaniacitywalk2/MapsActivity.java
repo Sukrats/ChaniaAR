@@ -3,6 +3,7 @@ package tuc.christos.chaniacitywalk2;
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -15,16 +16,19 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.DrawableRes;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -77,6 +81,8 @@ public class MapsActivity extends AppCompatActivity implements
     protected static final String TAG = "MAPS ACTIVITY";
 
     private final int MY_PERMISSION_REQUEST_CAMERA = 1;
+    private final int MY_PERMISSION_REQUEST_BUNDLE = 3;
+    private final int MY_PERMISSION_LOCATION = 2;
 
     private DataManager mDataManager;
     private GoogleMap mMap;
@@ -108,12 +114,13 @@ public class MapsActivity extends AppCompatActivity implements
 
     boolean mBount = false;
     private LocationService mService;
-    final ServiceConnection mConnection =  new ServiceConnection() {
+    final ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             LocationService.mIBinder binder = (LocationService.mIBinder) service;
             mService = binder.getService();
             mService.registerServiceListener(MapsActivity.this);
+            mService.isFenceTriggered();
             mBount = true;
         }
 
@@ -127,11 +134,9 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        startService(new Intent(this, LocationService.class));
         Log.i("ACTIVITY", "CREATED MAPS ACTIVITY");
         //setContentView(R.layout.activity_maps_custom);
         setContentView(R.layout.custom_map_layout_test);
-        bindService(new Intent(this, LocationService.class),mConnection, Context.BIND_NOT_FOREGROUND);
 
         //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
@@ -159,28 +164,15 @@ public class MapsActivity extends AppCompatActivity implements
             camToStart = true;
         } else camToStart = false;
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED) {
-            PermissionUtils.requestPermission(this, 1, Manifest.permission.ACCESS_FINE_LOCATION, true);
-        }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CAMERA);
-        else {
-            pushButton = (ImageButton) findViewById(R.id.round_button);
-            pushButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                /*
-                mDataManager.printModsTable();
-                Player player = mDataManager.getPlayer();
-                player.setFirstname("Christos");
-                mDataManager.updatePlayer(player , getApplicationContext());
-                mDataManager.printPlaces();*/
-                    Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
-                    aSyncActivity(intent);
-                }
-            });
-        }
+        pushButton = (ImageButton) findViewById(R.id.round_button);
+        pushButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
+                intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
+                aSyncActivity(intent);
+            }
+        });
         Button myloc = (Button) findViewById(R.id.my_location_btn);
         myloc.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -188,7 +180,7 @@ public class MapsActivity extends AppCompatActivity implements
                 if (mCurrentLocation != null) {
                     setCameraPosition(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), mMap.getCameraPosition().zoom);
                 } else {
-                    Toast.makeText(MapsActivity.this.getApplicationContext(), "Please enable Location", Toast.LENGTH_LONG).show();
+                    Toast.makeText(MapsActivity.this.getApplicationContext(), "Please enable Location", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -210,34 +202,78 @@ public class MapsActivity extends AppCompatActivity implements
         }
         mapFragment.getMapAsync(this);
 
+        LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        else if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Location")
+                    .setTitle("Location")
+                    .setMessage("Please enable GPS and Location Services!")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            startActivity(myIntent);
+                        }
+                    })
+                    .create()
+                    .show();
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSION_REQUEST_CAMERA:
-                pushButton = (ImageButton) findViewById(R.id.round_button);
-                pushButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                /*
-                mDataManager.printModsTable();
-                Player player = mDataManager.getPlayer();
-                player.setFirstname("Christos");
-                mDataManager.updatePlayer(player , getApplicationContext());
-                mDataManager.printPlaces();*/
-                        Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                        intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
-                        startActivity(intent);
-                    }
-                });
-                Toast.makeText(this, "Permission Granted AR experiences are on the ready!", Toast.LENGTH_LONG).show();
-                break;
-            default:
-                Toast.makeText(this, "You wont be able to access the AR experiences", Toast.LENGTH_LONG).show();
-                break;
+        boolean location = false, camera = false;
+        for (int i = 0; i < permissions.length; i++) {
+            if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    location = true;
+                }
+            } else if (permissions[i].equals(Manifest.permission.CAMERA)) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    camera = true;
+                }
+            }
+        }
+        boolean granted = location && camera;
+        LocationManager lm = (LocationManager) getBaseContext().getSystemService(Context.LOCATION_SERVICE);
+        if (!granted) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Chania City View AR")
+                    .setMessage("App needs requested permissions to continue!")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            MapsActivity.this.cancel();
+                        }
+                    })
+                    .create()
+                    .show();
+        } else if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Location")
+                    .setMessage("Please enable GPS and Location Services!")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            getApplicationContext().startActivity(myIntent);
+                        }
+                    })
+                    .create()
+                    .show();
+        }else{
+            startService(new  Intent(this, LocationService.class));
+            bindService(new Intent(this, LocationService.class),mConnection,Context.BIND_NOT_FOREGROUND);
         }
     }
+
+    void cancel() {
+        finish();
+    }
+
 
     /**
      * Manipulates the map once available.
@@ -339,6 +375,7 @@ public class MapsActivity extends AppCompatActivity implements
             }
         }
     }
+
 
     public Location latLngToLoc(LatLng latLng) {
         Location location = new Location("");
@@ -545,23 +582,17 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onPause() {
         super.onPause();
-        if(mBount){
+        if( mBount) {
+            mService.removeListener(this);
             unbindService(mConnection);
             mBount = false;
         }
-        //mLocationProvider.removeLocationCallbackListener(this);
-        //mLocationProvider.removeLocationCallbackListener(mEventHandler);
-        //mLocationProvider.disconnect();
-        //mEventHandler.removeLocationEventListener(this);
-
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
-
-
         //Check Preferences File and Update locally
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type, "");
@@ -569,16 +600,10 @@ public class MapsActivity extends AppCompatActivity implements
         setMapStyle(mapStyle);
         camFollow = follow;
 
-        if(!mBount) {
+        if (!mBount && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED ) {
+            startService(new Intent(this, LocationService.class));
             bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
-            mBount = true;
         }
-        //Resume Location Provider and register
-        //the Map activity for location and locationEvent updates
-        //mLocationProvider.connect(this);
-        //mLocationProvider.setLocationCallbackListener(this);
-        //mLocationProvider.setLocationCallbackListener(mEventHandler);
-        //mEventHandler.setLocationEventListener(this);
     }
 
     protected void onStart() {
