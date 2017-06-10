@@ -1,18 +1,9 @@
 package tuc.christos.chaniacitywalk2.locationService;
 
-import android.Manifest;
-import android.app.Activity;
-import android.app.Service;
 import android.content.Context;
-import android.content.IntentSender;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -27,72 +18,50 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.util.ArrayList;
 
-import tuc.christos.chaniacitywalk2.MapsActivity;
-import tuc.christos.chaniacitywalk2.SettingsActivity;
-import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
+import tuc.christos.chaniacitywalk2.mInterfaces.LocationCallback;
 
-public class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListener, LocationListener  {
+
+class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListener, LocationListener  {
 
     private static final String TAG = "LocationProvider";
 
     private ArrayList<LocationCallback> mLocationCallback = new ArrayList<>();
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest = new LocationRequest();
-    private Context mContext;
 
-    public static final String MODE_HIGH_ACCURACY = "High Accuracy";
-    public static final String MODE_BALANCED_POWER_ACCURACY = "Balanced Power Accuracy";
-    public static final String MODE_BATTERY_SAVER = "Battery Saver";
-    public static final String MODE_BACKGROUND = "background";
-    public static final String MODE_GPS_ONLY = "gps_only";
+    static final String MODE_HIGH_ACCURACY = "High Accuracy";
+    private static final String MODE_BALANCED_POWER_ACCURACY = "Balanced Power Accuracy";
+    private static final String MODE_BATTERY_SAVER = "Battery Saver";
+    private static final String MODE_BACKGROUND = "background";
+    //public static final String MODE_GPS_ONLY = "gps_only";
     /**
      * public constructor
      * @param context
      * context of calling activity
      */
-    public LocationProvider (Context context,String mode){
+    LocationProvider (Context context,String mode){
         this.mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
 
-        mContext = context;
-
         setLocationMode(mode);
 
-    }/**
-     * public constructor
-     * @param context
-     * context of calling activity
-     */
-    public LocationProvider (Context context,LocationCallback locationCallback, String mode){
-        this.mGoogleApiClient = new GoogleApiClient.Builder(context)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-
-        mContext = context;
-
-        setLocationMode(mode);
-
-        this.mLocationCallback.add(locationCallback);
     }
     /**
      * PUBLIC METHODS TO START AND STOP THE LOCATION PROVIDER
      */
 
-    public void connect(){
+    void connect(){
         //Change Location Provider Settings and then connect to the client
         mGoogleApiClient.connect();
     }
-    public void disconnect(){
+    void disconnect(){
         stopLocationUpdates();
         mGoogleApiClient.disconnect();
     }
@@ -142,9 +111,9 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
 
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
-            public void onResult(LocationSettingsResult result) {
+            public void onResult(@NonNull LocationSettingsResult result) {
                 final Status status = result.getStatus();
-                final LocationSettingsStates states = result.getLocationSettingsStates();
+                //final LocationSettingsStates states = result.getLocationSettingsStates();
                 switch (status.getStatusCode()) {
                     case LocationSettingsStatusCodes.SUCCESS:
                         // All location settings are satisfied. The client can
@@ -177,12 +146,12 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
      * @param callback
      * listener registered to receive location updates
      */
-    public void setLocationCallbackListener(LocationCallback callback){
+    void setLocationCallbackListener(LocationCallback callback){
         this.mLocationCallback.add(callback);
         Log.i("Location Provider","Listeners Registered: " + mLocationCallback );
     }
 
-    public void removeLocationCallbackListener(LocationCallback callback){
+    void removeLocationCallbackListener(LocationCallback callback){
         this.mLocationCallback.remove(callback);
         Log.i("Location Provider","Listeners Removed: " + callback );
     }
@@ -250,8 +219,6 @@ public class LocationProvider implements ConnectionCallbacks, OnConnectionFailed
         if(mGoogleApiClient.isConnected())
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
     }
-    public void removeListeners(){
-        mLocationCallback = new ArrayList<>();
-    }
+
 
 }

@@ -1,6 +1,5 @@
 package tuc.christos.chaniacitywalk2;
 
-import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.ProgressDialog;
@@ -8,13 +7,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -26,7 +22,6 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,10 +35,10 @@ import java.util.regex.Pattern;
 
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.data.RestClient;
+import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
+import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.model.Player;
-import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.utils.JsonHelper;
-import tuc.christos.chaniacitywalk2.wikitude.ArNavigationActivity;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -625,11 +620,11 @@ public class LoginActivity extends AppCompatActivity {
                                 //startMapsActivity();
                             } else if (!sync.isEmpty() && sync.equals("remote")) {
                                 Toast.makeText(getApplicationContext(), "TODO: Upload to remote DB", Toast.LENGTH_LONG).show();
-                                startMapsActivity("Scenes Remote");
+                                startMapsActivity();
                             } else {
                                 progressBar.setProgress(100);
                                 progressBar.setMessage("Downloade Complete...");
-                                startMapsActivity("Scenes no sync");
+                                startMapsActivity();
                             }
                             break;
 
@@ -647,7 +642,7 @@ public class LoginActivity extends AppCompatActivity {
                         case "Places":
                             progressBar.setProgress(100);
                             progressBar.setMessage("Downloade Complete!");
-                            startMapsActivity("Not Initiated/Places");
+                            startMapsActivity();
                             break;
                         case "Player":
                             break;
@@ -671,7 +666,7 @@ public class LoginActivity extends AppCompatActivity {
                         case "Places":
                             progressBar.setProgress(100);
                             progressBar.setMessage("Downloade Complete!");
-                            startMapsActivity("Initiated/Places");
+                            startMapsActivity();
                             break;
                         case "Player":
                             break;
@@ -682,9 +677,8 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    void startMapsActivity(String tag) {
+    void startMapsActivity() {
         mDataManager.getScenes();
-        Log.i("LOADED","?"+mDataManager.scenesLoaded);
         progressBar.dismiss();
         Intent intent = new Intent(this, MapsActivity.class);
         startActivity(intent);

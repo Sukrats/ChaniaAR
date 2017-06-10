@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2;
+package tuc.christos.chaniacitywalk2.mapHelperClasses;
 
 import android.content.Context;
 import android.graphics.Point;

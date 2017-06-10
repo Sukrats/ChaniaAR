@@ -1,22 +1,16 @@
 package tuc.christos.chaniacitywalk2;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.support.v4.widget.ContentLoadingProgressBar;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.v7.widget.AppCompatTextView;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import tuc.christos.chaniacitywalk2.data.DataManager;
 import tuc.christos.chaniacitywalk2.data.RestClient;
+import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 
 
 /**

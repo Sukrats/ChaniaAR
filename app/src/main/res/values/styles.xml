@@ -26,6 +26,12 @@
         <item name="preferenceTheme">@style/PreferenceThemeOverlayCustom</item>
     </style>
 
+    <style name="PreferenceThemeDialog" parent="Theme.AppCompat.Light.Dialog">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+    <!---->
+
     <style name="PreferenceThemeOverlayCustom" parent="@style/PreferenceThemeOverlay">
         <item name="preferenceScreenStyle">@style/Preference.PreferenceScreen.Material</item>
         <item name="preferenceFragmentStyle">@style/PreferenceFragment.Material</item>

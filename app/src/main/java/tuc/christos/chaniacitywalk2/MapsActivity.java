@@ -24,6 +24,7 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
@@ -61,12 +62,14 @@ import java.util.HashMap;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.data.RestClient;
-import tuc.christos.chaniacitywalk2.locationService.IServiceListener;
+import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
+import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
 import tuc.christos.chaniacitywalk2.locationService.LocationService;
+import tuc.christos.chaniacitywalk2.mapHelperClasses.MapWrapperLayout;
+import tuc.christos.chaniacitywalk2.mapHelperClasses.OnInfoWindowElemTouchListener;
 import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
-import tuc.christos.chaniacitywalk2.utils.PermissionUtils;
 import tuc.christos.chaniacitywalk2.wikitude.ArNavigationActivity;
 import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -80,14 +83,8 @@ public class MapsActivity extends AppCompatActivity implements
 
     protected static final String TAG = "MAPS ACTIVITY";
 
-    private final int MY_PERMISSION_REQUEST_CAMERA = 1;
-    private final int MY_PERMISSION_REQUEST_BUNDLE = 3;
-    private final int MY_PERMISSION_LOCATION = 2;
-
     private DataManager mDataManager;
     private GoogleMap mMap;
-    //private LocationProvider mLocationProvider;
-    //private LocationEventHandler mEventHandler;
 
     private HashMap<Scene, Marker> sceneToMarkerMap = new HashMap<>();
     private HashMap<Marker, Scene> markerToSceneMap = new HashMap<>();
@@ -106,7 +103,6 @@ public class MapsActivity extends AppCompatActivity implements
     private CameraPosition defaultCameraPosition = new CameraPosition.Builder()
             .target(new LatLng(35.514388, 24.020335)).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
 
-    private ImageButton pushButton;
     private boolean isFenceTriggered = false;
     private String fenceTriggered = "";
     public OnInfoWindowElemTouchListener InfoButtonListener;
@@ -164,7 +160,7 @@ public class MapsActivity extends AppCompatActivity implements
             camToStart = true;
         } else camToStart = false;
 
-        pushButton = (ImageButton) findViewById(R.id.round_button);
+        ImageButton pushButton = (ImageButton) findViewById(R.id.round_button);
         pushButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -224,7 +220,7 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[],@NonNull int[] grantResults) {
         boolean location = false, camera = false;
         for (int i = 0; i < permissions.length; i++) {
             if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -482,51 +478,8 @@ public class MapsActivity extends AppCompatActivity implements
                         markerToSceneMap.put(marker, temp);
                     }
                 }
-            /*else if (temp.isHasAR()){
-                    Marker marker;
 
-                    LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
-                    marker = mMap.addMarker(new MarkerOptions()
-                            .position(pos)
-                            .title(temp.getName())
-                            .snippet(temp.getTAG()));
-
-                    if (temp.getId() == 1)
-                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.giali_thumb)));
-                    else if (temp.getId() == 2)
-                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.byzantine_thumb)));
-                    else if (temp.getId() == 3)
-                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.kasteli_thumb)));
-                    else if (temp.getId() == 4)
-                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.rocco_thumb)));
-                    else
-                        marker = null;
-
-
-                    if(marker != null){
-                        sceneToMarkerMap.put(temp, marker);
-                        markerToSceneMap.put(marker, temp);
-                    }
-
-                    Polyline line;
-                    PolylineOptions options = new PolylineOptions()
-                            .width(20)
-                            .color(ContextCompat.getColor(this,R.color.lineColor))
-                            .geodesic(true);
-
-                    for(LatLng ll: mDataManager.getPolyPoints(temp)){
-                        options.add(ll);
-                    }
-                    line = mMap.addPolyline(options);
-
-                    mDataManager.mapLineToScene(line, temp);
-                    mDataManager.mapScenetoLine(temp, line);
-                }*/
             }
-
-            //mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
-            //mMap.setMinZoomPreference(DEFAULT_MIN_ZOOM);
-            //mMap.setLatLngBoundsForCameraTarget(CHANIA);
 
         }
     }
@@ -571,6 +524,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     }
 
+    /*
     public void setCameraPosition(double latitude, double longitude) {
         Log.i(TAG, String.valueOf(latitude) + String.valueOf(longitude));
         CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -578,6 +532,7 @@ public class MapsActivity extends AppCompatActivity implements
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
     }
+    */
 
     @Override
     public void onPause() {
@@ -670,6 +625,7 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {
+
 
         View customMarkerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.view_custom_marker, null);
         ImageView markerImageView = (ImageView) customMarkerView.findViewById(R.id.profile_image);

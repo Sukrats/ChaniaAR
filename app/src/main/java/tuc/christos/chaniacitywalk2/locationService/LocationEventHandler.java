@@ -1,12 +1,13 @@
 package tuc.christos.chaniacitywalk2.locationService;
 
-import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
 import java.util.ArrayList;
 
 import tuc.christos.chaniacitywalk2.data.DataManager;
+import tuc.christos.chaniacitywalk2.mInterfaces.LocationCallback;
+import tuc.christos.chaniacitywalk2.mInterfaces.LocationEventsListener;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
 /**
@@ -15,14 +16,14 @@ import tuc.christos.chaniacitywalk2.model.Scene;
  * Created by Christos on 16-Mar-17.
  */
 
-public class LocationEventHandler implements LocationCallback {
+class LocationEventHandler implements LocationCallback {
 
     private DataManager mDataManager;
     private Location lastKnownLocation = new Location("");
     private ArrayList<LocationEventsListener> iLocationEventListener = new ArrayList<>();
-    private Context mContext;
-    public static int MIN_RADIUS = 20;
-    public static long COVER_RADIUS = 200;
+
+    static int MIN_RADIUS = 20;
+    private static long COVER_RADIUS = 200;
 
     private ArrayList<GeoFence> GeoFences = new ArrayList<>();
     private Location activeFenceLocation = new Location("");
@@ -34,8 +35,7 @@ public class LocationEventHandler implements LocationCallback {
      * Creator activity context for Toasts
      * Can be removed
      */
-    public LocationEventHandler(LocationEventsListener listener) {
-        setLocationEventListener(listener);
+    LocationEventHandler() {
         mDataManager = DataManager.getInstance();
     }
 
@@ -46,7 +46,7 @@ public class LocationEventHandler implements LocationCallback {
      * @param listener Activity that implements LocationEventListener Interface to Listen to LocationEvents
      */
 
-    public void setLocationEventListener(LocationEventsListener listener) {
+    void setLocationEventListener(LocationEventsListener listener) {
 
         this.iLocationEventListener.add(listener);
         Log.i("Event Handler", "Listeners Registered: " + this.iLocationEventListener);
@@ -58,7 +58,7 @@ public class LocationEventHandler implements LocationCallback {
      *
      * @param listener Listener to be removed from the EventHandler
      */
-    public void removeLocationEventListener(LocationEventsListener listener) {
+    void removeLocationEventListener(LocationEventsListener listener) {
         iLocationEventListener.remove(listener);
         Log.i("Event Handler", "Listeners Removed: " + listener);
     }
@@ -189,18 +189,15 @@ public class LocationEventHandler implements LocationCallback {
             temp.drawGeoFences(areaIds, MIN_RADIUS);
     }
 
-    public String getTriggeredArea(){
+    String getTriggeredArea(){
         return activeFenceID;
     }
 
-    public String[] getActiveFences(){
+    String[] getActiveFences(){
         String[] fences = new String[GeoFences.size()];
         for(int i = 0; i < GeoFences.size(); i++)
             fences[i] = GeoFences.get(i).ID;
         return fences;
-    }
-    public void removeListeners(){
-        iLocationEventListener = new ArrayList<>();
     }
 
     /**
@@ -225,10 +222,6 @@ public class LocationEventHandler implements LocationCallback {
 
         String getID() {
             return ID;
-        }
-
-        public void setID(String ID) {
-            this.ID = ID;
         }
     }
 }

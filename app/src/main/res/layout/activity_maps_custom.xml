@@ -37,6 +37,7 @@
         android:layout_gravity="top|end"
         android:background="@drawable/my_location_selector"
         style="?android:attr/buttonStyleSmall"/>
+
 <!--    <View
         android:id="@+id/contrast_light"
         android:layout_width="match_parent"

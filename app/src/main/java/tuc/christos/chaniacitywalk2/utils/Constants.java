@@ -30,5 +30,8 @@ public class Constants {
     public static final String ARCHITECT_WORLD_KEY = "WorldToLoad";
     public static final String ARCHITECT_AR_SCENE_KEY = "scene";
 
-    public static final int PERMA_NOTIFICATION_ID = 13;
+    public static final int PERMA_NOTIFICATION_ID = -20;
+    public static final String ACTION_STOP = "STOP";
+    public static final String ACTION_START = "START";
+    public static final String ACTION_SETTINGS = "SETTINGS";
 }

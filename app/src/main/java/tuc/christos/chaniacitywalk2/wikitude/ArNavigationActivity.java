@@ -1,7 +1,6 @@
 package tuc.christos.chaniacitywalk2.wikitude;
 
 import android.app.Activity;
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -9,7 +8,6 @@ import android.content.ServiceConnection;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NavUtils;
@@ -28,7 +26,7 @@ import org.json.JSONArray;
 import java.io.IOException;
 import java.util.List;
 
-import tuc.christos.chaniacitywalk2.locationService.IServiceListener;
+import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
@@ -62,7 +60,7 @@ public class ArNavigationActivity extends Activity {
     /**
      * last known location of the user, used internally for content-loading after user location was fetched
      */
-    protected Location lastKnownLocaton;
+    protected Location lastKnownLocation;
     /*
      * JS interface listener handling e.g. 'AR.platform.sendJSONObject({foo:"bar", bar:123})' calls in JavaScript
      */
@@ -118,7 +116,7 @@ public class ArNavigationActivity extends Activity {
 
         @Override
         public void handleNewLocation(Location location) {
-            ArNavigationActivity.this.lastKnownLocaton = location;
+            ArNavigationActivity.this.lastKnownLocation = location;
             //update JS Location
             ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
         }
@@ -218,9 +216,7 @@ public class ArNavigationActivity extends Activity {
         sensorAccuracyListener = getSensorAccuracyListener();
         architectView.registerSensorAccuracyChangeListener(sensorAccuracyListener);
 
-        if(Build.VERSION.SDK_INT >= 19) {
-            WebView.setWebContentsDebuggingEnabled(true);
-        }
+        WebView.setWebContentsDebuggingEnabled(true);
         Log.i(TAG,"World: "+WorldToLoad);
     }
 
@@ -233,7 +229,7 @@ public class ArNavigationActivity extends Activity {
                     isLoading = true;
                     final int WAIT_FOR_LOCATION_STEP_MS = 2000;
 
-                    while (lastKnownLocaton == null ) {
+                    while (lastKnownLocation == null ) {
 
                         try {
                             Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
@@ -241,7 +237,7 @@ public class ArNavigationActivity extends Activity {
                             break;
                         }
                     }
-                    if (lastKnownLocaton != null) {
+                    if (lastKnownLocation != null) {
                         callJavaScript(method, args);
                     }
                     isLoading = false;
@@ -260,7 +256,7 @@ public class ArNavigationActivity extends Activity {
                     isLoading = true;
                     final int WAIT_FOR_LOCATION_STEP_MS = 2000;
 
-                    while (lastKnownLocaton == null ) {
+                    while (lastKnownLocation == null ) {
 
                         try {
                             Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
@@ -268,7 +264,7 @@ public class ArNavigationActivity extends Activity {
                             break;
                         }
                     }
-                    if (lastKnownLocaton != null) {
+                    if (lastKnownLocation != null) {
                         args = new String[]{scenesToJson(scenes).toString()};
                         callJavaScript("World.loadPoisFromJsonData", args);
                     }
@@ -323,7 +319,7 @@ public class ArNavigationActivity extends Activity {
             @Override
             public void onCompassAccuracyChanged(int accuracy) {
                 /* UNRELIABLE = 0, LOW = 1, MEDIUM = 2, HIGH = 3 */
-                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_HIGH ) {
+                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_HIGH && System.currentTimeMillis() - ArNavigationActivity.this.lastCalibrationToastShownTimeMillis >= 5000  ) {
                     Toast.makeText(ArNavigationActivity.this, R.string.compass_accuracy_low, Toast.LENGTH_LONG).show();
                     ArNavigationActivity.this.lastCalibrationToastShownTimeMillis = System.currentTimeMillis();
                 }

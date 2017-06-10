@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2;
+package tuc.christos.chaniacitywalk2.mapHelperClasses;
 
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -13,7 +13,7 @@ import com.google.android.gms.maps.model.Marker;
  *
  */
 
-abstract class OnInfoWindowElemTouchListener implements View.OnTouchListener {
+public abstract class OnInfoWindowElemTouchListener implements View.OnTouchListener {
     private final View view;
     private final Drawable bgDrawableNormal;
     private final Drawable bgDrawablePressed;
@@ -22,7 +22,7 @@ abstract class OnInfoWindowElemTouchListener implements View.OnTouchListener {
     private Marker marker;
     private boolean pressed = false;
 
-    OnInfoWindowElemTouchListener(View view, Drawable bgDrawableNormal, Drawable bgDrawablePressed) {
+    protected OnInfoWindowElemTouchListener(View view, Drawable bgDrawableNormal, Drawable bgDrawablePressed) {
         this.view = view;
         this.bgDrawableNormal = bgDrawableNormal;
         this.bgDrawablePressed = bgDrawablePressed;

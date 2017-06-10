@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/pref_location">
+
+        <ListPreference
+            android:key="pref_key_location_update_interval_dialog"
+            android:title="@string/pref_location_mode"
+            android:entries="@array/pref_location_mode_titles_dialog"
+            android:defaultValue="Background"
+            android:entryValues="@array/pref_location_mode_values_dialog"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

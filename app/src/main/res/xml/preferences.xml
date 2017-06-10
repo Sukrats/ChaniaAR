@@ -26,6 +26,7 @@
             android:key="pref_key_map_type"
             android:entries="@array/pref_maps_map_style_titles"
             android:entryValues="@array/pref_maps_map_style_values"
+            android:defaultValue="Retro Mode"
             android:title="@string/pref_maps_map_style"/>
     </PreferenceCategory>
 

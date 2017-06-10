@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.locationService;
+package tuc.christos.chaniacitywalk2.mInterfaces;
 
 import android.location.Location;
 /**

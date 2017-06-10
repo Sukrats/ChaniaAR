@@ -26,7 +26,7 @@
     <string name="compass_accuracy_low">Please re-calibrate compass by waving your device in a figure 8 motion.</string>
 
     <!-- WIKITUDE -->
-    <string name="location_fetching">Trying to find out where you are...</string>
+    <string name="location_fetching">Trying to find out where you are &#8530;</string>
 
     <!-- LOGIN -->
     <string name="remember_me">Remember me </string>
@@ -96,11 +96,29 @@
         <item>Balanced Power Accuracy</item>
         <item>Battery Saver</item>
     </string-array>
+    <!-- LOCATION MODE DIALOG INTEFACE -->
+    <string name="pref_location_mode_dialog">Location Mode</string>
+    <string-array name="pref_location_mode_titles_dialog">
+        <item>High Accuracy</item>
+        <item>Balanced Power Accuracy</item>
+        <item>Battery Saver</item>
+        <item>Background</item>
+    </string-array>
+    <string-array name="pref_location_mode_values_dialog">
+        <item>High Accuracy</item>
+        <item>Balanced Power Accuracy</item>
+        <item>Battery Saver</item>
+        <item>Background</item>
+    </string-array>
     <!-- GEO FENCE PREFERENCES -->
     <string name="pref_geo_fence">Geo Fences</string>
     <string name="pref_geo_fence_culling_distance">Draw Distance</string>
     <string name="pref_geo_fence_culling_distance_summary">Set Max Drawing Distance</string>
 
+    <string name="notification_toggle_start">START</string>
+    <string name="notification_toggle_pause">PAUSE</string>
+    <string name="notification_toggle_stop">STOP</string>
+    <string name="notification_toggle_settings">SETTINGS</string>
     <string name="allow_background_locations_title">Notifications</string>
     <string name="allow_background_locations">Get Location Notifications when app is in the background</string>
 

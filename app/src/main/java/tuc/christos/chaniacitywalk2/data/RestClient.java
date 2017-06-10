@@ -2,7 +2,6 @@ package tuc.christos.chaniacitywalk2.data;
 
 import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -16,9 +15,8 @@ import java.nio.charset.StandardCharsets;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
-import tuc.christos.chaniacitywalk2.ClientListener;
-import tuc.christos.chaniacitywalk2.ContentListener;
-import tuc.christos.chaniacitywalk2.LoginActivity;
+import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
+import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.utils.JsonHelper;
