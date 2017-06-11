@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.collection;
+package tuc.christos.chaniacitywalk2.collectionActivity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -38,9 +38,9 @@ import java.util.Comparator;
 import java.util.List;
 
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
-import tuc.christos.chaniacitywalk2.data.DataManager;
+import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.R;
-import tuc.christos.chaniacitywalk2.data.RestClient;
+import tuc.christos.chaniacitywalk2.utils.RestClient;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Scene;
 

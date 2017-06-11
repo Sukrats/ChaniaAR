@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.data;
+package tuc.christos.chaniacitywalk2.utils;
 
 import android.content.Context;
 import android.util.Log;
@@ -18,8 +18,6 @@ import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.model.Player;
-import tuc.christos.chaniacitywalk2.utils.Constants;
-import tuc.christos.chaniacitywalk2.utils.JsonHelper;
 
 /**
  * Created by Christos on 29-May-17.
@@ -410,6 +408,47 @@ public class RestClient implements ContentListener {
         mClient = client;
 
     }
+
+    public void downloadScenesForLocation(String country,String area,final ContentListener contentListener){
+        mDataManager.clearScenes();
+        Log.i(TAG, "Downloading Scenes For Location");
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.setMaxRetriesAndTimeout(4,20000);
+        client.get(Constants.URL_SCENES+"?country="+country+"&area="+area, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                try {
+                    mDataManager.clearScenes();
+                    JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
+                    mDataManager.populateUserData(json, "Scenes");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                contentListener.downloadComplete(true, i, "Guest", "Downloading Complete");
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                String code = "";
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                String result = "Error on Download";
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    result = errorMessage.getString("message");
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                }
+                contentListener.downloadComplete(false, i, "Guest", result);
+            }
+        });
+        mClient = client;
+    }
+
     public void cancel(){
         if(mClient != null)
             mClient.cancelAllRequests(true);

@@ -23,9 +23,9 @@ import android.widget.ToggleButton;
 
 import java.util.List;
 
-import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
-import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
-import tuc.christos.chaniacitywalk2.data.DataManager;
+import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
+import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
 

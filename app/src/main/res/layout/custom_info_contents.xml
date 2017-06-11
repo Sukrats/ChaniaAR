@@ -8,41 +8,24 @@
     android:background="@drawable/markerbordermapwhite"
     android:clickable="false">
 
-    <LinearLayout
-        android:id="@+id/ar_panel"
+    <ImageView
+        android:id="@+id/thumb"
+        android:layout_width="64dp"
+        android:layout_height="48dp"
+        android:cropToPadding="true"
         android:layout_gravity="center_vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:visibility="gone">
-        <ImageButton
-            android:id="@+id/ar_button"
-            android:layout_gravity="center_vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_menu_camera"
-            style="@style/Widget.AppCompat.ImageButton"
-            android:background="@color/transparent"
-            android:contentDescription="@android:string/ok"/>
-
-        <View
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
-            android:layout_gravity="center_vertical"
-            android:background="@color/divider"
-            android:layout_width="1dp"
-            android:layout_height="match_parent"/>
-    </LinearLayout>
+        android:contentDescription="@string/app_name"/>
 
     <LinearLayout
         android:id="@+id/info"
         android:layout_gravity="center_vertical"
-        android:paddingLeft="2dp"
-        android:paddingRight="2dp"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:clickable="false">
+
 
         <TextView
             android:id="@+id/title"
@@ -61,18 +44,43 @@
             android:ellipsize="end"
             android:textColor="@color/Accent"
             android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/locality"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:textColor="@color/Accent"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/detail_panel"
+        android:id="@+id/controls_panel"
         android:layout_gravity="center_vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:visibility="gone">
         <View
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:layout_gravity="center_vertical"
+            android:background="@color/divider"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"/>
+
+        <ImageButton
+            android:id="@+id/ar_button"
+            android:layout_gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_camera"
+            style="@style/Widget.AppCompat.ImageButton"
+            android:background="@color/transparent"
+            android:contentDescription="@android:string/ok"/>
+        <View
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
             android:layout_gravity="center_vertical"
             android:background="@color/divider"
             android:layout_width="1dp"

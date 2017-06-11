@@ -17,6 +17,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -25,6 +26,7 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
@@ -41,6 +43,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -59,21 +63,21 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
-import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
-import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
-import tuc.christos.chaniacitywalk2.data.RestClient;
+import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
+import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
+import tuc.christos.chaniacitywalk2.utils.RestClient;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
 import tuc.christos.chaniacitywalk2.locationService.LocationService;
-import tuc.christos.chaniacitywalk2.mapHelperClasses.MapWrapperLayout;
-import tuc.christos.chaniacitywalk2.mapHelperClasses.OnInfoWindowElemTouchListener;
-import tuc.christos.chaniacitywalk2.model.ArScene;
+import tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.MapWrapperLayout;
+import tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.OnInfoWindowElemTouchListener;
+import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
-import tuc.christos.chaniacitywalk2.wikitude.ArNavigationActivity;
-import tuc.christos.chaniacitywalk2.collection.CollectionActivity;
+import tuc.christos.chaniacitywalk2.collectionActivity.CollectionActivity;
 import tuc.christos.chaniacitywalk2.model.Scene;
-import tuc.christos.chaniacitywalk2.data.DataManager;
+import tuc.christos.chaniacitywalk2.utils.DataManager;
 
 
 public class MapsActivity extends AppCompatActivity implements
@@ -86,6 +90,7 @@ public class MapsActivity extends AppCompatActivity implements
     private DataManager mDataManager;
     private GoogleMap mMap;
 
+    private HashMap<String, Scene> scenesShown = new HashMap<>();
     private HashMap<Scene, Marker> sceneToMarkerMap = new HashMap<>();
     private HashMap<Marker, Scene> markerToSceneMap = new HashMap<>();
 
@@ -109,6 +114,7 @@ public class MapsActivity extends AppCompatActivity implements
     MapWrapperLayout mapWrapperLayout;
 
     boolean mBount = false;
+    private Binder mBinder;
     private LocationService mService;
     final ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -138,8 +144,9 @@ public class MapsActivity extends AppCompatActivity implements
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
+
         RestClient mRestClient = RestClient.getInstance();
-        if (!mDataManager.isInitialised()) {
+        /*if (!mDataManager.isInitialised()) {
             mRestClient.getInitialContent(new ClientListener() {
                 @Override
                 public void onCompleted(boolean success, int httpCode, String msg) {
@@ -151,7 +158,7 @@ public class MapsActivity extends AppCompatActivity implements
                     Toast.makeText(MapsActivity.this, msg, Toast.LENGTH_SHORT).show();
                 }
             });
-        }
+        }*/
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
@@ -200,9 +207,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-        else if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             new AlertDialog.Builder(this)
                     .setTitle("Location")
                     .setTitle("Location")
@@ -219,52 +224,6 @@ public class MapsActivity extends AppCompatActivity implements
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[],@NonNull int[] grantResults) {
-        boolean location = false, camera = false;
-        for (int i = 0; i < permissions.length; i++) {
-            if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                    location = true;
-                }
-            } else if (permissions[i].equals(Manifest.permission.CAMERA)) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                    camera = true;
-                }
-            }
-        }
-        boolean granted = location && camera;
-        LocationManager lm = (LocationManager) getBaseContext().getSystemService(Context.LOCATION_SERVICE);
-        if (!granted) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Chania City View AR")
-                    .setMessage("App needs requested permissions to continue!")
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            MapsActivity.this.cancel();
-                        }
-                    })
-                    .create()
-                    .show();
-        } else if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Location")
-                    .setMessage("Please enable GPS and Location Services!")
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                            getApplicationContext().startActivity(myIntent);
-                        }
-                    })
-                    .create()
-                    .show();
-        }else{
-            startService(new  Intent(this, LocationService.class));
-            bindService(new Intent(this, LocationService.class),mConnection,Context.BIND_NOT_FOREGROUND);
-        }
-    }
 
     void cancel() {
         finish();
@@ -292,12 +251,7 @@ public class MapsActivity extends AppCompatActivity implements
 
             }
         });
-        mMap.setPadding(0, 0, 0, 100);
-
-        //mUiSettings = mMap.getUiSettings();
-        //mUiSettings.setZoomControlsEnabled(true);
-        //mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-
+        mMap.setPadding(0, 0, 0, 120);
         mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
 
         //mMap.setOnCameraMoveCanceledListener(this);
@@ -328,7 +282,6 @@ public class MapsActivity extends AppCompatActivity implements
         drawMap();
         //enableMyLocation();
     }
-
 
     public void moveMyLocationMarker(Location location) {
         if (mLocationMarker == null || !mLocationMarker.isVisible()) {
@@ -422,63 +375,47 @@ public class MapsActivity extends AppCompatActivity implements
             mMap.clear();
             sceneToMarkerMap.clear();
             markerToSceneMap.clear();
-            if (mLocationMarker != null) mLocationMarker.setVisible(false);
-            if (camToStart)
+            if (mLocationMarker != null) {
+                mLocationMarker.setVisible(false);
+                defaultCameraPosition = new CameraPosition.Builder()
+                        .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
+                        .bearing(0).tilt(50).build();
+            }
+            if (camToStart) {
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
-            Player player = mDataManager.getActivePlayer();
-            if (player.getScore() <= 1000 || player.getScore() == null) {
-                Log.i("Score", player.getScore() + " < 1000");
-                for (ArScene temp : mDataManager.getRoute().values()) {
-                    Marker marker;
-                    LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
-                    marker = mMap.addMarker(new MarkerOptions()
-                            .position(pos)
-                            .title(temp.getName())
-                            .snippet(temp.getTAG()));
-                    if (temp.getId() == 36)
-                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.giali_thumb)));
-                    else if (temp.getId() == 37)
-                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.byzantine_thumb)));
-                    else if (temp.getId() == 38)
-                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.kasteli_thumb)));
-                    else if (temp.getId() == 39)
-                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.rocco_thumb)));
-                    else
-                        marker = null;
-                    if (marker != null) {
-                        sceneToMarkerMap.put(temp, marker);
-                        markerToSceneMap.put(marker, temp);
-                    }
-                }
-            } else {
-                Log.i("Score", player.getScore() + " > 1000");
-                for (Scene temp : mDataManager.getScenes()) {
-                    if (temp.isSaved() && !temp.isHasAR()) {
-                        LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
-                        Marker marker = mMap.addMarker(new MarkerOptions()
-                                .position(pos)
-                                .title(temp.getName())
-                                .snippet(temp.getTAG()));
-                        if (temp.isVisited()) {
-                            if (temp.getTAG() != null && temp.getTAG().equals("Ottoman")) {
-                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
-                            } else if (temp.getTAG() != null && temp.getTAG().equals("Venetian")) {
-                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_venetian));
-                            } else if (temp.getTAG() != null && temp.getTAG().equals("Modern")) {
-                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_modern));
-                            } else if (temp.getTAG() != null && temp.getTAG().equals("NeoGreek")) {
-                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
-                            } else {
-                                marker = mMap.addMarker(new MarkerOptions().position(pos).title(temp.getName()));
-                            }
-                        } else {
-                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.unknown_32));
-                        }
-                        sceneToMarkerMap.put(temp, marker);
-                        markerToSceneMap.put(marker, temp);
-                    }
-                }
+                camToStart = false;
+            }
+            Log.i("NEW", "" + mDataManager.getActiveMapContent().size());
+            for (Scene temp : mDataManager.getActiveMapContent()) {
+                scenesShown.put(String.valueOf(temp.getId()), temp);
+                LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
+                Marker marker = mMap.addMarker(new MarkerOptions()
+                        .position(pos)
+                        .title(temp.getName())
+                        .snippet(temp.getTAG()));
 
+                if (temp.hasAR()) {
+                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.ar_photo)));
+                } else {
+
+                    if (temp.isVisited()) {
+                        if (temp.getTAG() != null && temp.getTAG().equals("Ottoman")) {
+                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
+                        } else if (temp.getTAG() != null && temp.getTAG().equals("Venetian")) {
+                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_venetian));
+                        } else if (temp.getTAG() != null && temp.getTAG().equals("Modern")) {
+                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_modern));
+                        } else if (temp.getTAG() != null && temp.getTAG().equals("NeoGreek")) {
+                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
+                        } else {
+                            marker = mMap.addMarker(new MarkerOptions().position(pos).title(temp.getName()));
+                        }
+                    } else {
+                        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.unknown_32));
+                    }
+                }
+                sceneToMarkerMap.put(temp, marker);
+                markerToSceneMap.put(marker, temp);
             }
 
         }
@@ -537,7 +474,7 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onPause() {
         super.onPause();
-        if( mBount) {
+        if (mBount) {
             mService.removeListener(this);
             unbindService(mConnection);
             mBount = false;
@@ -555,7 +492,7 @@ public class MapsActivity extends AppCompatActivity implements
         setMapStyle(mapStyle);
         camFollow = follow;
 
-        if (!mBount && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)== PackageManager.PERMISSION_GRANTED ) {
+        if (!mBount && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             startService(new Intent(this, LocationService.class));
             bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
         }
@@ -605,7 +542,7 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     public void userEnteredArea(String areaID) {
-        Scene scene = mDataManager.getRoute().get(areaID);
+        Scene scene = scenesShown.get(areaID);
         isFenceTriggered = true;
         fenceTriggered = areaID;
         sceneToMarkerMap.get(scene).showInfoWindow();
@@ -622,6 +559,10 @@ public class MapsActivity extends AppCompatActivity implements
         //circleMap.remove(areaID);
         //}
 
+    }
+
+    public void regionChanged(String region, String Country) {
+        drawMap();
     }
 
     private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {
@@ -659,8 +600,18 @@ public class MapsActivity extends AppCompatActivity implements
             if (!marker.equals(mLocationMarker)) {
                 ImageButton ar_button = (ImageButton) mContents.findViewById(R.id.ar_button);
                 ImageButton det_button = (ImageButton) mContents.findViewById(R.id.details_button);
+                ImageView thumb = (ImageView) mContents.findViewById(R.id.thumb);
+                mContents.findViewById(R.id.locality).setVisibility(View.GONE);
 
                 final Scene scene = markerToSceneMap.get(marker);
+                if (scene.hasAR())
+                    Glide.with(getApplicationContext())
+                            .load(scene.getUriThumb())
+                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                            .placeholder(R.drawable.empty_photo)
+                            .override(164, 164)
+                            .into(thumb);
+                Log.i("Glide", "uri is: " + scene.getUriThumb());
                 TextView titleUi = ((TextView) mContents.findViewById(R.id.title));
                 titleUi.setText(marker.getTitle());
 
@@ -676,7 +627,6 @@ public class MapsActivity extends AppCompatActivity implements
 
                 boolean isfence = String.valueOf(markerToSceneMap.get(marker).getId()).equals(fenceTriggered);
                 if (!scene.isVisited() && isFenceTriggered && isfence) {
-                    mContents.findViewById(R.id.ar_panel).setVisibility(View.VISIBLE);
                     InfoButtonListener = new OnInfoWindowElemTouchListener(ar_button,
                             ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
                             ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {
@@ -690,7 +640,7 @@ public class MapsActivity extends AppCompatActivity implements
                     };
                     ar_button.setOnTouchListener(InfoButtonListener);
 
-                    mContents.findViewById(R.id.detail_panel).setVisibility(View.VISIBLE);
+                    mContents.findViewById(R.id.controls_panel).setVisibility(View.VISIBLE);
                     OnInfoWindowElemTouchListener infoTouchListener = new OnInfoWindowElemTouchListener(det_button,
                             ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
                             ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {
@@ -705,17 +655,26 @@ public class MapsActivity extends AppCompatActivity implements
                     };
                     det_button.setOnTouchListener(infoTouchListener);
                 } else {
-                    mContents.findViewById(R.id.ar_panel).setVisibility(View.GONE);
-                    mContents.findViewById(R.id.detail_panel).setVisibility(View.GONE);
+                    mContents.findViewById(R.id.controls_panel).setVisibility(View.GONE);
                 }
 
                 mapWrapperLayout.setMarkerWithInfoWindow(marker, mContents);
                 return mContents;
             } else {
-                mContents.findViewById(R.id.ar_panel).setVisibility(View.GONE);
-                mContents.findViewById(R.id.detail_panel).setVisibility(View.GONE);
+                mContents.findViewById(R.id.thumb).setVisibility(View.GONE);
+                mContents.findViewById(R.id.controls_panel).setVisibility(View.GONE);
+                TextView locality = (TextView) mContents.findViewById(R.id.locality);
 
                 Player player = mDataManager.getActivePlayer();
+                Level level = mDataManager.getCurrentLevel();
+
+                String local = level.getCity() + ", (" + level.getCountry_code() + ")" + level.getCountry()
+                        + "\nAdmin Area: " + level.getAdminArea()
+                        + "\nSub Admin Area: " + level.getSubAdminArea()
+                        + "!";
+
+                locality.setText(local);
+
                 TextView titleUi = ((TextView) mContents.findViewById(R.id.title));
                 titleUi.setText(player.getUsername());
 

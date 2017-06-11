@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.collection;
+package tuc.christos.chaniacitywalk2.collectionActivity;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;

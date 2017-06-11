@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.data;
+package tuc.christos.chaniacitywalk2.utils;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -36,6 +36,7 @@ final class mDBHelper extends SQLiteOpenHelper {
                 PlayerEntry.COLUMN_FIRST_NAME + " TEXT," +
                 PlayerEntry.COLUMN_LAST_NAME + " TEXT," +
                 PlayerEntry.COLUMN_CREATED + " TEXT," +
+                PlayerEntry.COLUMN_REGION + " TEXT," +
                 PlayerEntry.COLUMN_SCORE + " INTEGER," +
                 PlayerEntry.COLUMN_RECENT_ACTIVITY + " TIMESTAMP," +
                 PlayerEntry.COLUMN_ACTIVE + " INTEGER " +
@@ -323,6 +324,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(PlayerEntry.COLUMN_LAST_NAME, player.getLastname());
         values.put(PlayerEntry.COLUMN_CREATED, player.getCreated().toString());
         values.put(PlayerEntry.COLUMN_SCORE, player.getScore());
+        values.put(PlayerEntry.COLUMN_REGION, player.getRegion());
         values.put(PlayerEntry.COLUMN_RECENT_ACTIVITY, player.getRecentActivity().toString());
         values.put(PlayerEntry.COLUMN_ACTIVE, 1);
 
@@ -339,6 +341,7 @@ final class mDBHelper extends SQLiteOpenHelper {
                 PlayerEntry.COLUMN_FIRST_NAME + " = '" + player.getFirstname() + "'," +
                 PlayerEntry.COLUMN_LAST_NAME + " = '" + player.getLastname() + "'," +
                 PlayerEntry.COLUMN_SCORE + " = '" + player.getScore() + "'," +
+                PlayerEntry.COLUMN_REGION + " = '" + player.getRegion() + "'," +
                 PlayerEntry.COLUMN_RECENT_ACTIVITY + " =  current_timestamp " +
                 " WHERE " + PlayerEntry.COLUMN_ACTIVE + " = '1' ";
         db.execSQL(updateQ);
@@ -388,8 +391,8 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(SceneEntry.SCENES_COLUMN_DESCRIPTION, scene.getDescription());
         values.put(SceneEntry.SCENES_COLUMN_LATITUDE, scene.getLatitude());
         values.put(SceneEntry.SCENES_COLUMN_LONGITUDE, scene.getLongitude());
-        values.put(SceneEntry.SCENES_COLUMN_IMAGES_URL, scene.getUriImages());
-        values.put(SceneEntry.SCENES_COLUMN_THUMBNAIL_URL, scene.getUriThumb());
+        values.put(SceneEntry.SCENES_COLUMN_IMAGES_URL, scene.getUriImages().toString());
+        values.put(SceneEntry.SCENES_COLUMN_THUMBNAIL_URL, scene.getUriThumb().toString());
 
         long count = db.insertWithOnConflict(SceneEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
         return count != -1;
@@ -399,8 +402,10 @@ final class mDBHelper extends SQLiteOpenHelper {
 
     void clearScenes() {
         SQLiteDatabase db = this.getWritableDatabase();
-        String deleteQ = "DELETE FROM " + SceneEntry.TABLE_NAME;
-        db.rawQuery(deleteQ, null);
+        /*String deleteQ = "DELETE FROM " + SceneEntry.TABLE_NAME;
+        db.rawQuery(deleteQ, null);*/
+        Log.i("DB_CLEAR","DELETE QUERY EXECUTED");
+        db.delete(SceneEntry.TABLE_NAME,null , null);
     }
 
     /**************************************************************************************PERIODS****************************************************************************************/
@@ -551,6 +556,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         static final String COLUMN_LAST_NAME = "lastname";
         static final String COLUMN_CREATED = "created";
         static final String COLUMN_SCORE = "score";
+        static final String COLUMN_REGION = "region";
         static final String COLUMN_RECENT_ACTIVITY = "recent_activity";
         static final String COLUMN_ACTIVE = "active";
     }

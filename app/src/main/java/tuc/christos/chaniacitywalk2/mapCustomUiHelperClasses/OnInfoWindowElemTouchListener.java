@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.mapHelperClasses;
+package tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses;
 
 import android.graphics.drawable.Drawable;
 import android.os.Handler;

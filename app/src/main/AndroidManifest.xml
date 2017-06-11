@@ -44,7 +44,7 @@
 
         <activity
             android:name=".LoginActivity"
-            android:noHistory="true">
+            android:noHistory="false">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -53,7 +53,7 @@
         </activity>
         <activity android:name=".MapsActivity" />
         <activity
-            android:name=".collection.CollectionActivity"
+            android:name=".collectionActivity.CollectionActivity"
             android:label="@string/title_activity_collection_siblings"
             android:parentActivityName=".MapsActivity"
             android:screenOrientation="portrait"
@@ -63,14 +63,14 @@
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
         </activity>
         <activity
-            android:name=".collection.SceneDetailActivity"
+            android:name=".collectionActivity.SceneDetailActivity"
             android:label="@string/title_scene_detail"
-            android:parentActivityName=".collection.CollectionActivity"
+            android:parentActivityName=".collectionActivity.CollectionActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="tuc.christos.chaniacitywalk2.collection.CollectionActivity" />
+                android:value="tuc.christos.chaniacitywalk2.collectionActivity.CollectionActivity" />
         </activity>
         <activity
             android:name=".SettingsActivity"
@@ -90,7 +90,7 @@
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
         </activity>
         <activity
-            android:name=".wikitude.ArNavigationActivity"
+            android:name=".ArNavigationActivity"
             android:configChanges="screenSize|orientation">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

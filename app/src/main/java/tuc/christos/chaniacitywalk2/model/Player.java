@@ -17,6 +17,7 @@ public class Player {
     private String password;
     private String firstname;
     private String lastname;
+    private String region;
     private Date created;
     private Date recentActivity;
     private Long numOfPlaces;
@@ -180,5 +181,13 @@ public class Player {
             this.score += 250;
         else
             this.score -= 250;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 }

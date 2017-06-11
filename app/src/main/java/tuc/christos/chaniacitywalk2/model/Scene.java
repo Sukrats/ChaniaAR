@@ -1,5 +1,7 @@
 package tuc.christos.chaniacitywalk2.model;
 
+import android.net.Uri;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,11 +25,11 @@ public class Scene {
 
     private String briefDesc;
     private String description;
-    private String uriImages;
-    private String uriThumb;
+    private Uri uriImages;
+    private Uri uriThumb;
     private String TAG;
 
-    public boolean isHasAR() {
+    public boolean hasAR() {
         return hasAR;
     }
 
@@ -152,20 +154,20 @@ public class Scene {
         this.links.put(rel, url);
     }
 
-    public String getUriImages() {
+    public Uri getUriImages() {
         return uriImages;
     }
 
     public void setUriImages(String uriImages) {
-        this.uriImages = uriImages;
+        this.uriImages = Uri.parse(uriImages);
     }
 
-    public String getUriThumb() {
+    public Uri getUriThumb() {
         return uriThumb;
     }
 
     public void setUriThumb(String uriThumb) {
-        this.uriThumb = uriThumb;
+        this.uriThumb = Uri.parse(uriThumb);
     }
 
 }

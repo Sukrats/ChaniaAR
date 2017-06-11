@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.data;
+package tuc.christos.chaniacitywalk2.utils;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -17,10 +17,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import tuc.christos.chaniacitywalk2.model.ArScene;
+import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
-import tuc.christos.chaniacitywalk2.utils.JsonHelper;
 
 /**
  * Created by Christos on 24/1/2017.
@@ -32,7 +32,9 @@ public class DataManager {
     private static DataManager INSTANCE = null;
     private boolean instantiated = false;
     private Player activePlayer;
-    public boolean scenesLoaded = false;
+
+    private boolean scenesLoaded = false;
+    private Level currentLevel;
 
     private HashMap<String, ArScene> Route = new HashMap<>();
     private HashMap<String, Scene> ScenesMap = new HashMap<>();
@@ -63,6 +65,13 @@ public class DataManager {
         }
     }
 
+    public boolean isInstantiated() {
+        return instantiated;
+    }
+    public boolean isContentReady(){
+        return !mDBh.isScenesEmpty();
+    }
+
     /**********************************************************MODIFICATIONS******************************************************************/
 
     public Timestamp getLastUpdate(String table_name) {
@@ -75,9 +84,9 @@ public class DataManager {
         return Timestamp.valueOf(update);
     }
 
-      public void printModsTable() {
-          mDBh.printModsTable();
-      }
+    public void printModsTable() {
+        mDBh.printModsTable();
+    }
 
     /**********************************************************DB SYNCING********************************************************************/
 
@@ -104,6 +113,15 @@ public class DataManager {
     public void syncRemoteToLocal() {
 
         Log.i("DB_SYNC", "UPDATED REMOTE DATABASE");
+    }
+  */
+
+    public ArrayList<Scene> getActiveMapContent() {
+        Log.i(TAG,""+scenesLoaded);
+        if( getActivePlayer().getScore() < 1000 && !getActivePlayer().getUsername().equals("Guest"))
+            return new ArrayList<Scene>(getRoute().values());
+        else
+            return new ArrayList<>(getScenes());
     }
 
   /*  /*********************************************************CONTENT METHODS**************************************************************/
@@ -140,7 +158,11 @@ public class DataManager {
     }
 
     public Player getActivePlayer() {
-        return this.activePlayer;
+        if (this.activePlayer != null)
+            return this.activePlayer;
+
+        return this.getPlayer();
+
     }
 
     public void setActivePlayer(Player player) {
@@ -205,9 +227,18 @@ public class DataManager {
             player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_PASSWORD)));
             player.setFirstname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_FIRST_NAME)));
             player.setLastname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_LAST_NAME)));
-            player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+            player.setRegion(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_REGION)));
             player.setScore(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_SCORE)));
-            player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
+            try {
+                player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+            }catch(IllegalArgumentException e){
+                player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+            }
+            try {
+                player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
+            }catch(IllegalArgumentException e){
+                player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
+            }
         }
         activePlayer = player;
         return player;
@@ -222,10 +253,20 @@ public class DataManager {
             player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_PASSWORD)));
             player.setFirstname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_FIRST_NAME)));
             player.setLastname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_LAST_NAME)));
+            player.setRegion(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_REGION)));
             int active = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_ACTIVE));
-            player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
             player.setScore(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_SCORE)));
-            player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
+
+            try {
+                player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+            }catch(IllegalArgumentException e){
+                player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
+            }
+            try {
+                player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
+            }catch(IllegalArgumentException e){
+                player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
+            }
             Log.i("Players", player.getEmail() + player.getUsername() + player.getRecentActivity() + " ACTIVE?: " + String.valueOf(active));
         }
     }
@@ -270,7 +311,7 @@ public class DataManager {
         return periodsGet;
     }
 
-   public Period getPeriod(String period_id) {
+    public Period getPeriod(String period_id) {
         Cursor c = mDBh.getPeriod(period_id);
         Period p = new Period();
         if (c.moveToNext()) {
@@ -302,7 +343,10 @@ public class DataManager {
                 String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
                 Scene temp = new Scene(lat, lon, id, period_id, name, description);
-                temp.setHasAR(false);
+                if(!Route.containsKey(String.valueOf(temp.getId())))
+                    temp.setHasAR(false);
+                else temp.setHasAR(true);
+
                 temp.setSaved(hasSaved(temp.getId()));
                 temp.setVisited(hasVisited(temp.getId()));
                 temp.setUriImages(images);
@@ -331,7 +375,7 @@ public class DataManager {
     }
 
     public Scene getScene(String id) {
-        if (scenesLoaded) {
+        if (!scenesLoaded) {
             Cursor c = mDBh.getScene(Long.valueOf(id));
             Scene s = new Scene();
             if (c.moveToNext()) {
@@ -345,7 +389,9 @@ public class DataManager {
                 s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
                 s.setSaved(hasSaved(s.getId()));
                 s.setVisited(hasVisited(s.getId()));
-                s.setHasAR(false);
+                if(!Route.containsKey(String.valueOf(s.getId())))
+                    s.setHasAR(false);
+                else s.setHasAR(true);
             }
             return s;
         } else
@@ -359,27 +405,35 @@ public class DataManager {
             List<Scene> scenes = new ArrayList<>();
             int i = 0;
             Log.i(TAG, "Fetching Scenes from local db");
-            while (c.moveToNext()) {
-                i++;
-                String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
-                double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
-                double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
-                int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID));
-                int period_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID));
-                String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
-                String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL));
-                String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
+            if(!isScenesEmpty()) {
+                while (c.moveToNext()) {
+                    i++;
+                    String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
+                    double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE));
+                    double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
+                    int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID));
+                    int period_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID));
+                    String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
+                    String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL));
+                    String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
-                Scene temp = new Scene(lat, lon, id, period_id, name, description);
-                temp.setSaved(hasSaved(temp.getId()));
-                temp.setVisited(hasVisited(temp.getId()));
-                temp.setUriImages(images);
-                temp.setUriThumb(thumbnail);
-                temp.setHasAR(false);
-                scenes.add(temp);
-                ScenesMap.put(String.valueOf(temp.getId()), temp);
+                    Scene temp = new Scene(lat, lon, id, period_id, name, description);
+                    temp.setSaved(hasSaved(temp.getId()));
+                    temp.setVisited(hasVisited(temp.getId()));
+                    temp.setUriImages(images);
+                    temp.setUriThumb(thumbnail);
+                    if (!Route.containsKey(String.valueOf(temp.getId())))
+                        temp.setHasAR(false);
+                    else {
+                        temp.setHasAR(true);
+                        Route.get(String.valueOf(temp.getId())).setUriImages(temp.getUriImages().toString());
+                        Route.get(String.valueOf(temp.getId())).setUriThumb(temp.getUriThumb().toString());
+                    }
+                    scenes.add(temp);
+                    ScenesMap.put(String.valueOf(temp.getId()), temp);
+                }
+                scenesLoaded = true;
             }
-            scenesLoaded = true;
             Log.i(TAG, "Fetched: " + i + " Scenes");
             return scenes;
         } else
@@ -391,19 +445,19 @@ public class DataManager {
     public void savePlace(long id) {
         Player p = getPlayer();
         mDBh.insertPlace(id, p.getUsername());
-        if(scenesLoaded)
+        if (scenesLoaded)
             ScenesMap.get(String.valueOf(id)).setSaved(true);
     }
 
     public void clearPlace(long id) {
         Player p = getPlayer();
         mDBh.deletePlace(id, p.getUsername());
-        if(scenesLoaded)
+        if (scenesLoaded)
             ScenesMap.get(String.valueOf(id)).setSaved(false);
     }
 
     public boolean hasSaved(long scene_id) {
-        if(!scenesLoaded) {
+        if (!scenesLoaded) {
             Player p = getPlayer();
             Cursor c = mDBh.getPlace(scene_id, p.getUsername());
             return c.moveToNext();
@@ -447,7 +501,7 @@ public class DataManager {
     public void addVisit(long id) {
         Player p = getPlayer();
         mDBh.insertVisit(id, p.getUsername());
-        if(scenesLoaded)
+        if (scenesLoaded)
             ScenesMap.get(String.valueOf(id)).setVisited(true);
     }
 
@@ -456,8 +510,7 @@ public class DataManager {
         if (!scenesLoaded) {
             Cursor c = mDBh.getVisit(scene_id, p.getUsername());
             return c.moveToNext();
-        }
-        else    return ScenesMap.get(String.valueOf(scene_id)).isVisited();
+        } else return ScenesMap.get(String.valueOf(scene_id)).isVisited();
     }
 /*
     public void printVisits() {
@@ -550,16 +603,38 @@ public class DataManager {
         }
     }
 
+    public void setLevelLocality(Level level){
+        if(activePlayer != null)
+            this.activePlayer.setRegion(level.getAdminArea());
+        else
+            getPlayer().setRegion(level.getAdminArea());
+
+        this.currentLevel = level;
+
+    }
+    public Level getCurrentLevel(){
+        if(currentLevel!=null)
+            return this.currentLevel;
+        return new Level();
+    }
+
     /*public ArrayList<ArScene> getRouteAsList() {
         return new ArrayList<>(Route.values());
     }*/
 
-    public HashMap<String, ArScene> getRoute() {
+    private HashMap<String, ArScene> getRoute() {
         return Route;
     }
 
     /**********************************************************POPULATE DB TASK*************************************************************************/
 
+    public void clearScenes(){
+        mDBh.clearScenes();
+        scenesLoaded =false;
+    }
+    public void clearPeriods(){
+        mDBh.clearPeriods();
+    }
     void populateUserData(JSONArray jsonArray, String tableName) {
         PopulateDBTask myTask = new PopulateDBTask(jsonArray, tableName);
         myTask.execute();

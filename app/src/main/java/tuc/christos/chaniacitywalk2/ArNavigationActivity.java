@@ -1,4 +1,4 @@
-package tuc.christos.chaniacitywalk2.wikitude;
+package tuc.christos.chaniacitywalk2;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -10,6 +10,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.webkit.WebView;
@@ -26,15 +27,17 @@ import org.json.JSONArray;
 import java.io.IOException;
 import java.util.List;
 
+import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
-import tuc.christos.chaniacitywalk2.R;
-import tuc.christos.chaniacitywalk2.collection.SceneDetailActivity;
-import tuc.christos.chaniacitywalk2.collection.SceneDetailFragment;
-import tuc.christos.chaniacitywalk2.data.DataManager;
+import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
+import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.model.Level;
+import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.utils.JsonHelper;
+import tuc.christos.chaniacitywalk2.utils.RestClient;
 
 /**
  * Created by Christos on 19-May-17.
@@ -98,8 +101,8 @@ public class ArNavigationActivity extends Activity {
     };
     final IServiceListener mLocationServiceListener = new IServiceListener() {
         @Override
-        public void drawGeoFences(String[] areaIds, int radius) {
-
+        public void regionChanged(String areaIds, String radius) {
+            //reload?
         }
 
         @Override
@@ -180,7 +183,7 @@ public class ArNavigationActivity extends Activity {
                     case "arNav":
                         try {
                             architectView.load("ArNavigation/index.html");
-                            injectData(mDataManager.getScenes());
+                            injectData(mDataManager.getActiveMapContent());
                         }catch(IOException e){
                             e.printStackTrace();
                         }
@@ -337,7 +340,7 @@ public class ArNavigationActivity extends Activity {
                 // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
                 // have a look at wikitude.com's developer section for API references
                 architectView.load(WorldToLoad);
-                if(WorldToLoad.contains("ArNav"))   injectData(mDataManager.getScenes());
+                if(WorldToLoad.contains("ArNav"))   injectData(mDataManager.getActiveMapContent());
                 else injectArgs("World.getScene",new String[]{JsonHelper.sceneToJson(mDataManager.getScene(scene_id)).toString()});
 
             } catch (IOException e1) {
@@ -404,6 +407,5 @@ public class ArNavigationActivity extends Activity {
             architectView.onLowMemory();
         }
     }
-
 
 }

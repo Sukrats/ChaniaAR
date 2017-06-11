@@ -74,8 +74,17 @@ public class JsonHelper {
                 JSONObject obj = new JSONObject(links.get(j).toString());
                 scene.addLink(obj.getString("rel"), obj.getString("url"));
             }
-            scene.setUriImages(scene.getLinks().get("images"));
-            scene.setUriThumb(scene.getLinks().get("thumbnail"));
+            if(scene.getLinks().containsKey("images"))
+                scene.setUriImages(scene.getLinks().get("images"));
+            else
+                scene.setUriImages("");
+
+            if(scene.getLinks().containsKey("thumbnail"))
+                scene.setUriThumb(scene.getLinks().get("thumbnail"));
+            else
+                scene.setUriThumb("");
+
+            Log.i("JSONHELPER","Scene Parsed: "+scene.getUriThumb());
         } catch (JSONException e) {
             Log.i("JSON EXCEPTION", e.getMessage());
         }

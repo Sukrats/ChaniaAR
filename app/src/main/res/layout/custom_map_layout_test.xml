@@ -1,4 +1,4 @@
-<tuc.christos.chaniacitywalk2.mapHelperClasses.MapWrapperLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.MapWrapperLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/map_container"
     android:layout_width="match_parent"
@@ -57,4 +57,4 @@
         android:layout_marginBottom="1dp"
         />
 
-</tuc.christos.chaniacitywalk2.mapHelperClasses.MapWrapperLayout>
+</tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.MapWrapperLayout>

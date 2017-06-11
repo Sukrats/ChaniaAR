@@ -8,8 +8,8 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import tuc.christos.chaniacitywalk2.data.DataManager;
-import tuc.christos.chaniacitywalk2.data.RestClient;
+import tuc.christos.chaniacitywalk2.utils.DataManager;
+import tuc.christos.chaniacitywalk2.utils.RestClient;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 
 
