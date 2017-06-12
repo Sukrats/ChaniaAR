@@ -9,11 +9,13 @@ import android.location.Location;
 
 public interface IServiceListener {
 
+    void drawGeoFences(long[] areaIDs);
+
     void regionChanged(String region_name,String country);
 
-    void userEnteredArea(String areaID);
+    void userEnteredArea(long areaID);
 
-    void userLeftArea(String areaID);
+    void userLeftArea(long areaID);
 
     void handleNewLocation(Location location);
 }

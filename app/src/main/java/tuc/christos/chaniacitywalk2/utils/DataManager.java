@@ -39,7 +39,7 @@ public class DataManager {
     private Level currentLevel;
 
     private HashMap<String, ArScene> Route = new HashMap<>();
-    private HashMap<String, Scene> ScenesMap = new HashMap<>();
+    private HashMap<Long, Scene> ScenesMap = new HashMap<>();
 
     //private HashMap<Polyline, Scene> lineToSceneMap = new HashMap<>();
     //private HashMap<Scene, Polyline> sceneToLineMap = new HashMap<>();
@@ -377,9 +377,9 @@ public class DataManager {
         myTask.execute();
     }
 
-    public Scene getScene(String id) {
+    public Scene getScene(long id) {
         if (!scenesLoaded) {
-            Cursor c = mDBh.getScene(Long.valueOf(id));
+            Cursor c = mDBh.getScene(id);
             Scene s = new Scene();
             if (c.moveToNext()) {
                 s.setId(c.getLong(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID)));
@@ -433,7 +433,7 @@ public class DataManager {
                         Route.get(String.valueOf(temp.getId())).setUriThumb(temp.getUriThumb().toString());
                     }
                     scenes.add(temp);
-                    ScenesMap.put(String.valueOf(temp.getId()), temp);
+                    ScenesMap.put(temp.getId(), temp);
                 }
                 scenesLoaded = true;
             }
@@ -449,14 +449,14 @@ public class DataManager {
         Player p = getPlayer();
         mDBh.insertPlace(id, p.getUsername());
         if (scenesLoaded)
-            ScenesMap.get(String.valueOf(id)).setSaved(true);
+            ScenesMap.get(id).setSaved(true);
     }
 
     public void clearPlace(long id) {
         Player p = getPlayer();
         mDBh.deletePlace(id, p.getUsername());
         if (scenesLoaded)
-            ScenesMap.get(String.valueOf(id)).setSaved(false);
+            ScenesMap.get(id).setSaved(false);
     }
 
     public boolean hasSaved(long scene_id) {
@@ -465,7 +465,7 @@ public class DataManager {
             Cursor c = mDBh.getPlace(scene_id, p.getUsername());
             return c.moveToNext();
         } else
-            return ScenesMap.get(String.valueOf(scene_id)).isSaved();
+            return ScenesMap.get(scene_id).isSaved();
     }
 
  /*   public void printPlaces() {
@@ -489,7 +489,7 @@ public class DataManager {
             Cursor c = mDBh.getPlaces(username);
             while (c.moveToNext()) {
                 long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
-                scenes.add(getScene(String.valueOf(scene_id)));
+                scenes.add(getScene(scene_id));
             }
         } else {
             for (Scene temp : ScenesMap.values()) {
@@ -505,7 +505,7 @@ public class DataManager {
         Player p = getPlayer();
         mDBh.insertVisit(id, p.getUsername());
         if (scenesLoaded)
-            ScenesMap.get(String.valueOf(id)).setVisited(true);
+            ScenesMap.get(id).setVisited(true);
     }
 
     private boolean hasVisited(long scene_id) {
@@ -513,7 +513,7 @@ public class DataManager {
         if (!scenesLoaded) {
             Cursor c = mDBh.getVisit(scene_id, p.getUsername());
             return c.moveToNext();
-        } else return ScenesMap.get(String.valueOf(scene_id)).isVisited();
+        } else return ScenesMap.get(scene_id).isVisited();
     }
 /*
     public void printVisits() {
@@ -538,7 +538,7 @@ public class DataManager {
             Cursor c = mDBh.getVisits(username);
             while (c.moveToNext()) {
                 long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
-                scenes.add(getScene(String.valueOf(scene_id)));
+                scenes.add(getScene(scene_id));
             }
         } else {
             for (Scene temp : ScenesMap.values()) {

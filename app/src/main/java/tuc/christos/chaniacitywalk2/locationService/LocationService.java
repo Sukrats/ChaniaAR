@@ -60,7 +60,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     private boolean fenceTriggered = false;
     private static boolean isRunning = false;
     private long updated = 0;
-    private String activeFence;
+    private long activeFence;
     private Location lastLocationChecked = null;
 
     /**
@@ -98,9 +98,6 @@ public class LocationService extends Service implements LocationCallback, Locati
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (!mDataManager.isInstantiated()) {
-            mDataManager.init(this);
-        }
         if (!isRunning) {
             Message msg = mServiceHandler.obtainMessage();
             msg.arg1 = startId;
@@ -158,6 +155,9 @@ public class LocationService extends Service implements LocationCallback, Locati
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval, "");
 
+            if (!mDataManager.isInstantiated()) {
+                mDataManager.init(LocationService.this);
+            }
             mLocationProvider = new LocationProvider(LocationService.this, mode);
 
             if (mDataManager.isContentReady())
@@ -312,7 +312,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     }
 
     @Override
-    public void userEnteredArea(String areaID) {
+    public void userEnteredArea(long areaID) {
         fenceTriggered = true;
         activeFence = areaID;
         Toast.makeText(this, "Entered Area: " + areaID, Toast.LENGTH_SHORT).show();
@@ -343,14 +343,14 @@ public class LocationService extends Service implements LocationCallback, Locati
             notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            mNotificationManager.notify(Integer.valueOf(areaID), notification);
+            mNotificationManager.notify((int)(areaID), notification);
         }
     }
 
     @Override
-    public void userLeftArea(String areaID) {
+    public void userLeftArea(long areaID) {
         Toast.makeText(this, "Left Area: " + areaID, Toast.LENGTH_SHORT).show();
-        activeFence = "";
+        activeFence = -5;
         fenceTriggered = false;
         if (IsApplicationInForeground())
             for (IServiceListener l : listeners)
@@ -359,7 +359,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             NotificationManager mNotificationManager =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-            mNotificationManager.cancel(Integer.valueOf(areaID));
+            mNotificationManager.cancel((int)areaID);
         }
     }
 
@@ -376,6 +376,17 @@ public class LocationService extends Service implements LocationCallback, Locati
                     i.regionChanged(level.getAdminArea(), level.getCountry());
             }
         });
+    }
+
+    public void requestFences(){
+        mEventHandler.requestFences();
+    }
+    public void drawGeoFences(long[] area_ids) {
+        if(!listeners.isEmpty()){
+            for(IServiceListener l : listeners){
+                l.drawGeoFences(area_ids);
+            }
+        }
     }
 
     private void checkForRegionChange(Location location) {

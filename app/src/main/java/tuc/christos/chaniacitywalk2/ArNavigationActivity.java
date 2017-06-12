@@ -101,19 +101,23 @@ public class ArNavigationActivity extends Activity {
     };
     final IServiceListener mLocationServiceListener = new IServiceListener() {
         @Override
+        public void drawGeoFences(long[] areas){
+
+        }
+        @Override
         public void regionChanged(String areaIds, String radius) {
             //reload?
         }
 
         @Override
-        public void userEnteredArea(String areaID) {
-            callJavaScript("World.userEnteredArea", new String[]{areaID});
+        public void userEnteredArea(long areaID) {
+            callJavaScript("World.userEnteredArea", new String[]{String.valueOf(areaID)});
             Log.i("GeoFence", "Fence Triggered: " + areaID);
         }
 
         @Override
-        public void userLeftArea(String areaID) {
-            callJavaScript("World.userLeftArea", new String[]{areaID});
+        public void userLeftArea(long areaID) {
+            callJavaScript("World.userLeftArea", new String[]{String.valueOf(areaID)});
             Log.i("GeoFence", "Fence Removed: " + areaID);
         }
 
@@ -127,7 +131,7 @@ public class ArNavigationActivity extends Activity {
 
     protected boolean mBount = false;
     protected String WorldToLoad = "";
-    protected String scene_id = "";
+    protected long scene_id ;
     protected String question_id = "";
 
 
@@ -137,7 +141,7 @@ public class ArNavigationActivity extends Activity {
         setContentView(R.layout.activity_architect);
         architectView = (ArchitectView) findViewById(R.id.architectView);
         WorldToLoad = getIntent().getStringExtra(Constants.ARCHITECT_WORLD_KEY);
-        scene_id = getIntent().getStringExtra(Constants.ARCHITECT_AR_SCENE_KEY);
+        scene_id = Long.parseLong(getIntent().getStringExtra(Constants.ARCHITECT_AR_SCENE_KEY));
         question_id = getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY);
         /*final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
         config.setFeatures(1);
@@ -176,7 +180,7 @@ public class ArNavigationActivity extends Activity {
                         try {
                             architectView.load("ModelAtGeoLocation/index.html");
                             callJavaScript("World.ShowBackBtn", new String[]{});
-                            injectArgs("World.getScene", new String[]{JsonHelper.sceneToJson(mDataManager.getScene(String.valueOf(invokedUri.getQueryParameter("id")))).toString()});
+                            injectArgs("World.getScene", new String[]{JsonHelper.sceneToJson(mDataManager.getScene(Long.parseLong(invokedUri.getQueryParameter("id")))).toString()});
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

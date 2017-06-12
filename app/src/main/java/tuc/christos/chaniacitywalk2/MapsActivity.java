@@ -107,7 +107,7 @@ public class MapsActivity extends AppCompatActivity implements
     protected String mLastUpdateTime;
     private Marker mLocationMarker = null;
 
-    private LongSparseArray<Circle> circleMap = new LongSparseArray<>();
+    private HashMap<Long,Circle> circleMap = new HashMap<>();
 
     private boolean camToStart = false;
     private boolean camFollow = false;
@@ -116,7 +116,7 @@ public class MapsActivity extends AppCompatActivity implements
             .target(new LatLng(35.514388, 24.020335)).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
 
     private boolean isFenceTriggered = false;
-    private String fenceTriggered = "";
+    private long fenceTriggered = -4;
     MapWrapperLayout mapWrapperLayout;
 
     boolean mBount = false;
@@ -128,6 +128,7 @@ public class MapsActivity extends AppCompatActivity implements
             LocationService.mIBinder binder = (LocationService.mIBinder) service;
             mService = binder.getService();
             mService.registerServiceListener(MapsActivity.this);
+            mService.requestFences();
             isFenceTriggered = mService.isFenceTriggered();
             mBount = true;
         }
@@ -211,7 +212,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         String camToItem = getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID);
         if (camToItem != null) {
-            Scene temp = mDataManager.getScene(camToItem);
+            Scene temp = mDataManager.getScene(Long.parseLong(camToItem));
             defaultCameraPosition = new CameraPosition.Builder()
                     .target(new LatLng(temp.getLatitude(), temp.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
             if (sceneToMarkerMap.containsKey(temp)) sceneToMarkerMap.get(temp).showInfoWindow();
@@ -323,7 +324,7 @@ public class MapsActivity extends AppCompatActivity implements
                     double x = currentX + t * (targetX - currentX);
                     double y = currentY + t * (targetY - currentY);
 
-                    mLocationMarker.setPosition(new LatLng(x, y));
+                    //mLocationMarker.setPosition(new LatLng(x, y));
 
                     if (t > 0.0 && t < 1.0) {
                         // Post again 16ms later.
@@ -333,6 +334,7 @@ public class MapsActivity extends AppCompatActivity implements
                 }
             });
 
+            mLocationMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
             if (loc.distanceTo(location) >= 5 && camFollow) {
                 setCameraPosition(location.getLatitude(), location.getLongitude(), mMap.getCameraPosition().zoom);
             }
@@ -387,7 +389,6 @@ public class MapsActivity extends AppCompatActivity implements
     private void drawMap() {
         if (mMap != null) {
             mMap.clear();
-            circleMap.clear();
             sceneToMarkerMap.clear();
             markerToSceneMap.clear();
             if (mLocationMarker != null) {
@@ -431,17 +432,7 @@ public class MapsActivity extends AppCompatActivity implements
                 }
                 sceneToMarkerMap.put(temp, marker);
                 markerToSceneMap.put(marker, temp);
-
-                Circle circle = mMap.addCircle(new CircleOptions()
-                        .center(new LatLng(temp.getLatitude(), temp.getLongitude()))
-                        .radius(20)
-                        .strokeWidth(2)
-                        .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
-                        .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
-
-                circleMap.put(temp.getId(), circle);
             }
-
         }
     }
 
@@ -481,10 +472,26 @@ public class MapsActivity extends AppCompatActivity implements
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(latitude, longitude)).zoom(zoomf).bearing(0).tilt(50).build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
-
     }
 
+    public void drawGeoFences(long[] areaIds) {
+        for (Long key : circleMap.keySet()) {
+            circleMap.get(key).remove();
+        }
+        circleMap.clear();
+        for (long areaID : areaIds) {
+            Scene scene = mDataManager.getScene(areaID);
+
+            Circle circle = mMap.addCircle(new CircleOptions()
+                    .center(new LatLng(scene.getLatitude(), scene.getLongitude()))
+                    .radius(20)
+                    .strokeWidth(2)
+                    .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
+                    .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
+
+            circleMap.put(areaID, circle);
+        }
+    }
     /*
     public void setCameraPosition(double latitude, double longitude) {
         Log.i(TAG, String.valueOf(latitude) + String.valueOf(longitude));
@@ -546,7 +553,7 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
 
-    public void userEnteredArea(String areaID) {
+    public void userEnteredArea(long areaID) {
         if(isFenceTriggered) {
             Scene scene = mDataManager.getScene(areaID);
             setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
@@ -556,9 +563,9 @@ public class MapsActivity extends AppCompatActivity implements
         fenceTriggered = areaID;
     }
 
-    public void userLeftArea(String areaID) {
+    public void userLeftArea(long areaID) {
         isFenceTriggered = false;
-        fenceTriggered = "";
+        fenceTriggered = -1;
         //if (circleMap.containsKey(areaID)){
         //Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
         //Circle circle = circleMap.get(areaID);
@@ -653,7 +660,7 @@ public class MapsActivity extends AppCompatActivity implements
                 det_button.setOnTouchListener(infoTouchListener);
                 det_button.setVisibility(View.VISIBLE);
                 mContents.findViewById(R.id.div).setVisibility(View.VISIBLE);
-                if ((!scene.isVisited() || scene.hasAR()) && isFenceTriggered && String.valueOf(scene.getId()).equals(fenceTriggered)) {
+                if ((!scene.isVisited() || scene.hasAR()) && isFenceTriggered && scene.getId() == fenceTriggered) {
                     OnInfoWindowElemTouchListener InfoButtonListener = new OnInfoWindowElemTouchListener(ar_button,
                             ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
                             ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {

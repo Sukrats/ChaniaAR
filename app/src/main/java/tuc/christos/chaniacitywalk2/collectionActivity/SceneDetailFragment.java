@@ -31,7 +31,6 @@ public class SceneDetailFragment extends Fragment {
      */
     private Scene mItem;
 
-    private DataManager mDataManager;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -43,13 +42,13 @@ public class SceneDetailFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mDataManager = DataManager.getInstance();
+        DataManager mDataManager = DataManager.getInstance();
 
         if (getArguments().containsKey(ARG_ITEM_ID)) {
             // Load the dummy content specified by the fragment
             // arguments. In a real-WorldToLoad scenario, use a Loader
             // to load content from a content provider.
-            Scene tmpScene = mDataManager.getScene(getArguments().getString(ARG_ITEM_ID));
+            Scene tmpScene = mDataManager.getScene(Long.parseLong(getArguments().getString(ARG_ITEM_ID)));
             if(tmpScene != null)
                 mItem = tmpScene;
 
