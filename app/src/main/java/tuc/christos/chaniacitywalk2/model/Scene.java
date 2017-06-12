@@ -15,6 +15,7 @@ public class Scene {
     private long id;
     private long period_id;
     private String name;
+    private String region;
     private double latitude;
     private double longitude;
     private boolean visited;
@@ -168,6 +169,14 @@ public class Scene {
 
     public void setUriThumb(String uriThumb) {
         this.uriThumb = Uri.parse(uriThumb);
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 
 }

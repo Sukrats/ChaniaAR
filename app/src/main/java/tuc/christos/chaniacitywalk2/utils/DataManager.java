@@ -36,6 +36,7 @@ public class DataManager {
     private Player activePlayer;
 
     private boolean scenesLoaded = false;
+    private Level locality;
     private Level currentLevel;
 
     private HashMap<String, ArScene> Route = new HashMap<>();
@@ -71,7 +72,7 @@ public class DataManager {
         return instantiated;
     }
 
-    public boolean isContentReady(){
+    public boolean isContentReady() {
         return !mDBh.isScenesEmpty();
     }
 
@@ -120,8 +121,8 @@ public class DataManager {
   */
 
     public ArrayList<Scene> getActiveMapContent() {
-        Log.i(TAG,""+scenesLoaded);
-        if( getActivePlayer().getScore() < 1000 && !getActivePlayer().getUsername().equals("Guest"))
+        Log.i(TAG, "" + scenesLoaded);
+        if (getActivePlayer().getScore() < 1000 && !getActivePlayer().getUsername().equals("Guest"))
             return new ArrayList<Scene>(getRoute().values());
         else
             return new ArrayList<>(getScenes());
@@ -234,12 +235,12 @@ public class DataManager {
             player.setScore(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_SCORE)));
             try {
                 player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
-            }catch(IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
             }
             try {
                 player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
-            }catch(IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
             }
         }
@@ -262,12 +263,12 @@ public class DataManager {
 
             try {
                 player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
-            }catch(IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
             }
             try {
                 player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
-            }catch(IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
             }
             Log.i("Players", player.getEmail() + player.getUsername() + player.getRecentActivity() + " ACTIVE?: " + String.valueOf(active));
@@ -346,7 +347,7 @@ public class DataManager {
                 String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
                 Scene temp = new Scene(lat, lon, id, period_id, name, description);
-                if(!Route.containsKey(String.valueOf(temp.getId())))
+                if (!Route.containsKey(String.valueOf(temp.getId())))
                     temp.setHasAR(false);
                 else temp.setHasAR(true);
 
@@ -392,7 +393,7 @@ public class DataManager {
                 s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
                 s.setSaved(hasSaved(s.getId()));
                 s.setVisited(hasVisited(s.getId()));
-                if(!Route.containsKey(String.valueOf(s.getId())))
+                if (!Route.containsKey(String.valueOf(s.getId())))
                     s.setHasAR(false);
                 else s.setHasAR(true);
             }
@@ -408,7 +409,7 @@ public class DataManager {
             List<Scene> scenes = new ArrayList<>();
             int i = 0;
             Log.i(TAG, "Fetching Scenes from local db");
-            if(!isScenesEmpty()) {
+            if (!isScenesEmpty()) {
                 while (c.moveToNext()) {
                     i++;
                     String name = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_NAME));
@@ -606,8 +607,9 @@ public class DataManager {
         }
     }
 
-    public void setLevelLocality(Level level){
-        if(activePlayer != null)
+    public void setLevelLocality(Level level) {
+        this.locality = level;
+        if (activePlayer != null)
             this.activePlayer.setRegion(level.getAdminArea());
         else
             getPlayer().setRegion(level.getAdminArea());
@@ -615,10 +617,26 @@ public class DataManager {
         this.currentLevel = level;
 
     }
-    public Level getCurrentLevel(){
-        if(currentLevel!=null)
+//TODO: LOCAL DB SYNC AND CACHING
+    public boolean checkExistingLocality(Level level) {
+        Cursor c = mDBh.getActivePlayer();
+        if (!c.moveToNext())
+            return true;
+        else if(level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_REGION))))
+            return false;
+
+        return true;
+    }
+
+    public Level getCurrentLevel() {
+        if (currentLevel != null)
             return this.currentLevel;
-        return new Level();
+
+        currentLevel = new Level();
+        Player player = getPlayer();
+        currentLevel.setAdminArea(player.getRegion());
+        return currentLevel;
+
     }
 
     /*public ArrayList<ArScene> getRouteAsList() {
@@ -631,11 +649,12 @@ public class DataManager {
 
     /**********************************************************POPULATE DB TASK*************************************************************************/
 
-    public void clearScenes(){
+    public void clearScenes() {
         mDBh.clearScenes();
-        scenesLoaded =false;
+        scenesLoaded = false;
     }
-    public void clearPeriods(){
+
+    public void clearPeriods() {
         mDBh.clearPeriods();
     }
 
@@ -650,7 +669,7 @@ public class DataManager {
         private final String tableName;
         private final LocalDBWriteListener listener;
 
-        PopulateDBTask(JSONArray json, String tableName,LocalDBWriteListener l) {
+        PopulateDBTask(JSONArray json, String tableName, LocalDBWriteListener l) {
             this.jsonArray = json;
             this.tableName = tableName;
             this.listener = l;

@@ -62,6 +62,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     private long updated = 0;
     private long activeFence;
     private Location lastLocationChecked = null;
+    private Location mLastKnownLocation;
 
     /**
      * Called when the service is being created.
@@ -217,7 +218,7 @@ public class LocationService extends Service implements LocationCallback, Locati
 
         listeners = new ArrayList<>();
 
-        if (!keepRunning) {
+        if (!keepRunning && !IsApplicationInForeground()) {
             isRunning = false;
             Log.i(TAG, "Suspended");
             stopSelf();
@@ -301,14 +302,23 @@ public class LocationService extends Service implements LocationCallback, Locati
         listeners.remove(listener);
     }
 
+    public Location getLastKnownLocation() {
+        return mLastKnownLocation;
+    }
 
     @Override
     public void handleNewLocation(Location location) {
+        mLastKnownLocation = location;
         mEventHandler.handleNewLocation(location);
         for (IServiceListener l : listeners)
             l.handleNewLocation(location);
 
-        checkForRegionChange(location);
+        if (lastLocationChecked == null)
+            lastLocationChecked = location;
+        if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 3600000) {
+            updated = System.currentTimeMillis();
+            checkForRegionChange(location);
+        }
     }
 
     @Override
@@ -343,7 +353,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
             NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            mNotificationManager.notify((int)(areaID), notification);
+            mNotificationManager.notify((int) (areaID), notification);
         }
     }
 
@@ -359,31 +369,36 @@ public class LocationService extends Service implements LocationCallback, Locati
             NotificationManager mNotificationManager =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-            mNotificationManager.cancel((int)areaID);
+            mNotificationManager.cancel((int) areaID);
         }
     }
 
     public void triggerRegionChange(final Level level) {
-        RestClient mRestClient = RestClient.getInstance();
-        mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
-            @Override
-            public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
-                if (!success) {
-                    Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+        final RestClient mRestClient = RestClient.getInstance();
+        if (!level.getAdminArea().equals(mDataManager.getCurrentLevel().getAdminArea()))
+            mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
+                @Override
+                public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                    if (!success) {
+                        checkForRegionChange(mLastKnownLocation);
+                        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                    } else {
+                        mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
+                        for (IServiceListener i : listeners)
+                            i.regionChanged(level.getAdminArea(), level.getCountry());
+                    }
                 }
-                mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
-                for (IServiceListener i : listeners)
-                    i.regionChanged(level.getAdminArea(), level.getCountry());
-            }
-        });
+            });
     }
 
-    public void requestFences(){
+    public void requestFences() {
         mEventHandler.requestFences();
     }
+
     public void drawGeoFences(long[] area_ids) {
-        if(!listeners.isEmpty()){
-            for(IServiceListener l : listeners){
+        Log.i("FENCES", "DRAW GEOFENCES SERVICE");
+        if (!listeners.isEmpty()) {
+            for (IServiceListener l : listeners) {
                 l.drawGeoFences(area_ids);
             }
         }
@@ -391,48 +406,43 @@ public class LocationService extends Service implements LocationCallback, Locati
 
     private void checkForRegionChange(Location location) {
         //TODO: CHANGE FOR REGION CHANGES setting to a normal number
-        if (lastLocationChecked == null)
-            lastLocationChecked = location;
-        if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 3600000) {
-            updated = System.currentTimeMillis();
-            AsyncTask<Location, Void, Level> geoCoderTask = new AsyncTask<Location, Void, Level>() {
-                @Override
-                protected Level doInBackground(Location... location1) {
-                    Level level = new Level();
-                    if (Geocoder.isPresent()) {
-                        try {
-                            Geocoder coder = new Geocoder(getApplicationContext());
-                            List<Address> addresses = coder.getFromLocation(location1[0].getLatitude(), location1[0].getLongitude(), 10);
-                            level.setCountry(addresses.get(0).getCountryName());
-                            level.setCountry_code(addresses.get(0).getCountryCode());
-                            level.setCity(addresses.get(0).getLocality());
-                            level.setAdminArea("");
-                            for (Address temp : addresses) {
-                                if (temp.getAdminArea() != null)
-                                    level.setAdminArea(temp.getAdminArea());
-                                if (temp.getSubAdminArea() != null)
-                                    level.setSubAdminArea(temp.getSubAdminArea());
-                            }
-
-                        } catch (IOException e) {
-                            Log.i("Geocoder", e.getMessage());
+        AsyncTask<Location, Void, Level> geoCoderTask = new AsyncTask<Location, Void, Level>() {
+            @Override
+            protected Level doInBackground(Location... location1) {
+                Level level = new Level();
+                if (Geocoder.isPresent()) {
+                    try {
+                        Geocoder coder = new Geocoder(getApplicationContext());
+                        List<Address> addresses = coder.getFromLocation(location1[0].getLatitude(), location1[0].getLongitude(), 20);
+                        level.setCountry(addresses.get(0).getCountryName());
+                        level.setCountry_code(addresses.get(0).getCountryCode());
+                        level.setCity(addresses.get(0).getLocality());
+                        level.setAdminArea("");
+                        for (Address temp : addresses) {
+                            if (temp.getAdminArea() != null)
+                                level.setAdminArea(temp.getAdminArea());
+                            if (temp.getSubAdminArea() != null)
+                                level.setSubAdminArea(temp.getSubAdminArea());
                         }
-                    }
-                    return level;
-                }
 
-                @Override
-                protected void onPostExecute(Level level) {
-                    Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
+                    } catch (IOException e) {
+                        Log.i("Geocoder", e.getMessage());
+                    }
+                }
+                return level;
+            }
+
+            @Override
+            protected void onPostExecute(Level level) {
+                Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
                     mDataManager.setLevelLocality(level);
                     triggerRegionChange(level);
-                }
-            };
+            }
+        };
 
-            geoCoderTask.execute(location);
-            lastLocationChecked = location;
-        }
-
+        geoCoderTask.execute(location);
+        lastLocationChecked = location;
     }
+
 
 }

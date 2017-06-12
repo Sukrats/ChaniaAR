@@ -118,18 +118,6 @@ public class SettingsActivity extends AppCompatActivity {
                 connectionPref.setSummary(sharedPreferences.getString(key, ""));
             }
 
-            if (key.equals(pref_key_allow_background_locations)){
-                if(sharedPreferences.getBoolean(key,false)) {
-                    getActivity().startService(new Intent(getActivity(), LocationService.class));
-
-                }else {
-                    getActivity().stopService(new Intent(getActivity(), LocationService.class));
-
-                    NotificationManager mNotificationManager =
-                            (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
-                    mNotificationManager.cancel(Constants.PERMA_NOTIFICATION_ID);
-                }
-            }
         }
     }
 }

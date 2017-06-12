@@ -11,10 +11,13 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Camera;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.Image;
@@ -66,9 +69,11 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
@@ -90,6 +95,7 @@ import tuc.christos.chaniacitywalk2.utils.DataManager;
 public class MapsActivity extends AppCompatActivity implements
         IServiceListener,
         GoogleMap.OnMapClickListener,
+        GoogleMap.OnCameraIdleListener,
         OnMapReadyCallback {
 
     protected static final String TAG = "MAPS ACTIVITY";
@@ -107,7 +113,7 @@ public class MapsActivity extends AppCompatActivity implements
     protected String mLastUpdateTime;
     private Marker mLocationMarker = null;
 
-    private HashMap<Long,Circle> circleMap = new HashMap<>();
+    private HashMap<Long, Circle> circleMap = new HashMap<>();
 
     private boolean camToStart = false;
     private boolean camFollow = false;
@@ -341,6 +347,43 @@ public class MapsActivity extends AppCompatActivity implements
         }
     }
 
+    @Override
+    public void onCameraIdle() {
+        if(mDataManager.getCurrentLevel() != null ) {
+            LatLng pos = mMap.getCameraPosition().target;
+            Location targetRegion = new Location("");
+            targetRegion.setLatitude(pos.latitude);
+            targetRegion.setLongitude(pos.longitude);
+            Level level = new Level();
+            try {
+                Geocoder coder = new Geocoder(getApplicationContext());
+                List<Address> addresses = coder.getFromLocation(targetRegion.getLatitude(), targetRegion.getLongitude(), 20);
+                level.setCountry(addresses.get(0).getCountryName());
+                level.setCountry_code(addresses.get(0).getCountryCode());
+                level.setCity(addresses.get(0).getLocality());
+                level.setAdminArea("");
+                for (Address temp : addresses) {
+                    if (temp.getAdminArea() != null)
+                        level.setAdminArea(temp.getAdminArea());
+                    if (temp.getSubAdminArea() != null)
+                        level.setSubAdminArea(temp.getSubAdminArea());
+                }
+
+            } catch (IOException e) {
+                Log.i("Geocoder", e.getMessage());
+            }
+            if(level.getAdminArea().equals(mDataManager.getCurrentLevel().getAdminArea())){
+                RestClient client = RestClient.getInstance();
+                client.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
+                    @Override
+                    public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                        if(success){
+                        }
+                    }
+                });
+            }
+        }
+    }
 
     public Location latLngToLoc(LatLng latLng) {
         Location location = new Location("");
@@ -481,7 +524,7 @@ public class MapsActivity extends AppCompatActivity implements
         circleMap.clear();
         for (long areaID : areaIds) {
             Scene scene = mDataManager.getScene(areaID);
-
+            Log.i("FENCES", "DRAW GEOFENCE MAP+" + scene.getId());
             Circle circle = mMap.addCircle(new CircleOptions()
                     .center(new LatLng(scene.getLatitude(), scene.getLongitude()))
                     .radius(20)
@@ -554,7 +597,7 @@ public class MapsActivity extends AppCompatActivity implements
 
 
     public void userEnteredArea(long areaID) {
-        if(isFenceTriggered) {
+        if (isFenceTriggered) {
             Scene scene = mDataManager.getScene(areaID);
             setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
             sceneToMarkerMap.get(scene).showInfoWindow();
@@ -615,6 +658,7 @@ public class MapsActivity extends AppCompatActivity implements
             if (!marker.equals(mLocationMarker)) {
                 ImageButton ar_button = (ImageButton) mContents.findViewById(R.id.ar_button);
                 ImageButton det_button = (ImageButton) mContents.findViewById(R.id.details_button);
+
                 final FrameLayout thumb = (FrameLayout) mContents.findViewById(R.id.thumb);
                 final ImageView thumbnail = (ImageView) mContents.findViewById(R.id.thumbnail);
                 mContents.findViewById(R.id.locality).setVisibility(View.GONE);
@@ -632,7 +676,6 @@ public class MapsActivity extends AppCompatActivity implements
                 } else {
                     mContents.findViewById(R.id.thumb).setVisibility(View.GONE);
                 }
-                Log.i("Glide", "uri is: " + scene.getUriThumb());
                 TextView titleUi = ((TextView) mContents.findViewById(R.id.title));
                 titleUi.setText(marker.getTitle());
 
@@ -652,7 +695,7 @@ public class MapsActivity extends AppCompatActivity implements
                     @Override
                     protected void onClickConfirmed(View v, Marker marker) {
                         Intent intent = new Intent(mContents.getContext(), SceneDetailActivity.class);
-                        Log.i("", String.valueOf(scene.getId()));
+                        Log.i("window", String.valueOf(scene.getId()));
                         intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(scene.getId()));
                         startActivity(intent);
                     }
@@ -667,6 +710,7 @@ public class MapsActivity extends AppCompatActivity implements
                         @Override
                         protected void onClickConfirmed(View v, Marker marker) {
                             Intent intent = new Intent(mContents.getContext(), ArNavigationActivity.class);
+                            Log.i("window", String.valueOf(scene.getId()));
                             intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
                             intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, String.valueOf(scene.getId()));
                             startActivity(intent);
