@@ -17,6 +17,7 @@ import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
+import tuc.christos.chaniacitywalk2.mInterfaces.LocalDBWriteListener;
 import tuc.christos.chaniacitywalk2.model.Player;
 
 /**
@@ -129,14 +130,18 @@ public class RestClient implements ContentListener {
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(Constants.URL_PERIODS, null, new AsyncHttpResponseHandler() {
             @Override
-            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
                 try {
                     JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    mDataManager.populatePeriods(json);
+                    mDataManager.populatePeriods(json, new LocalDBWriteListener() {
+                        @Override
+                        public void OnWriteComplete(boolean success) {
+                            cl.downloadComplete(success, i, mDBHelper.PeriodEntry.TABLE_NAME, "Download Periods Complete");
+                        }
+                    });
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                cl.downloadComplete(true, i, mDBHelper.PeriodEntry.TABLE_NAME, "Download Periods Complete");
             }
 
             @Override
@@ -168,14 +173,18 @@ public class RestClient implements ContentListener {
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(Constants.URL_SCENES, null, new AsyncHttpResponseHandler() {
             @Override
-            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
                 try {
                     JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    mDataManager.populateScenes(json);
+                    mDataManager.populateScenes(json, new LocalDBWriteListener() {
+                        @Override
+                        public void OnWriteComplete(boolean success) {
+                            cl.downloadComplete(success, i, mDBHelper.SceneEntry.TABLE_NAME, "Downloading Scenes Complete");
+                        }
+                    });
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                cl.downloadComplete(true, i, mDBHelper.SceneEntry.TABLE_NAME, "Downloading Scenes Complete");
             }
 
             @Override
@@ -376,14 +385,18 @@ public class RestClient implements ContentListener {
         client.setMaxRetriesAndTimeout(4, 20000);
         client.get(uri, null, new AsyncHttpResponseHandler() {
             @Override
-            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
                 try {
                     JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    mDataManager.populateUserData(json, tag);
+                    mDataManager.populateUserData(json, tag, new LocalDBWriteListener() {
+                        @Override
+                        public void OnWriteComplete(boolean success) {
+                            contentListener.downloadComplete(success, i, tag, "Downloading Complete");
+                        }
+                    });
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                contentListener.downloadComplete(true, i, tag, "Downloading Complete");
             }
 
             @Override
@@ -416,15 +429,18 @@ public class RestClient implements ContentListener {
         client.setMaxRetriesAndTimeout(4,20000);
         client.get(Constants.URL_SCENES+"?country="+country+"&area="+area, null, new AsyncHttpResponseHandler() {
             @Override
-            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
                 try {
-                    mDataManager.clearScenes();
                     JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
-                    mDataManager.populateUserData(json, "Scenes");
+                    mDataManager.populateUserData(json, "Scenes", new LocalDBWriteListener() {
+                        @Override
+                        public void OnWriteComplete(boolean success) {
+                            contentListener.downloadComplete(success, i,"","Download Complete!");
+                        }
+                    });
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                contentListener.downloadComplete(true, i, "Guest", "Downloading Complete");
             }
 
             @Override

@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
+import tuc.christos.chaniacitywalk2.mInterfaces.LocalDBWriteListener;
 import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Period;
@@ -68,6 +70,7 @@ public class DataManager {
     public boolean isInstantiated() {
         return instantiated;
     }
+
     public boolean isContentReady(){
         return !mDBh.isScenesEmpty();
     }
@@ -277,8 +280,8 @@ public class DataManager {
         return mDBh.isPeriodsEmpty();
     }
 
-    boolean populatePeriods(JSONArray jsonArray) {
-        PopulateDBTask myTask = new PopulateDBTask(jsonArray, mDBHelper.PeriodEntry.TABLE_NAME);
+    boolean populatePeriods(JSONArray jsonArray, LocalDBWriteListener l) {
+        PopulateDBTask myTask = new PopulateDBTask(jsonArray, mDBHelper.PeriodEntry.TABLE_NAME, l);
         myTask.execute();
         return true;
     }
@@ -369,8 +372,8 @@ public class DataManager {
         return mDBh.isScenesEmpty();
     }
 
-    void populateScenes(JSONArray jsonArray) {
-        PopulateDBTask myTask = new PopulateDBTask(jsonArray, mDBHelper.SceneEntry.TABLE_NAME);
+    void populateScenes(JSONArray jsonArray, LocalDBWriteListener l) {
+        PopulateDBTask myTask = new PopulateDBTask(jsonArray, mDBHelper.SceneEntry.TABLE_NAME, l);
         myTask.execute();
     }
 
@@ -635,8 +638,9 @@ public class DataManager {
     public void clearPeriods(){
         mDBh.clearPeriods();
     }
-    void populateUserData(JSONArray jsonArray, String tableName) {
-        PopulateDBTask myTask = new PopulateDBTask(jsonArray, tableName);
+
+    void populateUserData(JSONArray jsonArray, String tableName, LocalDBWriteListener l) {
+        PopulateDBTask myTask = new PopulateDBTask(jsonArray, tableName, l);
         myTask.execute();
     }
 
@@ -644,10 +648,12 @@ public class DataManager {
 
         private final JSONArray jsonArray;
         private final String tableName;
+        private final LocalDBWriteListener listener;
 
-        PopulateDBTask(JSONArray json, String tableName) {
+        PopulateDBTask(JSONArray json, String tableName,LocalDBWriteListener l) {
             this.jsonArray = json;
             this.tableName = tableName;
+            this.listener = l;
         }
 
         @Override
@@ -723,9 +729,8 @@ public class DataManager {
 
         @Override
         protected void onPostExecute(final Boolean success) {
-            if (success) {
-                Log.i(TAG, "Insert Complete :");
-            }
+            Log.i(TAG, "Insert Complete :");
+            listener.OnWriteComplete(success);
         }
 
         @Override

@@ -17,6 +17,8 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.Image;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,6 +32,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.util.LongSparseArray;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -38,6 +41,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -45,6 +49,9 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -100,7 +107,7 @@ public class MapsActivity extends AppCompatActivity implements
     protected String mLastUpdateTime;
     private Marker mLocationMarker = null;
 
-    private HashMap<String, Circle> circleMap = new HashMap<>();
+    private LongSparseArray<Circle> circleMap = new LongSparseArray<>();
 
     private boolean camToStart = false;
     private boolean camFollow = false;
@@ -110,7 +117,6 @@ public class MapsActivity extends AppCompatActivity implements
 
     private boolean isFenceTriggered = false;
     private String fenceTriggered = "";
-    public OnInfoWindowElemTouchListener InfoButtonListener;
     MapWrapperLayout mapWrapperLayout;
 
     boolean mBount = false;
@@ -122,7 +128,7 @@ public class MapsActivity extends AppCompatActivity implements
             LocationService.mIBinder binder = (LocationService.mIBinder) service;
             mService = binder.getService();
             mService.registerServiceListener(MapsActivity.this);
-            mService.isFenceTriggered();
+            isFenceTriggered = mService.isFenceTriggered();
             mBount = true;
         }
 
@@ -172,7 +178,15 @@ public class MapsActivity extends AppCompatActivity implements
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
+                if (isFenceTriggered && mDataManager.getScene(fenceTriggered).hasAR()) {
+                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
+                    intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
+                } else if (isFenceTriggered && !mDataManager.getScene(fenceTriggered).isVisited()) {
+                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
+                    intent.putExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY, fenceTriggered);
+                } else {
+                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
+                }
                 aSyncActivity(intent);
             }
         });
@@ -251,7 +265,7 @@ public class MapsActivity extends AppCompatActivity implements
 
             }
         });
-        mMap.setPadding(0, 0, 0, 120);
+        mMap.setPadding(0, 0, 0, 140);
         mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
 
         //mMap.setOnCameraMoveCanceledListener(this);
@@ -373,6 +387,7 @@ public class MapsActivity extends AppCompatActivity implements
     private void drawMap() {
         if (mMap != null) {
             mMap.clear();
+            circleMap.clear();
             sceneToMarkerMap.clear();
             markerToSceneMap.clear();
             if (mLocationMarker != null) {
@@ -416,6 +431,15 @@ public class MapsActivity extends AppCompatActivity implements
                 }
                 sceneToMarkerMap.put(temp, marker);
                 markerToSceneMap.put(marker, temp);
+
+                Circle circle = mMap.addCircle(new CircleOptions()
+                        .center(new LatLng(temp.getLatitude(), temp.getLongitude()))
+                        .radius(20)
+                        .strokeWidth(2)
+                        .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
+                        .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
+
+                circleMap.put(temp.getId(), circle);
             }
 
         }
@@ -521,32 +545,15 @@ public class MapsActivity extends AppCompatActivity implements
         moveMyLocationMarker(location);
     }
 
-    public void drawGeoFences(String[] areaIds, int radius) {
-        for (String key : circleMap.keySet()) {
-            circleMap.get(key).remove();
-        }
-        circleMap.clear();
-        for (String areaID : areaIds) {
-            Scene scene = mDataManager.getScene(areaID);
-
-            Circle circle = mMap.addCircle(new CircleOptions()
-                    .center(new LatLng(scene.getLatitude(), scene.getLongitude()))
-                    .radius(radius)
-                    .strokeWidth(2)
-                    .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
-                    .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
-
-            circleMap.put(areaID, circle);
-        }
-        //Toast.makeText(this, "GeoFences Drawn: " + areaIds.length, Toast.LENGTH_LONG).show();
-    }
 
     public void userEnteredArea(String areaID) {
-        Scene scene = scenesShown.get(areaID);
+        if(isFenceTriggered) {
+            Scene scene = mDataManager.getScene(areaID);
+            setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
+            sceneToMarkerMap.get(scene).showInfoWindow();
+        }
         isFenceTriggered = true;
         fenceTriggered = areaID;
-        sceneToMarkerMap.get(scene).showInfoWindow();
-        setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
     }
 
     public void userLeftArea(String areaID) {
@@ -590,6 +597,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         private final View mContents;
 
+
         CustomInfoWindowAdapter() {
             mContents = getLayoutInflater().inflate(R.layout.custom_info_contents, null);
         }
@@ -600,17 +608,23 @@ public class MapsActivity extends AppCompatActivity implements
             if (!marker.equals(mLocationMarker)) {
                 ImageButton ar_button = (ImageButton) mContents.findViewById(R.id.ar_button);
                 ImageButton det_button = (ImageButton) mContents.findViewById(R.id.details_button);
-                ImageView thumb = (ImageView) mContents.findViewById(R.id.thumb);
+                final FrameLayout thumb = (FrameLayout) mContents.findViewById(R.id.thumb);
+                final ImageView thumbnail = (ImageView) mContents.findViewById(R.id.thumbnail);
                 mContents.findViewById(R.id.locality).setVisibility(View.GONE);
 
                 final Scene scene = markerToSceneMap.get(marker);
-                if (scene.hasAR())
+                if (scene.hasAR()) {
                     Glide.with(getApplicationContext())
                             .load(scene.getUriThumb())
+                            .asBitmap()
                             .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                             .placeholder(R.drawable.empty_photo)
                             .override(164, 164)
-                            .into(thumb);
+                            .into(thumbnail);
+                    thumb.setVisibility(View.VISIBLE);
+                } else {
+                    mContents.findViewById(R.id.thumb).setVisibility(View.GONE);
+                }
                 Log.i("Glide", "uri is: " + scene.getUriThumb());
                 TextView titleUi = ((TextView) mContents.findViewById(R.id.title));
                 titleUi.setText(marker.getTitle());
@@ -625,9 +639,22 @@ public class MapsActivity extends AppCompatActivity implements
                     distance = "Distance: " + (int) mCurrentLocation.distanceTo(markerLocation) + "m";
                 snippetUi.setText(distance);
 
-                boolean isfence = String.valueOf(markerToSceneMap.get(marker).getId()).equals(fenceTriggered);
-                if (!scene.isVisited() && isFenceTriggered && isfence) {
-                    InfoButtonListener = new OnInfoWindowElemTouchListener(ar_button,
+                OnInfoWindowElemTouchListener infoTouchListener = new OnInfoWindowElemTouchListener(det_button,
+                        ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
+                        ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {
+                    @Override
+                    protected void onClickConfirmed(View v, Marker marker) {
+                        Intent intent = new Intent(mContents.getContext(), SceneDetailActivity.class);
+                        Log.i("", String.valueOf(scene.getId()));
+                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(scene.getId()));
+                        startActivity(intent);
+                    }
+                };
+                det_button.setOnTouchListener(infoTouchListener);
+                det_button.setVisibility(View.VISIBLE);
+                mContents.findViewById(R.id.div).setVisibility(View.VISIBLE);
+                if ((!scene.isVisited() || scene.hasAR()) && isFenceTriggered && String.valueOf(scene.getId()).equals(fenceTriggered)) {
+                    OnInfoWindowElemTouchListener InfoButtonListener = new OnInfoWindowElemTouchListener(ar_button,
                             ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
                             ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {
                         @Override
@@ -639,21 +666,7 @@ public class MapsActivity extends AppCompatActivity implements
                         }
                     };
                     ar_button.setOnTouchListener(InfoButtonListener);
-
                     mContents.findViewById(R.id.controls_panel).setVisibility(View.VISIBLE);
-                    OnInfoWindowElemTouchListener infoTouchListener = new OnInfoWindowElemTouchListener(det_button,
-                            ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
-                            ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {
-                        @Override
-                        protected void onClickConfirmed(View v, Marker marker) {
-                            Intent intent = new Intent(mContents.getContext(), SceneDetailActivity.class);
-                            Log.i("", String.valueOf(scene.getId()));
-                            intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(scene.getId()));
-                            startActivity(intent);
-
-                        }
-                    };
-                    det_button.setOnTouchListener(infoTouchListener);
                 } else {
                     mContents.findViewById(R.id.controls_panel).setVisibility(View.GONE);
                 }
@@ -662,6 +675,8 @@ public class MapsActivity extends AppCompatActivity implements
                 return mContents;
             } else {
                 mContents.findViewById(R.id.thumb).setVisibility(View.GONE);
+                mContents.findViewById(R.id.details_button).setVisibility(View.GONE);
+                mContents.findViewById(R.id.div).setVisibility(View.GONE);
                 mContents.findViewById(R.id.controls_panel).setVisibility(View.GONE);
                 TextView locality = (TextView) mContents.findViewById(R.id.locality);
 

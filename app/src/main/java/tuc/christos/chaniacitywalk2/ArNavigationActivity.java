@@ -83,7 +83,7 @@ public class ArNavigationActivity extends Activity {
     protected boolean isLoading = false;
 
     protected LocationService mService;
-    final ServiceConnection mConnection =  new ServiceConnection() {
+    final ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             LocationService.mIBinder binder = (LocationService.mIBinder) service;
@@ -107,14 +107,14 @@ public class ArNavigationActivity extends Activity {
 
         @Override
         public void userEnteredArea(String areaID) {
-            callJavaScript("World.userEnteredArea",new String[]{areaID});
-            Log.i("GeoFence","Fence Triggered: "+areaID);
+            callJavaScript("World.userEnteredArea", new String[]{areaID});
+            Log.i("GeoFence", "Fence Triggered: " + areaID);
         }
 
         @Override
         public void userLeftArea(String areaID) {
-            callJavaScript("World.userLeftArea",new String[]{areaID});
-            Log.i("GeoFence","Fence Removed: "+areaID);
+            callJavaScript("World.userLeftArea", new String[]{areaID});
+            Log.i("GeoFence", "Fence Removed: " + areaID);
         }
 
         @Override
@@ -126,9 +126,9 @@ public class ArNavigationActivity extends Activity {
     };
 
     protected boolean mBount = false;
-    protected  String WorldToLoad = "";
+    protected String WorldToLoad = "";
     protected String scene_id = "";
-
+    protected String question_id = "";
 
 
     @Override
@@ -138,6 +138,7 @@ public class ArNavigationActivity extends Activity {
         architectView = (ArchitectView) findViewById(R.id.architectView);
         WorldToLoad = getIntent().getStringExtra(Constants.ARCHITECT_WORLD_KEY);
         scene_id = getIntent().getStringExtra(Constants.ARCHITECT_AR_SCENE_KEY);
+        question_id = getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY);
         /*final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
         config.setFeatures(1);
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
@@ -160,7 +161,7 @@ public class ArNavigationActivity extends Activity {
             @Override
             public boolean urlWasInvoked(String s) {
                 Uri invokedUri = Uri.parse(s);
-                switch (invokedUri.getHost()){
+                switch (invokedUri.getHost()) {
                     case "details":
                         Intent intent = new Intent(getApplicationContext(), SceneDetailActivity.class);
                         intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(invokedUri.getQueryParameter("id")));
@@ -174,9 +175,9 @@ public class ArNavigationActivity extends Activity {
                     case "mark":
                         try {
                             architectView.load("ModelAtGeoLocation/index.html");
-                            callJavaScript("World.ShowBackBtn",new String[]{});
-                            injectArgs("World.getScene",new String[]{JsonHelper.sceneToJson(mDataManager.getScene(String.valueOf(invokedUri.getQueryParameter("id")))).toString()});
-                        }catch(IOException e){
+                            callJavaScript("World.ShowBackBtn", new String[]{});
+                            injectArgs("World.getScene", new String[]{JsonHelper.sceneToJson(mDataManager.getScene(String.valueOf(invokedUri.getQueryParameter("id")))).toString()});
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                         break;
@@ -184,23 +185,23 @@ public class ArNavigationActivity extends Activity {
                         try {
                             architectView.load("ArNavigation/index.html");
                             injectData(mDataManager.getActiveMapContent());
-                        }catch(IOException e){
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                         break;
                     case "score":
-                        if(invokedUri.getBooleanQueryParameter("success",false)){
-                            Log.i("Answer","correct");
+                        if (invokedUri.getBooleanQueryParameter("success", false)) {
+                            Log.i("Answer", "correct");
                             mDataManager.getActivePlayer().updateScore(true);
                             mDataManager.addVisit(Long.valueOf(invokedUri.getQueryParameter("id")));
-                        }else{
-                            Log.i("Answer","wrong");
+                        } else {
+                            Log.i("Answer", "wrong");
                             mDataManager.getActivePlayer().updateScore(false);
                         }
                         break;
 
                     default:
-                        Toast.makeText(getApplicationContext(),"Got url: "+invokedUri.getHost(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Got url: " + invokedUri.getHost(), Toast.LENGTH_SHORT).show();
                         return true;
                 }
                 return true;
@@ -220,10 +221,10 @@ public class ArNavigationActivity extends Activity {
         architectView.registerSensorAccuracyChangeListener(sensorAccuracyListener);
 
         WebView.setWebContentsDebuggingEnabled(true);
-        Log.i(TAG,"World: "+WorldToLoad);
+        Log.i(TAG, "World: " + WorldToLoad);
     }
 
-    private void injectArgs(final String method,final String[] args) {
+    private void injectArgs(final String method, final String[] args) {
         if (!isLoading) {
             final Thread t = new Thread(new Runnable() {
 
@@ -232,7 +233,7 @@ public class ArNavigationActivity extends Activity {
                     isLoading = true;
                     final int WAIT_FOR_LOCATION_STEP_MS = 2000;
 
-                    while (lastKnownLocation == null ) {
+                    while (lastKnownLocation == null) {
 
                         try {
                             Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
@@ -259,7 +260,7 @@ public class ArNavigationActivity extends Activity {
                     isLoading = true;
                     final int WAIT_FOR_LOCATION_STEP_MS = 2000;
 
-                    while (lastKnownLocation == null ) {
+                    while (lastKnownLocation == null) {
 
                         try {
                             Thread.sleep(WAIT_FOR_LOCATION_STEP_MS);
@@ -322,7 +323,7 @@ public class ArNavigationActivity extends Activity {
             @Override
             public void onCompassAccuracyChanged(int accuracy) {
                 /* UNRELIABLE = 0, LOW = 1, MEDIUM = 2, HIGH = 3 */
-                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_HIGH && System.currentTimeMillis() - ArNavigationActivity.this.lastCalibrationToastShownTimeMillis >= 5000  ) {
+                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_HIGH && System.currentTimeMillis() - ArNavigationActivity.this.lastCalibrationToastShownTimeMillis >= 5000) {
                     Toast.makeText(ArNavigationActivity.this, R.string.compass_accuracy_low, Toast.LENGTH_LONG).show();
                     ArNavigationActivity.this.lastCalibrationToastShownTimeMillis = System.currentTimeMillis();
                 }
@@ -340,8 +341,10 @@ public class ArNavigationActivity extends Activity {
                 // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
                 // have a look at wikitude.com's developer section for API references
                 architectView.load(WorldToLoad);
-                if(WorldToLoad.contains("ArNav"))   injectData(mDataManager.getActiveMapContent());
-                else injectArgs("World.getScene",new String[]{JsonHelper.sceneToJson(mDataManager.getScene(scene_id)).toString()});
+                if (WorldToLoad.contains("ArNavigation"))
+                    injectData(mDataManager.getActiveMapContent());
+                else
+                    injectArgs("World.getScene", new String[]{JsonHelper.sceneToJson(mDataManager.getScene(scene_id)).toString()});
 
             } catch (IOException e1) {
                 e1.printStackTrace();
@@ -353,9 +356,9 @@ public class ArNavigationActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if( !mBount ){
+        if (!mBount) {
             startService(new Intent(this, LocationService.class));
-            bindService(new Intent(this,LocationService.class),mConnection,Context.BIND_NOT_FOREGROUND);
+            bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
             mBount = true;
         }
         // call mandatory live-cycle method of architectView
@@ -373,7 +376,7 @@ public class ArNavigationActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        if(mBount ){
+        if (mBount) {
             mService.removeListener(mLocationServiceListener);
             unbindService(mConnection);
             mBount = false;

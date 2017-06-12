@@ -60,7 +60,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     private boolean fenceTriggered = false;
     private static boolean isRunning = false;
     private long updated = 0;
-    private String areaid;
+    private String activeFence;
     private Location lastLocationChecked = null;
 
     /**
@@ -88,16 +88,17 @@ public class LocationService extends Service implements LocationCallback, Locati
         }
     }
 
-    public void updateEventHandlerList(ArrayList<Scene> scenes){
+    public void updateEventHandlerList(ArrayList<Scene> scenes) {
         mEventHandler.updateSceneList(scenes);
     }
+
     /**
      * The service is starting, due to a call to startService()
      */
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(!mDataManager.isInstantiated()){
+        if (!mDataManager.isInstantiated()) {
             mDataManager.init(this);
         }
         if (!isRunning) {
@@ -119,13 +120,13 @@ public class LocationService extends Service implements LocationCallback, Locati
                         break;
                     default:
                 }
-            if(intent.getStringExtra("event") != null && intent.getStringExtra("events").equals("update"))
+            if (intent.getStringExtra("event") != null && intent.getStringExtra("events").equals("update"))
                 mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
         }
         return START_STICKY;
     }
 
-    public static boolean isServiceRunning(){
+    public static boolean isServiceRunning() {
         return isRunning;
     }
 
@@ -143,9 +144,8 @@ public class LocationService extends Service implements LocationCallback, Locati
         mLocationProvider.removeLocationCallbackListener(this);
         mLocationProvider.disconnect();
         mEventHandler.removeLocationEventListener(this);
-        isRunning =false;
+        isRunning = false;
     }
-
 
 
     /**
@@ -160,7 +160,7 @@ public class LocationService extends Service implements LocationCallback, Locati
 
             mLocationProvider = new LocationProvider(LocationService.this, mode);
 
-            if(mDataManager.isContentReady())
+            if (mDataManager.isContentReady())
                 mEventHandler = new LocationEventHandler(mDataManager.getActiveMapContent());
             else
                 mEventHandler = new LocationEventHandler(new ArrayList<Scene>());
@@ -226,7 +226,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             return true;
         }
 
-        if(!IsApplicationInForeground()) {
+        if (!IsApplicationInForeground()) {
             showServiceNotification();
         }
         //TODO:SET TO BACKGROUND ACCURACY
@@ -248,7 +248,7 @@ public class LocationService extends Service implements LocationCallback, Locati
         mLocationProvider.setMode(mode);
     }
 
-    public void showServiceNotification(){
+    public void showServiceNotification() {
         Intent dialogIntent = new Intent(this, NotificationResult.class);
         dialogIntent.setAction(Constants.ACTION_STOP);
         PendingIntent piStop = PendingIntent.getActivity(this, 0, dialogIntent, 0);
@@ -257,7 +257,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                 .setSmallIcon(R.drawable.angry_thor_024px)
                 .setContentTitle("Chania AR Location")
                 .setContentText("Running! Tap o Pause...")
-                .setVibrate(new long[]{ 0L,0L,0L,0L})
+                .setVibrate(new long[]{0L, 0L, 0L, 0L})
                 .setSound(Uri.EMPTY)
                 .setOngoing(true)
                 .setContentIntent(piStop);
@@ -266,7 +266,7 @@ public class LocationService extends Service implements LocationCallback, Locati
         mNotificationManager.notify(Constants.PERMA_NOTIFICATION_ID, mBuilder.build());
     }
 
-    public void hideServiceNotification(){
+    public void hideServiceNotification() {
         NotificationManager mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancelAll();
     }
@@ -286,10 +286,10 @@ public class LocationService extends Service implements LocationCallback, Locati
     }
 
     public boolean isFenceTriggered() {
+        Toast.makeText(this, "SERVICE: fencetriggered?" + fenceTriggered, Toast.LENGTH_SHORT).show();
         if (fenceTriggered)
-            for (IServiceListener i : listeners) {
-                i.userEnteredArea(mEventHandler.getTriggeredArea());
-            }
+            for (IServiceListener l : listeners)
+                l.userEnteredArea(activeFence);
         return fenceTriggered;
     }
 
@@ -304,16 +304,17 @@ public class LocationService extends Service implements LocationCallback, Locati
 
     @Override
     public void handleNewLocation(Location location) {
-        checkForRegionChange(location);
         mEventHandler.handleNewLocation(location);
         for (IServiceListener l : listeners)
             l.handleNewLocation(location);
+
+        checkForRegionChange(location);
     }
 
     @Override
     public void userEnteredArea(String areaID) {
         fenceTriggered = true;
-        areaid = areaID;
+        activeFence = areaID;
         Toast.makeText(this, "Entered Area: " + areaID, Toast.LENGTH_SHORT).show();
         Log.i(TAG, "method: " + IsApplicationInForeground());
         if (IsApplicationInForeground())
@@ -349,7 +350,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     @Override
     public void userLeftArea(String areaID) {
         Toast.makeText(this, "Left Area: " + areaID, Toast.LENGTH_SHORT).show();
-        areaid = "";
+        activeFence = "";
         fenceTriggered = false;
         if (IsApplicationInForeground())
             for (IServiceListener l : listeners)
@@ -361,49 +362,49 @@ public class LocationService extends Service implements LocationCallback, Locati
             mNotificationManager.cancel(Integer.valueOf(areaID));
         }
     }
-    public void triggerRegionChange(final Level level){
-            RestClient mRestClient = RestClient.getInstance();
-            mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
-                @Override
-                public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
-                    if(success){
-                        mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
-                    }else{
-                        Toast.makeText(getApplicationContext(),msg,Toast.LENGTH_LONG).show();
-                    }
-                    for(IServiceListener i: listeners)
-                        i.regionChanged(level.getAdminArea(),level.getCountry());
+
+    public void triggerRegionChange(final Level level) {
+        RestClient mRestClient = RestClient.getInstance();
+        mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
+            @Override
+            public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                if (!success) {
+                    Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
                 }
-            });
+                mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
+                for (IServiceListener i : listeners)
+                    i.regionChanged(level.getAdminArea(), level.getCountry());
+            }
+        });
     }
 
-    private void checkForRegionChange(Location location){
+    private void checkForRegionChange(Location location) {
         //TODO: CHANGE FOR REGION CHANGES setting to a normal number
-        if(lastLocationChecked == null)
+        if (lastLocationChecked == null)
             lastLocationChecked = location;
-        if(lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 3600000){
+        if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 3600000) {
             updated = System.currentTimeMillis();
-            AsyncTask<Location,Void,Level> geoCoderTask = new AsyncTask<Location,Void,Level>() {
+            AsyncTask<Location, Void, Level> geoCoderTask = new AsyncTask<Location, Void, Level>() {
                 @Override
                 protected Level doInBackground(Location... location1) {
                     Level level = new Level();
-                    if(Geocoder.isPresent()) {
+                    if (Geocoder.isPresent()) {
                         try {
                             Geocoder coder = new Geocoder(getApplicationContext());
-                            List<Address> addresses = coder.getFromLocation(location1[0].getLatitude(), location1[0].getLongitude(), 10 );
+                            List<Address> addresses = coder.getFromLocation(location1[0].getLatitude(), location1[0].getLongitude(), 10);
                             level.setCountry(addresses.get(0).getCountryName());
                             level.setCountry_code(addresses.get(0).getCountryCode());
                             level.setCity(addresses.get(0).getLocality());
                             level.setAdminArea("");
-                            for(Address temp: addresses){
-                                if(temp.getAdminArea() != null)
+                            for (Address temp : addresses) {
+                                if (temp.getAdminArea() != null)
                                     level.setAdminArea(temp.getAdminArea());
-                                if(temp.getSubAdminArea() != null)
+                                if (temp.getSubAdminArea() != null)
                                     level.setSubAdminArea(temp.getSubAdminArea());
                             }
 
-                        }catch (IOException e){
-                            Log.i("Geocoder",e.getMessage());
+                        } catch (IOException e) {
+                            Log.i("Geocoder", e.getMessage());
                         }
                     }
                     return level;
@@ -411,7 +412,7 @@ public class LocationService extends Service implements LocationCallback, Locati
 
                 @Override
                 protected void onPostExecute(Level level) {
-                    Log.i("Geocoder","Got Level: "+level.getCountry()+ ", " +level.getCity());
+                    Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
                     mDataManager.setLevelLocality(level);
                     triggerRegionChange(level);
                 }

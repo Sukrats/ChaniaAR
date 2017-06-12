@@ -276,11 +276,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:layout_gravity="start"
+                    android:layout_gravity="end"
                     android:padding="4dp"
                     android:text="@string/action_guest"
                     android:onClick="guestLogin"
-                    android:background="@android:color/holo_blue_dark"
+                    android:background="@color/colorAccent"
                     android:textColor="@color/text_icon"
                     android:textSize="12sp"
                     android:textStyle="bold" />

@@ -240,6 +240,16 @@ var World = {
             }
         }
 
+    },
+    triggerQuestion: function triggerQuestionFn(args){
+        var singlePoi = {
+        	"id": args.id,
+        	"latitude": parseFloat(args.latitude),
+        	"longitude": parseFloat(args.longitude),
+        	"title": args.name,
+        	"description": args.description
+        };
+        World.userEnteredArea(singlePoi.id);
     }
 };
 

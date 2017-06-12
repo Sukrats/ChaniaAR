@@ -99,8 +99,8 @@ class LocationEventHandler implements LocationCallback {
         for(Scene s: list){
             scenes.put(String.valueOf(s.getId()),s);
         }
-        setGeoFences(lastKnownLocation);
         this.scenes = scenes;
+        setGeoFences(lastKnownLocation);
     }
     /**
      * Fired when the user left the Cover Radius
