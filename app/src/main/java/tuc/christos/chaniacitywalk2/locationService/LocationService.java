@@ -63,6 +63,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     private long activeFence;
     private Location lastLocationChecked = null;
     private Location mLastKnownLocation;
+    private int retryCount = 0;
 
     /**
      * Called when the service is being created.
@@ -291,6 +292,10 @@ public class LocationService extends Service implements LocationCallback, Locati
         if (fenceTriggered)
             for (IServiceListener l : listeners)
                 l.userEnteredArea(activeFence);
+        else
+            for (IServiceListener l : listeners)
+                l.userLeftArea(activeFence);
+
         return fenceTriggered;
     }
 
@@ -360,7 +365,6 @@ public class LocationService extends Service implements LocationCallback, Locati
     @Override
     public void userLeftArea(long areaID) {
         Toast.makeText(this, "Left Area: " + areaID, Toast.LENGTH_SHORT).show();
-        activeFence = -5;
         fenceTriggered = false;
         if (IsApplicationInForeground())
             for (IServiceListener l : listeners)
@@ -374,21 +378,35 @@ public class LocationService extends Service implements LocationCallback, Locati
     }
 
     public void triggerRegionChange(final Level level) {
+        Toast.makeText(this,"Downloading Scenes For Region:\n"+level.getAdminArea(), Toast.LENGTH_LONG).show();
         final RestClient mRestClient = RestClient.getInstance();
-        if (!level.getAdminArea().equals(mDataManager.getCurrentLevel().getAdminArea()))
-            mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
-                @Override
-                public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
-                    if (!success) {
-                        checkForRegionChange(mLastKnownLocation);
-                        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
-                    } else {
-                        mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
-                        for (IServiceListener i : listeners)
-                            i.regionChanged(level.getAdminArea(), level.getCountry());
+        mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
+            @Override
+            public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                if (!success) {
+                    Log.i("Download",String.valueOf(httpCode));
+                    switch (httpCode){
+                        case 404: Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                            break;
+
+                        default:
+                            if(retryCount < 4) {
+                                triggerRegionChange(level);
+                                retryCount++;
+                            }
+                            else {
+                                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                                retryCount = 0;
+                            }
+                            break;
                     }
+                } else {
+                    mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
+                    for (IServiceListener i : listeners)
+                        i.regionChanged(level.getAdminArea(), level.getCountry());
                 }
-            });
+            }
+        });
     }
 
     public void requestFences() {
@@ -435,8 +453,10 @@ public class LocationService extends Service implements LocationCallback, Locati
             @Override
             protected void onPostExecute(Level level) {
                 Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
+                if(mDataManager.checkExistingLocality(level)) {
                     mDataManager.setLevelLocality(level);
                     triggerRegionChange(level);
+                }
             }
         };
 

@@ -3,6 +3,9 @@ var World = {
 	// true once data was fetched
 	initiallyLoadedData: false,
     panelOpen: false,
+
+    markerInFocus: null,
+    isMarkerInFocus: false,
 	// POI-Marker asset
 	markerDrawable_idle: null,
 	markerDrawable_selected: null,
@@ -41,6 +44,10 @@ var World = {
 			The AR.Drawables can be defined for multiple targets. A target can be the camera, the radar or a direction indicator.
 			Both the radar and direction indicators will be covered in more detail in later examples.
 		*/
+		if(poiData.length == 0){
+		    World.updateStatusMessage('No Scenes in your Area');
+		    return;
+		}
 		// loop through POI-information and create an AR.GeoObject (=Marker) per POI
         for (var currentPlaceNr = 0; currentPlaceNr < poiData.length; currentPlaceNr++) {
         	var singlePoi = {
@@ -60,8 +67,8 @@ var World = {
         	*/
         	World.markerList.push(new Marker(singlePoi));
         }
-		World.updateStatusMessage(currentPlaceNr + ' places loaded');
 		World.initiallyLoadedData = true;
+		World.updateStatusMessage(currentPlaceNr + ' places loaded');
 	},
 
 	// updates status message shown in small "i"-button aligned bottom center
@@ -75,7 +82,11 @@ var World = {
 		$("#popupInfoButton").buttonMarkup({
 			icon: iconToUse
 		});
-		$("#info-footer").hide();
+		if(World.markerList.length > 0)
+		    $("#info-footer").hide();
+
+        //if(!World.isMarkerInFocus)
+		    //World.focusScene(markerInFocus)
 	},
 
 	// location updates, fired every time you call architectView.setLocation() in native environment
@@ -90,7 +101,6 @@ var World = {
         $("#panel-poidetail").slideToggle();
         panelOpen = false;
         $("#ar-panel").hide();
-
         World.currentMarker = null;
     },
 	// fired when user pressed maker in cam
@@ -115,12 +125,13 @@ var World = {
 		$(".ui-panel-dismiss").unbind("mousedown");
 		// deselect AR-marker when user exits detail screen div.
 		$("#panel-poidetail").on("panelbeforeclose", function(event, ui) {
-			World.currentMarker.setDeselected(World.currentMarker);
+			//World.currentMarker.setDeselected(World.currentMarker);
 		});
 		$("#closeBtn").click(function(){
 			World.currentMarker.setDeselected(World.currentMarker);
+
             $("#panel-poidetail").slideToggle();
-            panelOpen = false;
+            World.panelOpen = false;
             World.currentMarker = null;
 		});
 		$("#open-details-activity").click(function(){
@@ -158,6 +169,10 @@ var World = {
                     $("#backBtn").hide();
                     World.resume();
                 })
+                World.currentMarker.setDeselected(World.currentMarker);
+                $("#panel-poidetail").slideToggle();
+                World.panelOpen = false;
+                World.currentMarker = null;
                 World.areaMarker.enabled = false;
         });
 
@@ -183,14 +198,14 @@ var World = {
                 $("#ar-panel").hide();
             }
         }
-    	marker.setSelected(marker);
+    	//marker.setSelected(marker);
     	World.currentMarker = marker;
     },
 
     userEnteredArea: function userEnteredAreaFn(areaId){
         World.isInArea = true
         World.currentArea = areaId;
-        if(World.initiallyLoadedData){
+        if(World.initiallyLoadedData && !World.isMarkerInFocus){
             for(var i=0; i < World.markerList.length; i++){
                 World.markerList[i].markerObject.enabled = false;
                 if(World.markerList[i].poiData.id == areaId){
@@ -230,16 +245,15 @@ var World = {
     resume: function resumeFn(){
         if(World.isAnswering){
             World.isAnswering = false;
-            World.question.destroy();
+            World.question.GeoObject.destroy();
         }
         if(World.isInArea){
             World.areaMarker.enabled = true;
         }else{
-            for(var it=0; World.markerList.length;it++){
+            for(var it=0; it < World.markerList.length;it++){
                 World.markerList[it].markerObject.enabled = true;
             }
         }
-
     },
     triggerQuestion: function triggerQuestionFn(args){
         var singlePoi = {
@@ -250,6 +264,28 @@ var World = {
         	"description": args.description
         };
         World.userEnteredArea(singlePoi.id);
+    },
+
+    focusScene: function focusSceneFn(scene_id){
+        World.markerInFocus = scene_id;
+        if(World.initiallyLoadedData){
+            World.isMarkerInFocus = true;
+            alert("markerToFocus:"+ World.markerInFocus + "isInFocus: " + World.isMarkerInFocus);
+            for(var i=0; i < World.markerList.length; i++){
+                World.markerList[i].markerObject.enabled = false;
+                if(World.markerList[i].poiData.id == areaId){
+                    World.markerList[i].markerObject.enabled = true;
+                    World.markerInFocus = scene_id;
+                }
+            }
+        }
+    },
+    clearFocus: function clearFocusFn(){
+        for(var i =0; World.markerList.length;i++){
+            World.markerList[i].markerObject.enabled = true;
+        }
+        World.markerInFocus = null;
+        World.isMarkerInFocus = false;
     }
 };
 

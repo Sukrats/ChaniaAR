@@ -436,6 +436,7 @@ public class DataManager {
                     scenes.add(temp);
                     ScenesMap.put(temp.getId(), temp);
                 }
+                Log.i(TAG,"DB Queried");
                 scenesLoaded = true;
             }
             Log.i(TAG, "Fetched: " + i + " Scenes");
@@ -609,15 +610,17 @@ public class DataManager {
 
     public void setLevelLocality(Level level) {
         this.locality = level;
-        if (activePlayer != null)
+        if (activePlayer != null) {
             this.activePlayer.setRegion(level.getAdminArea());
-        else
-            getPlayer().setRegion(level.getAdminArea());
-
+            mDBh.updatePlayer(activePlayer);
+        }else {
+            Player player = getPlayer();
+            player.setRegion(level.getAdminArea());
+            mDBh.updatePlayer(activePlayer);
+        }
         this.currentLevel = level;
-
     }
-//TODO: LOCAL DB SYNC AND CACHING
+    //TODO: LOCAL DB SYNC AND CACHING
     public boolean checkExistingLocality(Level level) {
         Cursor c = mDBh.getActivePlayer();
         if (!c.moveToNext())
@@ -631,12 +634,10 @@ public class DataManager {
     public Level getCurrentLevel() {
         if (currentLevel != null)
             return this.currentLevel;
-
         currentLevel = new Level();
-        Player player = getPlayer();
+        Player player = getActivePlayer();
         currentLevel.setAdminArea(player.getRegion());
         return currentLevel;
-
     }
 
     /*public ArrayList<ArScene> getRouteAsList() {

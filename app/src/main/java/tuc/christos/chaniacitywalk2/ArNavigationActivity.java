@@ -101,9 +101,10 @@ public class ArNavigationActivity extends Activity {
     };
     final IServiceListener mLocationServiceListener = new IServiceListener() {
         @Override
-        public void drawGeoFences(long[] areas){
+        public void drawGeoFences(long[] areas) {
 
         }
+
         @Override
         public void regionChanged(String areaIds, String radius) {
             //reload?
@@ -131,8 +132,8 @@ public class ArNavigationActivity extends Activity {
 
     protected boolean mBount = false;
     protected String WorldToLoad = "";
-    protected long scene_id ;
-    protected String question_id = "";
+    protected long scene_id = 0;
+    protected String question_id = null;
 
 
     @Override
@@ -141,8 +142,9 @@ public class ArNavigationActivity extends Activity {
         setContentView(R.layout.activity_architect);
         architectView = (ArchitectView) findViewById(R.id.architectView);
         WorldToLoad = getIntent().getStringExtra(Constants.ARCHITECT_WORLD_KEY);
-        scene_id = Long.parseLong(getIntent().getStringExtra(Constants.ARCHITECT_AR_SCENE_KEY));
-        question_id = getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY);
+        scene_id = getIntent().getLongExtra(Constants.ARCHITECT_AR_SCENE_KEY,0);
+        if (getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY) != null)
+            question_id = getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY);
         /*final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
         config.setFeatures(1);
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
@@ -246,6 +248,7 @@ public class ArNavigationActivity extends Activity {
                         }
                     }
                     if (lastKnownLocation != null) {
+                        Log.i(TAG, "Injected Single Scene: " + args[0]);
                         callJavaScript(method, args);
                     }
                     isLoading = false;
@@ -303,7 +306,7 @@ public class ArNavigationActivity extends Activity {
         }
         if (this.architectView != null) {
             final String js = (methodName + "( " + argumentsString.toString() + " );");
-            Log.i("GeoFence", js);
+            Log.i("CallJavaScript", js);
             this.architectView.callJavascript(js);
         }
     }
@@ -345,9 +348,12 @@ public class ArNavigationActivity extends Activity {
                 // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
                 // have a look at wikitude.com's developer section for API references
                 architectView.load(WorldToLoad);
-                if (WorldToLoad.contains("ArNavigation"))
+                if (WorldToLoad.contains("ArNavigation") && scene_id != 0) {
+                    injectArgs("World.focusScene", new String[]{String.valueOf(mDataManager.getScene(scene_id).getId())});
                     injectData(mDataManager.getActiveMapContent());
-                else
+                } else if (WorldToLoad.contains("ArNavigation"))
+                    injectData(mDataManager.getActiveMapContent());
+                else if(WorldToLoad.contains("ModelAtGeoLocation"))
                     injectArgs("World.getScene", new String[]{JsonHelper.sceneToJson(mDataManager.getScene(scene_id)).toString()});
 
             } catch (IOException e1) {
