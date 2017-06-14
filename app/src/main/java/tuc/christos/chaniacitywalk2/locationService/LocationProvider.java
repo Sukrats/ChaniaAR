@@ -220,5 +220,16 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
     }
 
+    LocationRequest getDefaultLocationSettingsRequest(){
+        LocationRequest dr =  new LocationRequest();
+        dr.setInterval(1000);
+        dr.setFastestInterval(1000/2);
+        dr.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        return dr;
+    }
+
+    GoogleApiClient getmGoogleApiClient(){
+        return mGoogleApiClient;
+    }
 
 }

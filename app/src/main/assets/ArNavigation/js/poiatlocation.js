@@ -59,6 +59,7 @@ var World = {
         		"description": poiData[currentPlaceNr].description,
         		"visited":poiData[currentPlaceNr].visited,
         		"saved":poiData[currentPlaceNr].saved,
+        		"hasAR":poiData[currentPlaceNr].hasAR,
         	};
         	singlePoi.description = "Lorem ipsum dolor sit amet, ei justo commune vim, cu legere euripidis vulputate vim";
         	/*
@@ -85,6 +86,31 @@ var World = {
 		if(World.markerList.length > 0)
 		    $("#info-footer").hide();
 
+        $("#ar-btn").unbind();
+        $("#ar-btn").click(function(){
+            if(World.isInArea){
+                if(!World.areaMarker.poiData.visited && !World.areaMarker.poiData.hasAR){
+
+                    $("#backBtn").unbind();
+                    $("#backBtn").click(function(){
+                        World.resume();
+                    });
+                    World.areaMarker.setDeselected(World.areaMarker);
+                    World.areaMarker.markerObject.enabled = false;
+
+                    World.question = new QuestionObject(World.areaMarker.poiData);
+                    World.isAnswering = true;
+                }else if(World.areaMarker.poiData.hasAR){
+                    var architectSdkUrl = "architectsdk://GEOAR?id=" + encodeURIComponent(World.areaMarker.poiData.id);
+                    document.location = architectSdkUrl;
+                    World.areaMarker.setDeselected(World.areaMarker);
+                }
+             /*   $("#panel-poidetail").slideToggle();
+                World.panelOpen = false;
+                World.currentMarker = null;
+                World.areaMarker.enabled = false;*/
+            }
+        });
         //if(!World.isMarkerInFocus)
 		    //World.focusScene(markerInFocus)
 	},
@@ -100,7 +126,7 @@ var World = {
     onMarkerDeSelected: function onMarkerDeSelectedFn(marker){
         $("#panel-poidetail").slideToggle();
         panelOpen = false;
-        $("#ar-panel").hide();
+        $("#ar-btn").css({'color':'#A9A9A9'});
         World.currentMarker = null;
     },
 	// fired when user pressed maker in cam
@@ -124,16 +150,15 @@ var World = {
 
 		$(".ui-panel-dismiss").unbind("mousedown");
 		// deselect AR-marker when user exits detail screen div.
-		$("#panel-poidetail").on("panelbeforeclose", function(event, ui) {
-			//World.currentMarker.setDeselected(World.currentMarker);
-		});
+        $("#closeBtn").unbind();
 		$("#closeBtn").click(function(){
-			World.currentMarker.setDeselected(World.currentMarker);
 
+			World.currentMarker.setDeselected(World.currentMarker);
             $("#panel-poidetail").slideToggle();
             World.panelOpen = false;
             World.currentMarker = null;
 		});
+        $("#open-details-activity").unbind();
 		$("#open-details-activity").click(function(){
             var architectSdkUrl = "architectsdk://details?id=" + encodeURIComponent(marker.poiData.id);
             /*
@@ -145,12 +170,13 @@ var World = {
             */
             document.location = architectSdkUrl;
 		});
-
+        $("#open-map").unbind();
 		$("#open-map").click(function(){
             var architectSdkUrl = "architectsdk://map?id=" + encodeURIComponent(marker.poiData.id);
 
             document.location = architectSdkUrl;
 		});
+        $("#mark-place").unbind();
 		$("#mark-place").click(function(){
                     var themeToUse = ($("#mark-place").attr("data-theme") == "d"? "b" : "d");
                     $("#mark-place").buttonMarkup({
@@ -160,45 +186,23 @@ var World = {
                     document.location = architectSdkUrl;
         });
 
-        $("#ar-btn").click(function(){
-                World.question = new QuestionObject(marker.poiData);
-                World.isAnswering = true;
 
-                $("#backBtn").show();
-                $("#backBtn").click(function(){
-                    $("#backBtn").hide();
-                    World.resume();
-                })
-                World.currentMarker.setDeselected(World.currentMarker);
-                $("#panel-poidetail").slideToggle();
-                World.panelOpen = false;
-                World.currentMarker = null;
-                World.areaMarker.enabled = false;
-        });
-
-		if (World.currentMarker != null) {
+        if(World.currentMarker != null){
             if (World.currentMarker.poiData.id == marker.poiData.id) {
-                return;
-            }
-            World.currentMarker.setDeselected(World.currentMarker);
-            $("#panel-poidetail").slideToggle();
-            panelOpen = false;
-            if(!marker.poiData.visited && World.currentArea == marker.poiData.id){
-                $("#ar-panel").show();
+                   return;
             }else{
-                $("#ar-panel").hide();
+                   World.currentMarker.setDeselected(World.currentMarker);
+                   World.currentMarker = marker;
+                   return;
             }
         }
-        if(!World.panelOpen){
-            $("#panel-poidetail").slideToggle();
-            panelOpen = true;
-            if(!marker.poiData.visited && World.currentArea == marker.poiData.id){
-                $("#ar-panel").show();
-            }else{
-                $("#ar-panel").hide();
-            }
+        if(!marker.poiData.visited && World.isInArea){
+            $("#ar-btn").css({'color':'#000000'});
+        }else{
+            $("#ar-btn").css({'color':'#A9A9A9'});
         }
-    	//marker.setSelected(marker);
+
+        $("#panel-poidetail").slideToggle();
     	World.currentMarker = marker;
     },
 
@@ -206,12 +210,10 @@ var World = {
         World.isInArea = true
         World.currentArea = areaId;
         if(World.initiallyLoadedData && !World.isMarkerInFocus){
-            for(var i=0; i < World.markerList.length; i++){
-                World.markerList[i].markerObject.enabled = false;
-                if(World.markerList[i].poiData.id == areaId){
-                    World.markerList[i].markerObject.enabled = true;
-                    World.areaMarker = World.markerList[i].markerObject;
-                }
+            World.areaMarker = World.hideRest(areaId);
+            if(!World.areaMarker.poiData.visited || !World.areaMarker.poiData.hasAR){
+                //$("#ar-btn").css({'color':'#ff000000'});
+                document.getElementById("ar-btn").style.color = "#ff0000";
             }
         }
     },
@@ -221,9 +223,8 @@ var World = {
         World.currentArea = null;
         if(!World.isAnswering){
             World.areaMarker = null;
-            for(var i=0; i < World.markerList.length; i++){
-                World.markerList[i].markerObject.enabled = true;
-            }
+            World.showAll();
+            $("#ar-btn").css({'color':'#A9A9A9'});
         }
     },
     // screen was clicked but no geo-object was hit
@@ -248,7 +249,7 @@ var World = {
             World.question.GeoObject.destroy();
         }
         if(World.isInArea){
-            World.areaMarker.enabled = true;
+            World.areaMarker.markerObject.enabled = true;
         }else{
             for(var it=0; it < World.markerList.length;it++){
                 World.markerList[it].markerObject.enabled = true;
@@ -271,21 +272,30 @@ var World = {
         if(World.initiallyLoadedData){
             World.isMarkerInFocus = true;
             alert("markerToFocus:"+ World.markerInFocus + "isInFocus: " + World.isMarkerInFocus);
-            for(var i=0; i < World.markerList.length; i++){
-                World.markerList[i].markerObject.enabled = false;
-                if(World.markerList[i].poiData.id == areaId){
-                    World.markerList[i].markerObject.enabled = true;
-                    World.markerInFocus = scene_id;
-                }
-            }
+            World.hideRest(scene_id);
         }
     },
     clearFocus: function clearFocusFn(){
-        for(var i =0; World.markerList.length;i++){
-            World.markerList[i].markerObject.enabled = true;
-        }
+        World.showAll();
         World.markerInFocus = null;
         World.isMarkerInFocus = false;
+    },
+
+    hideRest: function hideRestFn(scene_id){
+        var marker = null;
+        for(var i=0; i < World.markerList.length; i++){
+            World.markerList[i].markerObject.enabled = false;
+            if(World.markerList[i].poiData.id == scene_id){
+                World.markerList[i].markerObject.enabled = true;
+                marker =  World.markerList[i];
+            }
+        }
+        return marker;
+    },
+    showAll: function showAll(){
+        for(var i=0; i < World.markerList.length; i++){
+            World.markerList[i].markerObject.enabled = true;
+        }
     }
 };
 

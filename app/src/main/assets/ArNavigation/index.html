@@ -7,24 +7,26 @@
     <!--  basic meta information -->
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta http-equiv="Content-Type" content="application/json; charset=utf-8">
-    <meta content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes" name="viewport">
+    <meta content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes"
+          name="viewport">
 
     <title>My ARchitect World</title>
 
     <script src="architect://architect.js"></script>
 
     <!-- CUSTOM CSS -->
-    <link rel="stylesheet" href="css/detail_panel.css" />
+    <link rel="stylesheet" href="css/detail_panel.css"/>
 
     <!-- jquery mobile CSS -->
-    <link rel="stylesheet" href="../jquery/jquery.mobile-1.3.2.min.css" />
+    <link rel="stylesheet" href="../jquery/jquery.mobile-1.3.2.min.css"/>
     <link rel="stylesheet" href="../jquery/icon-pack-custom.css"/>
     <!-- required to set background transparent & enable "click through" -->
-    <link rel="stylesheet" href="../jquery/jquery-mobile-transparent-ui-overlay.css" />
+    <link rel="stylesheet" href="../jquery/jquery-mobile-transparent-ui-overlay.css"/>
 
     <!-- jquery JS files -->
     <script type="text/javascript" src="../jquery/jquery-1.9.1.min.js"></script>
     <script type="text/javascript" src="../jquery/jquery.mobile-1.3.2.min.js"></script>
+    <link rel="stylesheet" href="../font-awesome/css/font-awesome.min.css">
 
 
     <!-- marker representation-->
@@ -36,19 +38,48 @@
     <script type="text/javascript" src="js/poiatlocation.js"></script>
 </head>
 
-<body >
-<div data-role="page" id="page1" style="background: none;" >
+<body>
+<div data-role="page" id="page1" style="background: none;">
     <!-- MAIN PAGE CONTENT -->
     <div class="radarContainer_left" id="radarContainer"></div>
-    <!-- "back" button -->
-    <a id="backBtn" data-shadow="false" data-role="button" data-iconpos="bottom" data-mini="true" data-theme="d"
-       data-icon="home">Home</a>
+
+    <a id="overflowBtn" data-shadow="false" data-role="button" data-iconpos="bottom"
+       data-mini="true"
+       data-theme="d"
+       data-icon="home">
+        <i class="fa fa-align-justify fa-2x" aria-hidden="true" ></i>
+    </a>
+
+    <div id="overMenu" class="list-group">
+        <!-- "back" button -->
+        <a id="backBtn" data-shadow="false" data-role="button"
+           data-theme="d"
+           data-inline="true">
+            <i class="fa fa-home fa-2x" aria-hidden="true"></i>
+        </a>
+        <!-- "show-hide" button -->
+        <a id="toggleView" data-shadow="false" data-role="button"
+           data-theme="d"
+           data-inline="true">
+            <i class="fa fa-bullseye fa-2x" aria-hidden="true" style="color:#A9A9A9;"></i>
+        </a>
+        <!-- "AR" button -->
+        <a id="ar-btn" data-shadow="false" data-role="button"
+           data-theme="d"
+           data-inline="true">
+            <i class="fa fa-play fa-2x" aria-hidden="true" style="color:#A9A9A9;"></i>&nbsp;
+        </a>
+    </div>
+
     <!-- transparent footer-->
-    <div id="info-footer" data-role="footer" class="ui-bar" data-theme="f" data-position="fixed" style="text-align:center;">
+    <div id="info-footer" data-role="footer" class="ui-bar" data-theme="f" data-position="fixed"
+         style="text-align:center;">
 
         <!-- small status-button -->
-        <a style="text-align:right;" id="popupInfoButton" href="#popupInfo" data-rel="popup" data-role="button"
-           class="ui-icon-alt" data-inline="true" data-transition="pop" data-icon="alert" data-theme="e"
+        <a style="text-align:right;" id="popupInfoButton" href="#popupInfo" data-rel="popup"
+           data-role="button"
+           class="ui-icon-alt" data-inline="true" data-transition="pop" data-icon="alert"
+           data-theme="e"
            data-iconpos="notext">Log</a> </p>
 
         <!-- popup displayed when button clicked -->
@@ -61,7 +92,7 @@
     <!-- panel containing POI detail information -->
     <div id="panel-poidetail">
         <!-- header with "close" button -->
-        <div data-role="header" data-theme="b">
+        <div data-role="header" data-theme="d">
             <h3 id="poi-detail-title"></h3>
             <a id="closeBtn" href="#header" data-rel="close">Close</a>
         </div>
@@ -76,21 +107,26 @@
                     <h4>Distance: <a id="poi-detail-distance"></a></h4>
                 </div>
 
-                <div class="ui-block-b" data-role="controlgroup" data-type="vertical" style="width:20%;align-self:stretch;">
+                <div class="ui-block-b" data-role="controlgroup" data-type="vertical"
+                     style="width:20%;align-self:stretch;">
                     <a id="open-details-activity"
                        data-icon="info" data-role="button" data-iconpos="notext" data-theme="d">Details</a>
                     <a id="open-map"
-                       data-icon="back" data-role="button" data-iconpos="notext" data-theme="d">Map</a>
+                       data-icon="back" data-role="button" data-iconpos="notext"
+                       data-theme="d">Map</a>
                     <a id="mark-place"
-                       data-icon="star" data-role="button" data-iconpos="notext" data-theme="d">Mark</a>
+                       data-icon="star" data-role="button" data-iconpos="notext"
+                       data-theme="d">Mark</a>
                 </div>
             </div>
 
-            <div id="ar-panel" class="ui-grid-solo">
+         <!--   <div id="ar-panel" class="ui-grid-solo">
                 <div class="ui-block-a">
-                    <button id="ar-btn" data-iconpos="bottom" data-icon="camera-white" type="button" data-inline="true" data-theme="d">AR</button>
+                    <button id="ar-button" data-iconpos="bottom" data-icon="camera-white" type="button"
+                            data-inline="true" data-theme="d">AR
+                    </button>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 

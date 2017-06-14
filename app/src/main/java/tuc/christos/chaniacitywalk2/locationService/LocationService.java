@@ -1,5 +1,6 @@
 package tuc.christos.chaniacitywalk2.locationService;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -7,6 +8,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
@@ -21,6 +23,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
@@ -28,10 +31,21 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.SettingsClient;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import tuc.christos.chaniacitywalk2.LoginActivity;
 import tuc.christos.chaniacitywalk2.MapsActivity;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.SettingsActivity;
@@ -183,7 +197,7 @@ public class LocationService extends Service implements LocationCallback, Locati
      * interface for clients that bind
      */
     mIBinder mBinder = new mIBinder();
-
+    Activity resultActivity;
     /**
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
@@ -192,6 +206,9 @@ public class LocationService extends Service implements LocationCallback, Locati
         public LocationService getService() {
             // Return this instance of LocalService so clients can call public methods
             return LocationService.this;
+        }
+        public void setResultActivity(Activity activity){
+            resultActivity = activity;
         }
     }
 
@@ -326,6 +343,33 @@ public class LocationService extends Service implements LocationCallback, Locati
         }
     }
 
+    public void checkLocationSettings() {
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(mLocationProvider.getDefaultLocationSettingsRequest());
+
+        //SettingsClient client = LocationServices.getSettingsClient(this);
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mLocationProvider.getmGoogleApiClient(), builder.build());
+
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>()
+
+        {
+            @Override
+            public void onResult(@NonNull LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        try {
+                            status.startResolutionForResult(resultActivity, 1);
+
+                        }catch (IntentSender.SendIntentException e){
+                            Log.i(TAG,e.getMessage());
+                        }
+                        break;
+                }
+            }
+        });
+    }
+
     @Override
     public void userEnteredArea(long areaID) {
         fenceTriggered = true;
@@ -378,23 +422,23 @@ public class LocationService extends Service implements LocationCallback, Locati
     }
 
     public void triggerRegionChange(final Level level) {
-        Toast.makeText(this,"Downloading Scenes For Region:\n"+level.getAdminArea(), Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Downloading Scenes For Region:\n" + level.getAdminArea(), Toast.LENGTH_LONG).show();
         final RestClient mRestClient = RestClient.getInstance();
         mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
             @Override
             public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
                 if (!success) {
-                    Log.i("Download",String.valueOf(httpCode));
-                    switch (httpCode){
-                        case 404: Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                    Log.i("Download", String.valueOf(httpCode));
+                    switch (httpCode) {
+                        case 404:
+                            Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
                             break;
 
                         default:
-                            if(retryCount < 4) {
+                            if (retryCount < 4) {
                                 triggerRegionChange(level);
                                 retryCount++;
-                            }
-                            else {
+                            } else {
                                 Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
                                 retryCount = 0;
                             }
@@ -453,7 +497,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             @Override
             protected void onPostExecute(Level level) {
                 Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
-                if(mDataManager.checkExistingLocality(level)) {
+                if (mDataManager.checkExistingLocality(level)) {
                     mDataManager.setLevelLocality(level);
                     triggerRegionChange(level);
                 }

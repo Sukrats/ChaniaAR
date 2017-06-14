@@ -3,15 +3,20 @@ package tuc.christos.chaniacitywalk2;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -31,6 +36,19 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -76,6 +94,23 @@ public class LoginActivity extends AppCompatActivity {
     private String mActiveView = "login";
 
     private TextView progressView;
+
+    boolean mBount = false;
+    final ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            LocationService.mIBinder binder = (LocationService.mIBinder) service;
+            binder.setResultActivity(LoginActivity.this);
+            LocationService mService = binder.getService();
+            mService.checkLocationSettings();
+            mBount = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBount = false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -188,8 +223,9 @@ public class LoginActivity extends AppCompatActivity {
                     })
                     .create()
                     .show();
+            unbindService(mConnection);
         } else if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            new AlertDialog.Builder(this)
+            /*new AlertDialog.Builder(this)
                     .setTitle("Location")
                     .setMessage("Please enable GPS and Location Services!")
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -201,8 +237,30 @@ public class LoginActivity extends AppCompatActivity {
                     })
                     .create()
                     .show();
+                    */
+            bindService(new Intent(this, LocationService.class),mConnection,Context.BIND_NOT_FOREGROUND);
+
         } else {
             startService(new Intent(this, LocationService.class));
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        final LocationSettingsStates states = LocationSettingsStates.fromIntent(data);
+        switch (requestCode) {
+            case 1:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        // All required changes were successfully made
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        // The user was asked to change settings, but chose not to
+                        break;
+                    default:
+                        break;
+                }
+                break;
         }
     }
 
@@ -217,6 +275,9 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
+        if(mBount)
+            unbindService(mConnection);
+        mBount = false;
     }
 
     @Override

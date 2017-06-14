@@ -23,6 +23,8 @@ import com.wikitude.architect.StartupConfiguration;
 //import com.wikitude.common.camera.CameraSettings;
 
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.List;
@@ -178,7 +180,7 @@ public class ArNavigationActivity extends Activity {
                         mapIntent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(invokedUri.getQueryParameter("id")));
                         NavUtils.navigateUpTo(ArNavigationActivity.this, mapIntent);
                         return true;
-                    case "mark":
+                    case "GEOAR":
                         try {
                             architectView.load("ModelAtGeoLocation/index.html");
                             callJavaScript("World.ShowBackBtn", new String[]{});
@@ -289,7 +291,13 @@ public class ArNavigationActivity extends Activity {
     private JSONArray scenesToJson(List<Scene> scenes) {
         JSONArray array = new JSONArray();
         for (Scene scene : scenes) {
-            array.put(JsonHelper.sceneToJson(scene));
+            try {
+                JSONObject json = JsonHelper.sceneToJson(scene);
+                json.put("hasAR", scene.hasAR());
+                array.put(json);
+            }catch (JSONException e){
+                Log.i(TAG,e.getMessage());
+            }
         }
         return array;
     }
