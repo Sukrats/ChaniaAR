@@ -2,7 +2,8 @@
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory
+    <PreferenceScreen
+        android:icon="@android:drawable/ic_menu_myplaces"
         android:title="@string/pref_user_settings">
 
         <CheckBoxPreference
@@ -11,9 +12,10 @@
             android:title="@string/pref_keep_logged_in"
             android:defaultValue="false"/>
 
-    </PreferenceCategory>
+    </PreferenceScreen>
 
-    <PreferenceCategory
+    <PreferenceScreen
+        android:icon="@android:drawable/ic_menu_mapmode"
         android:title="@string/pref_maps">
 
         <SwitchPreferenceCompat
@@ -28,9 +30,10 @@
             android:entryValues="@array/pref_maps_map_style_values"
             android:defaultValue="Retro Mode"
             android:title="@string/pref_maps_map_style"/>
-    </PreferenceCategory>
+    </PreferenceScreen>
 
-    <PreferenceCategory
+    <PreferenceScreen
+        android:icon="@drawable/ic_menu_mylocation"
         android:title="@string/pref_location">
 
         <ListPreference
@@ -39,9 +42,10 @@
             android:entries="@array/pref_location_mode_titles"
             android:defaultValue="High Accuracy"
             android:entryValues="@array/pref_location_mode_values"/>
-    </PreferenceCategory>
+    </PreferenceScreen>
 
-    <PreferenceCategory
+    <PreferenceScreen
+        android:icon="@android:drawable/ic_menu_compass"
         android:title="@string/pref_geo_fence">
 
         <SeekBarPreference
@@ -55,6 +59,6 @@
             android:title="@string/allow_background_locations_title"
             android:defaultValue="false"/>
 
-    </PreferenceCategory>
+    </PreferenceScreen>
 
 </PreferenceScreen>

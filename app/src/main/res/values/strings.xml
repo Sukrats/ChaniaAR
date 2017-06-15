@@ -42,6 +42,10 @@
     <string name="action_register_successful">Successfully registered new Account Welcome</string>
     <string name="action_sign_in_wrong">Something went wrong check the form above</string>
     <string name="action_register_email_exists">Email is already registered, try logging in or check the form</string>
+    <string name="action_login_screen">Log In / Register</string>
+    <string name="action_login_screen_description">Thank you for Downloading.\n
+        You can continue by creating a new account or logging in to an existing one. By Choosing the Guest option you will only have access to the 3D reconstructions</string>
+    <string name="action_or">or</string>
     <string name="action_sign_in">Sign in</string>
     <string name="action_register">Register</string>
     <string name="action_guest">Continue as Guest</string>
@@ -112,7 +116,7 @@
         <item>Background</item>
     </string-array>
     <!-- GEO FENCE PREFERENCES -->
-    <string name="pref_geo_fence">Geo Fences</string>
+    <string name="pref_geo_fence">Location Service</string>
     <string name="pref_geo_fence_culling_distance">Draw Distance</string>
     <string name="pref_geo_fence_culling_distance_summary">Set Max Drawing Distance</string>
 
@@ -120,8 +124,8 @@
     <string name="notification_toggle_pause">PAUSE</string>
     <string name="notification_toggle_stop">STOP</string>
     <string name="notification_toggle_settings">SETTINGS</string>
-    <string name="allow_background_locations_title">Notifications</string>
-    <string name="allow_background_locations">Get Location Notifications when app is in the background</string>
+    <string name="allow_background_locations_title">Allow Background Location Service</string>
+    <string name="allow_background_locations">Get Notifications about nearby Landmarks when the app is in the background</string>
 
     <!-- LOGIN PREFERENCES -->
     <string name="pref_user_settings">User Settings</string>

@@ -50,13 +50,14 @@
 
 
             <View
+                android:id="@+id/section_div"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="?android:attr/listDivider"/>
 
             <android.support.v7.widget.AppCompatTextView
                 android:id="@+id/monuments"
-                android:text="Notable Monuments: "
+                android:text="Monuments: "
                 android:textColor="@android:color/tertiary_text_dark"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:layout_width="match_parent"

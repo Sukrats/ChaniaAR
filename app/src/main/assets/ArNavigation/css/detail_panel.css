@@ -11,8 +11,8 @@ body
 }
 #panel-poidetail
 {
-    position: fixed;
-    bottom: 0px;
+    position: absolute;
+    bottom: 10%;
     width: 100%;
     display: none;
     align-self: baseline|center;
@@ -41,8 +41,10 @@ body
 {
     position: fixed;
     bottom: 0px;
+    padding-bottom: 4px;
     text-align: center;
     align-self: baseline|center;
+    background: linear-gradient(white, silver);
+    height: 10%;
     width: 100%;
-    /*width: 80px;*/
 }

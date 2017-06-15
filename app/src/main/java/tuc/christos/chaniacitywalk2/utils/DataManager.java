@@ -123,7 +123,7 @@ public class DataManager {
     public ArrayList<Scene> getActiveMapContent() {
         Log.i(TAG, "" + scenesLoaded);
         if (getActivePlayer().getScore() < 1000 && !getActivePlayer().getUsername().equals("Guest"))
-            return new ArrayList<Scene>(getRoute().values());
+            return new ArrayList<Scene>(getRoute());
         else
             return new ArrayList<>(getScenes());
     }
@@ -644,8 +644,13 @@ public class DataManager {
         return new ArrayList<>(Route.values());
     }*/
 
-    private HashMap<String, ArScene> getRoute() {
-        return Route;
+    private ArrayList<Scene> getRoute() {
+        ArrayList<Scene> route = new ArrayList<>();
+        route.add(getScene(36));
+        route.add(getScene(37));
+        route.add(getScene(38));
+        route.add(getScene(39));
+        return route;
     }
 
     /**********************************************************POPULATE DB TASK*************************************************************************/

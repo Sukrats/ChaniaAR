@@ -97,8 +97,9 @@ public class RestClient implements ContentListener {
 
             switch (tag) {
                 case mDBHelper.PeriodEntry.TABLE_NAME:
-                    currentListener.onUpdate(50, "Downloading Scenes...");
-                    downloadScenes(this);
+                    //currentListener.onUpdate(50, "Downloading Scenes...");
+                    currentListener.onCompleted(true, httpCode, msg);
+                    //downloadScenes(this);
                     break;
                 case mDBHelper.SceneEntry.TABLE_NAME:
                     currentListener.onCompleted(true, httpCode, msg);

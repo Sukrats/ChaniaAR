@@ -338,7 +338,7 @@ public class ArNavigationActivity extends Activity {
             @Override
             public void onCompassAccuracyChanged(int accuracy) {
                 /* UNRELIABLE = 0, LOW = 1, MEDIUM = 2, HIGH = 3 */
-                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_HIGH && System.currentTimeMillis() - ArNavigationActivity.this.lastCalibrationToastShownTimeMillis >= 5000) {
+                if (accuracy < SensorManager.SENSOR_STATUS_ACCURACY_HIGH && System.currentTimeMillis() - ArNavigationActivity.this.lastCalibrationToastShownTimeMillis >= 10000) {
                     Toast.makeText(ArNavigationActivity.this, R.string.compass_accuracy_low, Toast.LENGTH_LONG).show();
                     ArNavigationActivity.this.lastCalibrationToastShownTimeMillis = System.currentTimeMillis();
                 }

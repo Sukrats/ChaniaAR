@@ -199,7 +199,7 @@ public class MapsActivity extends AppCompatActivity implements
                 aSyncActivity(intent);
             }
         });
-        Button myloc = (Button) findViewById(R.id.my_location_btn);
+        ImageButton myloc = (ImageButton) findViewById(R.id.my_location_btn);
         myloc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -576,6 +576,7 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onResume() {
         super.onResume();
+        drawMap();
         //Check Preferences File and Update locally
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type, "");
@@ -615,7 +616,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void userEnteredArea(long areaID) {
         if (isFenceTriggered) {
-            Scene scene = mDataManager.getScene(areaID);
+            Scene scene = scenesShown.get(String.valueOf(areaID));
             //setCameraPosition(scene.getLatitude(), scene.getLongitude(), 20.0f);
             sceneToMarkerMap.get(scene).showInfoWindow();
         }

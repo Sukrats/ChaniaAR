@@ -133,6 +133,7 @@ public class LoginActivity extends AppCompatActivity {
         startService(new Intent(this, LocationService.class));
 
         formsContainer = (LinearLayout) findViewById(R.id.forms_container);
+        formsContainer.setVisibility(View.GONE);
         btnPanel = (LinearLayout) findViewById(R.id.btn_panel);
         mProgressView = findViewById(R.id.login_progress);
 
@@ -245,6 +246,11 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    public void showForms(View view){
+        formsContainer.setVisibility(View.VISIBLE);
+        findViewById(R.id.initial).setVisibility(View.GONE);
+
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         final LocationSettingsStates states = LocationSettingsStates.fromIntent(data);

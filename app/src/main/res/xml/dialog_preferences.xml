@@ -10,6 +10,7 @@
             android:entries="@array/pref_location_mode_titles_dialog"
             android:defaultValue="Background"
             android:entryValues="@array/pref_location_mode_values_dialog"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>

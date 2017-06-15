@@ -1,23 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/transparent"
     android:clickable="true">
-
-    <android.support.v7.widget.CardView
-        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    <!--66dp height-->
+    <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
         android:id="@+id/card_view"
-        android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="66dp"
-        card_view:cardCornerRadius="4dp"
-        android:clickable="true">
+        android:layout_gravity="center"
+        android:clickable="true"
+        card_view:cardCornerRadius="3dp"
+        card_view:cardElevation="2dp"
+        card_view:cardUseCompatPadding="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="?android:selectableItemBackground">
+            android:background="?android:selectableItemBackground"
+            android:padding="2dp">
+
+
+            <ImageView
+                android:id="@+id/img"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="center_vertical"
+                android:scaleType="centerCrop"
+                android:contentDescription="@android:string/ok"
+                android:textAppearance="?attr/textAppearanceListItem" />
 
             <TextView
                 android:id="@+id/id"
@@ -31,35 +43,38 @@
                 android:layout_width="1dp"
                 android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"
-                android:background="?android:attr/listDivider"/>
+                android:background="?android:attr/listDivider" />
 
             <TextView
                 android:id="@+id/content"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
                 android:layout_gravity="center_vertical"
                 android:layout_margin="@dimen/text_margin"
+                android:layout_weight="1"
+                android:maxLength="25"
                 android:textAppearance="?attr/textAppearanceListItem" />
 
             <View
                 android:layout_width="1dp"
                 android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"
-                android:background="?android:attr/listDivider"/>
+                android:background="?android:attr/listDivider" />
 
             <LinearLayout
                 android:id="@+id/btn_holder"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:padding="2dp">
+
                 <ToggleButton
                     android:id="@+id/save_btn"
-                    android:layout_gravity="end|center_vertical"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:background="@android:drawable/btn_star"
                     android:textOff=""
-                    android:textOn=""
-                    android:background="@android:drawable/btn_star"/>
+                    android:textOn="" />
             </LinearLayout>
 
         </LinearLayout>

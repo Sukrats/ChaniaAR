@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:key="pref_key_camera_follow"
+        android:summary="@string/pref_maps_camera_follow_summary"
+        android:title="@string/pref_maps_camera_follow_title"
+        android:defaultValue="false"/>
+
+    <ListPreference
+        android:key="pref_key_map_type"
+        android:entries="@array/pref_maps_map_style_titles"
+        android:entryValues="@array/pref_maps_map_style_values"
+        android:defaultValue="Retro Mode"
+        android:title="@string/pref_maps_map_style"/>
+</PreferenceScreen>

@@ -17,13 +17,14 @@
                 <shape>
                     <corners android:radius="1dp" />
                     <solid android:color="#BFFAFAFA" />
-                    <padding android:bottom="5dp" android:left="5dp"
-                        android:right="5dp" android:top="5dp" />
+                    <padding android:bottom="0dp" android:left="0dp"
+                        android:right="0dp" android:top="0dp" />
                 </shape>
             </item>
             <item >
                 <bitmap
-                    android:src="@drawable/ic_my_location_black_36dp"
+                    android:src="@drawable/ic_menu_mylocation"
+                    android:tint="@color/black_overlay"
                     android:gravity="center" />
             </item>
         </layer-list>

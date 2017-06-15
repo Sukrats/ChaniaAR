@@ -2,6 +2,7 @@ package tuc.christos.chaniacitywalk2.collectionActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.Image;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.ContextCompat;
@@ -33,10 +34,12 @@ import android.widget.ToggleButton;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.R;
@@ -61,6 +64,7 @@ public class CollectionActivity extends AppCompatActivity {
     DataManager mDataManager = DataManager.getInstance();
     RestClient mRestClient = RestClient.getInstance();
     static int mImageSize;
+    static int numOfFragments;
 
     public static List<Period> periods;
 
@@ -68,7 +72,7 @@ public class CollectionActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_collection_siblings);
-
+        setTitle("");
         mImageSize = getResources().getDimensionPixelSize(R.dimen.image_size) * 2;
         //empty on click listener so that no accidental clicks occur
 
@@ -107,12 +111,13 @@ public class CollectionActivity extends AppCompatActivity {
 
             @Override
             public void onPageSelected(int position) {
-                Glide.with(getApplicationContext())
-                        .load(periods.get(position).getUriLogo())
-                        .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                        .placeholder(R.drawable.empty_photo)
-                        .override(mImageSize, mImageSize)
-                        .into(imgView);
+                if (position != numOfFragments - 1)
+                    Glide.with(getApplicationContext())
+                            .load(periods.get(position).getUriLogo())
+                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                            .placeholder(R.drawable.empty_photo)
+                            .override(mImageSize, mImageSize)
+                            .into(imgView);
             }
 
             @Override
@@ -127,6 +132,7 @@ public class CollectionActivity extends AppCompatActivity {
                 public void onCompleted(boolean success, int httpCode, String msg) {
                     if (success) {
                         periods = sortPeriodsList(mDataManager.getPeriods());
+                        numOfFragments = periods.size() + 1;
                         progressbar.setVisibility(View.GONE);
                         mViewPager.setAdapter(mSectionsPagerAdapter);
                     }
@@ -140,6 +146,8 @@ public class CollectionActivity extends AppCompatActivity {
 
         } else {
             periods = sortPeriodsList(mDataManager.getPeriods());
+            numOfFragments = periods.size() + 1;
+
             progressbar.setVisibility(View.GONE);
             mViewPager.setAdapter(mSectionsPagerAdapter);
         }
@@ -207,11 +215,14 @@ public class CollectionActivity extends AppCompatActivity {
         @Override
         public int getCount() {
             // Show total pages depending on Periods
-            return periods.size();
+            return numOfFragments;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
+            if (position == numOfFragments - 1) {
+                return "OVERALL";
+            }
             return periods.get(position).getName();
         }
     }
@@ -247,14 +258,39 @@ public class CollectionActivity extends AppCompatActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_collection_siblings, container, false);
             int index = getArguments().getInt(ARG_SECTION_NUMBER);
-            Period period = periods.get(index);
+            Log.i("PERIODS", "index: " + index + " Frag:" + (numOfFragments - 1));
+            if (index < numOfFragments - 1) {
+                Period period = periods.get(index);
+                TextView tx = (TextView) rootView.findViewById(R.id.monuments);
 
+                TextView body = (AppCompatTextView) rootView.findViewById(R.id.body);
+                body.setText(period.getDescription());
+
+                ArrayList<Scene> content = new ArrayList<>();
+                for (Scene scene : period.getScenesAsList()) {
+                    if (scene.isVisited())
+                        content.add(scene);
+                }
+                if (content.isEmpty()) {
+                    tx.setText("You have not unlocked any monuments yet!");
+                } else {
+                    tx.setText("Monuments: ");
+                }
+                RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
+                recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(content));
+                return rootView;
+            }
             TextView body = (AppCompatTextView) rootView.findViewById(R.id.body);
-            body.setText(period.getDescription());
+            body.setText("AVAILABLE SCENES LIST: ");
+            body.setPadding(5, 5, 5, 5);
+            rootView.findViewById(R.id.monuments).setVisibility(View.GONE);
+            rootView.findViewById(R.id.history).setVisibility(View.GONE);
+            rootView.findViewById(R.id.section_div).setVisibility(View.GONE);
 
             RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
-            recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(period.getScenesAsList()));
+            recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DataManager.getInstance().getScenes()));
             return rootView;
+
         }
 
 
@@ -282,12 +318,17 @@ public class CollectionActivity extends AppCompatActivity {
             final Scene item = mValues.get(position);
             DataManager dm = DataManager.getInstance();
             holder.mView.setText(item.getName());
-            holder.mIdView.setText(String.valueOf(position + 1));
-            if(dm.hasSaved(item.getId()))
+            Glide.with(MyApp.getAppContext())
+                    .load(item.getUriThumb())
+                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                    .override(mImageSize, mImageSize)
+                    .placeholder(R.drawable.empty_photo)
+                    .into(holder.logo);
+
+            if (dm.hasSaved(item.getId()))
                 holder.save.setChecked(true);
             else
                 holder.save.setChecked(false);
-            //holder.mContentView.setText(mValues.get(position).getTAG());
 
             holder.cardView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -295,8 +336,8 @@ public class CollectionActivity extends AppCompatActivity {
                     Context context = v.getContext();
                     Intent intent = new Intent(context, SceneDetailActivity.class);
                     intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
-
-                    context.startActivity(intent);
+                    if (DataManager.getInstance().getScene(item.getId()).isVisited())
+                        context.startActivity(intent);
 
                 }
             });
@@ -311,11 +352,11 @@ public class CollectionActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     ToggleButton tg = (ToggleButton) v;
                     DataManager dm = DataManager.getInstance();
-                    if(tg.isChecked()){
-                        Log.i("Place","Save place: "+ item.getId());
+                    if (tg.isChecked()) {
+                        Log.i("Place", "Save place: " + item.getId());
                         dm.savePlace(item.getId());
-                    }else{
-                        Log.i("Place","Delete place: "+ item.getId());
+                    } else {
+                        Log.i("Place", "Delete place: " + item.getId());
                         dm.clearPlace(item.getId());
                     }
                 }
@@ -330,6 +371,7 @@ public class CollectionActivity extends AppCompatActivity {
 
         class ViewHolder extends RecyclerView.ViewHolder {
             final TextView mView;
+            final ImageView logo;
             final TextView mIdView;
             final CardView cardView;
             final LinearLayout ln;
@@ -338,7 +380,10 @@ public class CollectionActivity extends AppCompatActivity {
             ViewHolder(View view) {
                 super(view);
                 mIdView = (TextView) view.findViewById(R.id.id);
+                mIdView.setVisibility(View.GONE);
+
                 mView = (TextView) view.findViewById(R.id.content);
+                logo = (ImageView) view.findViewById(R.id.img);
                 cardView = (CardView) view.findViewById(R.id.card_view);
                 ln = (LinearLayout) view.findViewById(R.id.btn_holder);
                 save = (ToggleButton) view.findViewById(R.id.save_btn);

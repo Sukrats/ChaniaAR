@@ -1,0 +1,18 @@
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <header
+        android:fragment="tuc.christos.chaniacitywalk2.SettingsActivity$UserPreferenceFragment"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="@string/pref_user_settings"/>
+
+    <header
+        android:fragment="tuc.christos.chaniacitywalk2.SettingsActivity$MapPreferenceFragment"
+        android:icon="@android:drawable/ic_menu_mapmode"
+        android:title="@string/pref_maps" />
+
+    <header
+        android:fragment="tuc.christos.chaniacitywalk2.SettingsActivity$ServicePreferenceFragment"
+        android:icon="@android:drawable/ic_menu_compass"
+        android:title="@string/pref_geo_fence" />
+
+</preference-headers>
