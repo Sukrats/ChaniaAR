@@ -111,6 +111,7 @@ public class CollectionActivity extends AppCompatActivity {
 
             @Override
             public void onPageSelected(int position) {
+                findViewById(R.id.logocont).setVisibility(View.VISIBLE);
                 if (position != numOfFragments - 1)
                     Glide.with(getApplicationContext())
                             .load(periods.get(position).getUriLogo())

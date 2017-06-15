@@ -20,18 +20,21 @@
             android:id="@+id/toolbar_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@drawable/book7"
             android:fitsSystemWindows="true"
-            android:background="@drawable/top5"
             app:contentScrim="@color/colorPrimaryDark"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            android:scaleType="centerCrop"
             app:toolbarId="@+id/toolbar">
 
             <FrameLayout
+                android:id="@+id/logocont"
                 android:layout_width="200dp"
                 android:layout_height="150dp"
                 android:layout_gravity="bottom|center_horizontal"
-                android:background="@color/Accent"
                 android:layout_marginBottom="2dp"
+                android:background="@color/Accent"
+                android:visibility="gone"
                 android:padding="4dp">
 
                 <ImageView
@@ -39,7 +42,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:contentDescription="@android:string/ok"
-                    android:scaleType="centerCrop"/>
+                    android:scaleType="centerCrop" />
             </FrameLayout>
 
             <android.support.v7.widget.Toolbar
@@ -47,9 +50,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin"
-                app:title="Index"
                 app:layout_scrollFlags="scroll|enterAlways"
-                app:popupTheme="@style/AppTheme.PopupOverlay">
+                app:popupTheme="@style/AppTheme.PopupOverlay"
+                app:title="Index">
 
             </android.support.v7.widget.Toolbar>
 
