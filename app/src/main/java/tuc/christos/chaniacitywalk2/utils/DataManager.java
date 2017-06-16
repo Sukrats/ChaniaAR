@@ -73,7 +73,7 @@ public class DataManager {
     }
 
     public boolean isContentReady() {
-        return !mDBh.isScenesEmpty();
+        return !mDBh.isScenesEmpty() && activePlayer != null;
     }
 
     /**********************************************************MODIFICATIONS******************************************************************/
@@ -123,7 +123,7 @@ public class DataManager {
     public ArrayList<Scene> getActiveMapContent() {
         Log.i(TAG, "" + scenesLoaded);
         if (getActivePlayer().getScore() < 1000 && !getActivePlayer().getUsername().equals("Guest"))
-            return new ArrayList<Scene>(getRoute());
+            return new ArrayList<>(getRoute());
         else
             return new ArrayList<>(getScenes());
     }
@@ -692,6 +692,7 @@ public class DataManager {
                             publishProgress((double) (i + 1) / jsonArray.length() * 100);
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
                             Scene scene = JsonHelper.parseSceneFromJson(obj);
+                            scene.setRegion(currentLevel.getAdminArea());
                             if (!mDBh.insertScene(scene)) {
                                 Log.i(TAG, "DELETED SCENES");
                                 mDBh.clearScenes();

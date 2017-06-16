@@ -2,10 +2,14 @@ package tuc.christos.chaniacitywalk2.collectionActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatTextView;
@@ -25,6 +29,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -33,6 +38,8 @@ import android.widget.ToggleButton;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +50,7 @@ import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.R;
+import tuc.christos.chaniacitywalk2.utils.ImageHelper;
 import tuc.christos.chaniacitywalk2.utils.RestClient;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -112,13 +120,40 @@ public class CollectionActivity extends AppCompatActivity {
             @Override
             public void onPageSelected(int position) {
                 findViewById(R.id.logocont).setVisibility(View.VISIBLE);
-                if (position != numOfFragments - 1)
+                if (position == 0) {
+                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_1);
+                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
+                    bm.setCircular(true);
+                    imgView.setImageDrawable(bm);
+                } else if (position == 1) {
+                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_2);
+                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
+                    bm.setCircular(true);
+                    imgView.setImageDrawable(bm);
+                } else if (position == 2) {
+                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_3);
+                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
+                    bm.setCircular(true);
+                    imgView.setImageDrawable(bm);
+                } else if (position == 3) {
+                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_4);
+                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
+                    bm.setCircular(true);
+                    imgView.setImageDrawable(bm);
+                } else if (position == 4) {
+                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_5);
+                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
+                    bm.setCircular(true);
+                    imgView.setImageDrawable(bm);
+                } else if (position == 5)
+                    findViewById(R.id.logocont).setVisibility(View.GONE);
+               /* if (position != numOfFragments - 1)
                     Glide.with(getApplicationContext())
                             .load(periods.get(position).getUriLogo())
                             .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                             .placeholder(R.drawable.empty_photo)
                             .override(mImageSize, mImageSize)
-                            .into(imgView);
+                            .into(imgView);*/
             }
 
             @Override

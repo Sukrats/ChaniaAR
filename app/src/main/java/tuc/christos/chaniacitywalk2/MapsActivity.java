@@ -1,6 +1,7 @@
 package tuc.christos.chaniacitywalk2;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -57,6 +58,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
@@ -129,13 +131,16 @@ public class MapsActivity extends AppCompatActivity implements
 
 
     boolean mBount = false;
-    private Binder mBinder;
+    private LocationService.mIBinder mBinder;
     private LocationService mService;
     final ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             LocationService.mIBinder binder = (LocationService.mIBinder) service;
+            mBinder = binder;
             mService = binder.getService();
+            binder.setResultActivity(MapsActivity.this);
+            mService.checkLocationSettings();
             mService.registerServiceListener(MapsActivity.this);
             mService.requestFences();
             isFenceTriggered = mService.isFenceTriggered();
@@ -230,7 +235,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-        if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+        /*if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             new AlertDialog.Builder(this)
                     .setTitle("Location")
                     .setTitle("Location")
@@ -244,7 +249,7 @@ public class MapsActivity extends AppCompatActivity implements
                     })
                     .create()
                     .show();
-        }
+        }*/
     }
 
 
@@ -329,9 +334,10 @@ public class MapsActivity extends AppCompatActivity implements
                     .position(new LatLng(location.getLatitude(), location.getLongitude()))
                     .title("mLocationMarker")
                     .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm, 64, 64, false))));
+            setCameraPosition(location.getLatitude(),location.getLongitude(),DEFAULT_ZOOM_LEVEL);
         } else {
             Location loc = latLngToLoc(mLocationMarker.getPosition());
-            final Handler handler = new Handler();
+            /*final Handler handler = new Handler();
             final long start = SystemClock.uptimeMillis();
             final long duration = 999;
             final double currentX = mLocationMarker.getPosition().latitude, targetX = location.getLatitude();
@@ -347,7 +353,7 @@ public class MapsActivity extends AppCompatActivity implements
                     double x = currentX + t * (targetX - currentX);
                     double y = currentY + t * (targetY - currentY);
 
-                    //mLocationMarker.setPosition(new LatLng(x, y));
+                    mLocationMarker.setPosition(new LatLng(x, y));
 
                     if (t > 0.0 && t < 1.0) {
                         // Post again 16ms later.
@@ -355,8 +361,7 @@ public class MapsActivity extends AppCompatActivity implements
                     }
 
                 }
-            });
-
+            });*/
             mLocationMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
             if (loc.distanceTo(location) >= 5 && camFollow) {
                 setCameraPosition(location.getLatitude(), location.getLongitude(), mMap.getCameraPosition().zoom);
@@ -366,7 +371,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onCameraIdle() {
-        if (mDataManager.getCurrentLevel() != null) {
+       /* if (mDataManager.getCurrentLevel() != null) {
             LatLng pos = mMap.getCameraPosition().target;
             Location targetRegion = new Location("");
             targetRegion.setLatitude(pos.latitude);
@@ -389,17 +394,18 @@ public class MapsActivity extends AppCompatActivity implements
             } catch (IOException e) {
                 Log.i("Geocoder", e.getMessage());
             }
+            Toast.makeText(this,"Region: "+level.getAdminArea(),Toast.LENGTH_SHORT).show();
             if (level.getAdminArea().equals(mDataManager.getCurrentLevel().getAdminArea())) {
-                RestClient client = RestClient.getInstance();
+              /*  RestClient client = RestClient.getInstance();
                 client.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
                     @Override
                     public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
                         if (success) {
                         }
                     }
-                });
-            }
-        }
+                });*/
+  //          }
+//        }
     }
 
     public Location latLngToLoc(LatLng latLng) {
@@ -780,5 +786,22 @@ public class MapsActivity extends AppCompatActivity implements
         return (int) (dp * scale + 0.5f);
     }
 
-
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        final LocationSettingsStates states = LocationSettingsStates.fromIntent(data);
+        switch (requestCode) {
+            case 1:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        // All required changes were successfully made
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        // The user was asked to change settings, but chose not to
+                        break;
+                    default:
+                        break;
+                }
+                break;
+        }
+    }
 }

@@ -72,6 +72,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     private ArrayList<IServiceListener> listeners = new ArrayList<>();
 
     private boolean fenceTriggered = false;
+    private boolean scheduledRegionUpdate = false;
     private static boolean isRunning = false;
     private long updated = 0;
     private long activeFence;
@@ -305,7 +306,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     }
 
     public boolean isFenceTriggered() {
-        Toast.makeText(this, "SERVICE: fencetriggered?" + fenceTriggered, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "SERVICE: fencetriggered?" + fenceTriggered, Toast.LENGTH_SHORT).show();
         if (fenceTriggered)
             for (IServiceListener l : listeners)
                 l.userEnteredArea(activeFence);
@@ -337,7 +338,10 @@ public class LocationService extends Service implements LocationCallback, Locati
 
         if (lastLocationChecked == null)
             lastLocationChecked = location;
-        if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 3600000) {
+        if(scheduledRegionUpdate && System.currentTimeMillis() - updated >= 60*1000) {
+            updated = System.currentTimeMillis();
+            checkForRegionChange(location);
+        }else if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 60*60*1000) {
             updated = System.currentTimeMillis();
             checkForRegionChange(location);
         }
@@ -374,7 +378,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     public void userEnteredArea(long areaID) {
         fenceTriggered = true;
         activeFence = areaID;
-        Toast.makeText(this, "Entered Area: " + areaID, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Entered Area: " + areaID, Toast.LENGTH_SHORT).show();
         Log.i(TAG, "method: " + IsApplicationInForeground());
         if (IsApplicationInForeground())
             for (IServiceListener l : listeners)
@@ -408,7 +412,7 @@ public class LocationService extends Service implements LocationCallback, Locati
 
     @Override
     public void userLeftArea(long areaID) {
-        Toast.makeText(this, "Left Area: " + areaID, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Left Area: " + areaID, Toast.LENGTH_SHORT).show();
         fenceTriggered = false;
         if (IsApplicationInForeground())
             for (IServiceListener l : listeners)
@@ -422,7 +426,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     }
 
     public void triggerRegionChange(final Level level) {
-        Toast.makeText(this, "Downloading Scenes For Region:\n" + level.getAdminArea(), Toast.LENGTH_LONG).show();
+        //Toast.makeText(this, "Downloading Scenes For Region:\n" + level.getAdminArea(), Toast.LENGTH_LONG).show();
         final RestClient mRestClient = RestClient.getInstance();
         mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
             @Override
@@ -435,11 +439,15 @@ public class LocationService extends Service implements LocationCallback, Locati
                             break;
 
                         default:
-                            if (retryCount < 4) {
+                            if (retryCount < 2) {
                                 triggerRegionChange(level);
                                 retryCount++;
+                                scheduledRegionUpdate = false;
                             } else {
-                                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(),
+                                        "Scenes Service seems to be offline, scheduled to check again in 1 min!",
+                                        Toast.LENGTH_LONG).show();
+                                scheduledRegionUpdate = true;
                                 retryCount = 0;
                             }
                             break;

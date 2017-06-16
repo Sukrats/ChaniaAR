@@ -48,7 +48,7 @@ final class mDBHelper extends SQLiteOpenHelper {
                 SceneEntry.SCENES_COLUMN_PERIOD_ID + " INTEGER," +
                 SceneEntry.SCENES_COLUMN_NAME + " TEXT," +
                 SceneEntry.SCENES_COLUMN_DESCRIPTION + " TEXT," +
-                SceneEntry.COLUMN_REGION + " TEXT," +
+                SceneEntry.SCENES_COLUMN_REGION + " TEXT," +
                 SceneEntry.SCENES_COLUMN_LATITUDE + " REAL," +
                 SceneEntry.SCENES_COLUMN_LONGITUDE + " REAL," +
                 SceneEntry.SCENES_COLUMN_VISITED + " INTEGER," +
@@ -392,6 +392,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(SceneEntry.SCENES_COLUMN_DESCRIPTION, scene.getDescription());
         values.put(SceneEntry.SCENES_COLUMN_LATITUDE, scene.getLatitude());
         values.put(SceneEntry.SCENES_COLUMN_LONGITUDE, scene.getLongitude());
+        values.put(SceneEntry.SCENES_COLUMN_REGION, scene.getRegion());
         values.put(SceneEntry.SCENES_COLUMN_IMAGES_URL, scene.getUriImages().toString());
         values.put(SceneEntry.SCENES_COLUMN_THUMBNAIL_URL, scene.getUriThumb().toString());
 
@@ -531,7 +532,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         static final String SCENES_COLUMN_LONGITUDE = "longitude";
         static final String SCENES_COLUMN_VISITED = "visited";
         static final String SCENES_COLUMN_PLACED = "placed";
-        static final String COLUMN_REGION = "region";
+        static final String SCENES_COLUMN_REGION = "region";
         static final String SCENES_COLUMN_THUMBNAIL_URL = "thumbnail";
         static final String SCENES_COLUMN_IMAGES_URL = "imagesurl";
     }

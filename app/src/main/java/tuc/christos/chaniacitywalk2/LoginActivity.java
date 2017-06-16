@@ -161,41 +161,50 @@ public class LoginActivity extends AppCompatActivity {
 
         boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
         getAutoCompleteList();
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-        }else if (autoSignIn && isConnected) {
-            showProgress(true);
+        } else if (autoSignIn && isConnected) {
             String credentials = mDataManager.getAutoLoginCredentials();
             if (credentials != null) {
                 String[] tokens = credentials.split(":");// 0 -> email, 1->password, 2-> username
                 Log.i("REMEMBER", "uname: " + tokens[2] + "pass: " + tokens[1]);
-                mRestClient.login(tokens[0], tokens[1], new ClientListener() {
-                    @Override
-                    public void onCompleted(boolean success, int httpCode, String code) {
-                        if (success) {
-                            try {
-                                mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
-                                mPlayer.setRegion(mDataManager.getCurrentLevel().getAdminArea());
-                                handleResponse(httpCode, "ok");
-                            } catch (JSONException e) {
-                                progressView.setText(e.getMessage());
+                if (!tokens[0].contains("guest")) {
+                    showProgress(true);
+                    mRestClient.login(tokens[0], tokens[1], new ClientListener() {
+                        @Override
+                        public void onCompleted(boolean success, int httpCode, String code) {
+                            if (success) {
+                                try {
+                                    mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
+                                    mPlayer.setRegion(mDataManager.getCurrentLevel().getAdminArea());
+                                    handleResponse(httpCode, "ok");
+                                } catch (JSONException e) {
+                                    progressView.setText(e.getMessage());
+                                }
+                            } else {
+                                handleResponse(httpCode, code);
                             }
-                        } else {
-                            handleResponse(httpCode, code);
                         }
-                    }
 
-                    @Override
-                    public void onUpdate(int progress, String msg) {
-                    }
-                });
+                        @Override
+                        public void onUpdate(int progress, String msg) {
+                        }
+                    });
+                } else {
+                    Log.i("LOGIN", "guestLogin Triggered");
+                    guestLogin(findViewById(R.id.guest));
+                }
             }
         }
 
-        if (!isConnected)
-            showNoConnectionDialog(this);
+        if (!isConnected && autoSignIn) {
+            //showNoConnectionDialog(this);
+            Log.i("LOGIN", "guestLogin Triggered");
+            guestLogin(findViewById(R.id.guest));
+        }
 
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         boolean location = false, camera = false;
@@ -239,18 +248,19 @@ public class LoginActivity extends AppCompatActivity {
                     .create()
                     .show();
                     */
-            bindService(new Intent(this, LocationService.class),mConnection,Context.BIND_NOT_FOREGROUND);
+            bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
 
         } else {
             startService(new Intent(this, LocationService.class));
         }
     }
 
-    public void showForms(View view){
+    public void showForms(View view) {
         formsContainer.setVisibility(View.VISIBLE);
         findViewById(R.id.initial).setVisibility(View.GONE);
 
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         final LocationSettingsStates states = LocationSettingsStates.fromIntent(data);
@@ -281,7 +291,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
-        if(mBount)
+        if (mBount)
             unbindService(mConnection);
         mBount = false;
     }
@@ -570,7 +580,6 @@ public class LoginActivity extends AppCompatActivity {
             if (!mDataManager.playerExists(mPlayer.getUsername())) {
                 Log.i("DB_SYNC", "Inserted new Player on: " + mPlayer.getRecentActivity().toString());
                 mDataManager.insertPlayer(mPlayer);
-                //intent.putExtra("sync_key","local");
                 startMapsActivity();
                 //downloadContent("local");
             } else {
