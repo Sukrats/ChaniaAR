@@ -212,7 +212,6 @@ public class RestClient implements ContentListener {
     /**********************************************************UPDATE PLAYER*************************************************************************/
 
     void putPlayer(Player player, Context context) {
-        Log.i(TAG, "STARTING...");
         ByteArrayEntity entity = null;
         AsyncHttpClient client = new AsyncHttpClient();
         JSONObject json = JsonHelper.playerToJson(player);
@@ -231,17 +230,17 @@ public class RestClient implements ContentListener {
                     for (byte b : bytes) {
                         code = code + ((char) b);
                     }
-                    Log.i("Response Body: ", code);
+                    Log.i("PUT", "BODY: "+ code);
                 }
 
                 @Override
                 public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
-                    Log.i("PUT", "NOP" + i);
+                    Log.i("PUT", "NOPE" + i);
                     String code = "";
                     for (byte b : bytes) {
                         code = code + ((char) b);
                     }
-                    Log.i("Response Body: ", code);
+                    Log.i("PUT","BODY: "+ code);
                 }
             });
         mClient = client;
@@ -380,7 +379,7 @@ public class RestClient implements ContentListener {
     }
 
     public void downloadData(String uri,final ContentListener contentListener,final String tag){
-        Log.i(TAG, "Downloading Player Data: "+ tag);
+        Log.i("DATA", "DOWLOADING: "+ tag);
         AsyncHttpClient client = new AsyncHttpClient();
         client.setBasicAuth(mDataManager.getActivePlayer().getUsername(), mDataManager.getActivePlayer().getPassword());
         client.setMaxRetriesAndTimeout(4, 20000);
@@ -417,6 +416,11 @@ public class RestClient implements ContentListener {
                     Log.i("JSON EXCEPTION: ", ex.getMessage());
                 }
                 contentListener.downloadComplete(false, i, tag, result);
+            }
+
+            @Override
+            public void onProgress(long bytesWritten, long totalSize){
+                currentListener.onUpdate((int)(bytesWritten/totalSize),"");
             }
         });
         mClient = client;
@@ -464,6 +468,15 @@ public class RestClient implements ContentListener {
             }
         });
         mClient = client;
+    }
+    //TODO IMPORTANTE!!
+
+    public void postVisit(){
+
+    }
+
+    public void postPlace(){
+
     }
 
     public void cancel(){

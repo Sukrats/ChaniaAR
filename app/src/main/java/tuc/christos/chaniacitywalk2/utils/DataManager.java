@@ -122,12 +122,15 @@ public class DataManager {
 
     public ArrayList<Scene> getActiveMapContent() {
         Log.i(TAG, "" + scenesLoaded);
-        if (getActivePlayer().getScore() < 1000 && !getActivePlayer().getUsername().equals("Guest"))
-            return new ArrayList<>(getRoute());
-        else
+        if (scenesLoaded) {
+            if (getActivePlayer().getScore() < 1000 && !getActivePlayer().getUsername().equals("Guest"))
+                return new ArrayList<>(getRoute());
+            else
+                return new ArrayList<>(getScenes());
+        } else {
             return new ArrayList<>(getScenes());
+        }
     }
-
   /*  /*********************************************************CONTENT METHODS**************************************************************/
    /* public void getContent(Player player) {
         ArrayList<Scene> scenes = new ArrayList<>(getScenes());
@@ -166,7 +169,12 @@ public class DataManager {
             return this.activePlayer;
 
         return this.getPlayer();
+    }
 
+    public void initNewPlayer(Player newPlayer) {
+        mDBh.clearPlayersAndData();
+        this.activePlayer = newPlayer;
+        mDBh.insertPlayer(newPlayer);
     }
 
     public void setActivePlayer(Player player) {
@@ -206,15 +214,16 @@ public class DataManager {
         return mDBh.getPlayer(username).moveToNext();
     }
 
-   /* public boolean isPlayersEmpty() {
+    public boolean isPlayersEmpty() {
         return mDBh.isPlayersEmpty();
     }
 
-    public void updatePlayer(Player player, Context context) {
-        mDBh.updatePlayer(player);
+    public void updatePlayer(boolean success, Context context) {
+        getActivePlayer().updateScore(success);
+        mDBh.updatePlayer(getActivePlayer());
         RestClient rs = RestClient.getInstance();
-        rs.putPlayer(player, context);
-    }*/
+        rs.putPlayer(getActivePlayer(), context);
+    }
 
     public void insertPlayer(Player player) {
         activePlayer = player;
@@ -224,7 +233,6 @@ public class DataManager {
     public Player getPlayer() {
         Player player = new Player();
         Cursor c = mDBh.getActivePlayer();
-
         while (c.moveToNext()) {
             player.setEmail(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_EMAIL)));
             player.setUsername(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_USERNAME)));
@@ -243,10 +251,11 @@ public class DataManager {
             } catch (IllegalArgumentException e) {
                 player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
             }
+            activePlayer = player;
         }
-        activePlayer = player;
         return player;
     }
+
 
     public void printPlayers() {
         Cursor c = mDBh.getPlayers();
@@ -436,7 +445,7 @@ public class DataManager {
                     scenes.add(temp);
                     ScenesMap.put(temp.getId(), temp);
                 }
-                Log.i(TAG,"DB Queried");
+                Log.i(TAG, "DB Queried");
                 scenesLoaded = true;
             }
             Log.i(TAG, "Fetched: " + i + " Scenes");
@@ -470,7 +479,7 @@ public class DataManager {
             return ScenesMap.get(scene_id).isSaved();
     }
 
- /*   public void printPlaces() {
+    public void printPlaces() {
         Player p = getPlayer();
         Cursor c = mDBh.getPlaces(p.getUsername());
         String username;
@@ -483,17 +492,19 @@ public class DataManager {
             created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_CREATED)));
             Log.i("Place", "Username: " + username + "\tScene: " + scene_id + "\tCreated: " + created.toString());
         }
-    }*/
+    }
 
     public ArrayList<Scene> getPlaces(String username) {
         ArrayList<Scene> scenes = new ArrayList<>();
         if (!scenesLoaded) {
+            Log.i(TAG,"Places From Local DB");
             Cursor c = mDBh.getPlaces(username);
             while (c.moveToNext()) {
                 long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
                 scenes.add(getScene(scene_id));
             }
         } else {
+            Log.i(TAG,"Places From MEMMORY");
             for (Scene temp : ScenesMap.values()) {
                 if (temp.isSaved()) scenes.add(temp);
             }
@@ -510,14 +521,14 @@ public class DataManager {
             ScenesMap.get(id).setVisited(true);
     }
 
-    private boolean hasVisited(long scene_id) {
+    public boolean hasVisited(long scene_id) {
         Player p = getPlayer();
         if (!scenesLoaded) {
             Cursor c = mDBh.getVisit(scene_id, p.getUsername());
             return c.moveToNext();
         } else return ScenesMap.get(scene_id).isVisited();
     }
-/*
+
     public void printVisits() {
         Player p = getPlayer();
         Cursor c = mDBh.getVisits(p.getUsername());
@@ -531,22 +542,23 @@ public class DataManager {
             created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_CREATED)));
             Log.i("Visit", "Username: " + username + "\tScene: " + scene_id + "\tCreated: " + created.toString());
         }
-    }*/
+    }
 
     public ArrayList<Scene> getVisits(String username) {
         ArrayList<Scene> scenes = new ArrayList<>();
 
         if (!scenesLoaded) {
+            Log.i(TAG,"VISITS FROM LOCAL DB");
             Cursor c = mDBh.getVisits(username);
             while (c.moveToNext()) {
                 long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
                 scenes.add(getScene(scene_id));
             }
         } else {
+            Log.i(TAG,"VISITS FROM MEMMORY DB");
             for (Scene temp : ScenesMap.values()) {
                 if (temp.isVisited()) scenes.add(temp);
             }
-
         }
         return scenes;
     }
@@ -609,23 +621,25 @@ public class DataManager {
     }
 
     public void setLevelLocality(Level level) {
+        //TODO LOCALITY FOR SCENES NOT PLAYER
         this.locality = level;
         if (activePlayer != null) {
             this.activePlayer.setRegion(level.getAdminArea());
             mDBh.updatePlayer(activePlayer);
-        }else {
+        } else {
             Player player = getPlayer();
             player.setRegion(level.getAdminArea());
             mDBh.updatePlayer(activePlayer);
         }
         this.currentLevel = level;
     }
+
     //TODO: LOCAL DB SYNC AND CACHING
     public boolean checkExistingLocality(Level level) {
         Cursor c = mDBh.getActivePlayer();
         if (!c.moveToNext())
             return true;
-        else if(level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_REGION))))
+        else if (level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_REGION))))
             return false;
 
         return true;
@@ -726,6 +740,8 @@ public class DataManager {
                                 Log.i(TAG, "ERROR ON INSERT PLACE");
                                 return false;
                             }
+                            //TODO THIS IS FISHY!!
+                            ScenesMap.get(obj.getLong("scene_id")).setVisited(true);
                         }
                         break;
                     case mDBHelper.PlacesEntry.TABLE_NAME:
@@ -738,6 +754,8 @@ public class DataManager {
                                 Log.i(TAG, "ERROR ON INSERT VISIT");
                                 return false;
                             }
+                            //TODO THIS IS FISHY!!
+                            ScenesMap.get(obj.getLong("scene_id")).setSaved(true);
                         }
                         break;
                 }

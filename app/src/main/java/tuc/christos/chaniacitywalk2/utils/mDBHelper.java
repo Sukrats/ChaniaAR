@@ -359,6 +359,16 @@ final class mDBHelper extends SQLiteOpenHelper {
         db.update(PlayerEntry.TABLE_NAME,values, PlayerEntry.COLUMN_USERNAME +" = ? " ,args);*/
     }
 
+    public void clearPlayersAndData(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        /*String deleteQ = "DELETE FROM " + SceneEntry.TABLE_NAME;
+        db.rawQuery(deleteQ, null);*/
+        Log.i("DB_CLEAR","DELETE PLAYERS AND DATA");
+        db.delete(PlayerEntry.TABLE_NAME, null , null);
+        db.delete(PlacesEntry.TABLE_NAME, null , null);
+        db.delete(VisitsEntry.TABLE_NAME, null , null);
+    }
+
     /**************************************************************************************SCENES****************************************************************************************/
 
 

@@ -72,7 +72,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     private ArrayList<IServiceListener> listeners = new ArrayList<>();
 
     private boolean fenceTriggered = false;
-    private boolean scheduledRegionUpdate = false;
+    private boolean scheduledRegionUpdate = true;
     private static boolean isRunning = false;
     private long updated = 0;
     private long activeFence;
@@ -176,11 +176,8 @@ public class LocationService extends Service implements LocationCallback, Locati
                 mDataManager.init(LocationService.this);
             }
             mLocationProvider = new LocationProvider(LocationService.this, mode);
+            mEventHandler = new LocationEventHandler(mDataManager.getActiveMapContent());
 
-            if (mDataManager.isContentReady())
-                mEventHandler = new LocationEventHandler(mDataManager.getActiveMapContent());
-            else
-                mEventHandler = new LocationEventHandler(new ArrayList<Scene>());
         }
 
         @Override
@@ -436,6 +433,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                     switch (httpCode) {
                         case 404:
                             Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                            scheduledRegionUpdate = false;
                             break;
 
                         default:
@@ -453,6 +451,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                             break;
                     }
                 } else {
+                    Toast.makeText(getApplicationContext(),"Scenes For Region Downloaded", Toast.LENGTH_SHORT).show();
                     mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
                     for (IServiceListener i : listeners)
                         i.regionChanged(level.getAdminArea(), level.getCountry());
@@ -462,6 +461,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     }
 
     public void requestFences() {
+        Log.i("FENCES", "REQUEST FENCES");
         mEventHandler.requestFences();
     }
 
@@ -475,6 +475,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     }
 
     private void checkForRegionChange(Location location) {
+        Toast.makeText(this,"checking region for scenes", Toast.LENGTH_SHORT).show();
         //TODO: CHANGE FOR REGION CHANGES setting to a normal number
         AsyncTask<Location, Void, Level> geoCoderTask = new AsyncTask<Location, Void, Level>() {
             @Override
@@ -508,7 +509,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                 if (mDataManager.checkExistingLocality(level)) {
                     mDataManager.setLevelLocality(level);
                     triggerRegionChange(level);
-                }
+                }else scheduledRegionUpdate = false;
             }
         };
 

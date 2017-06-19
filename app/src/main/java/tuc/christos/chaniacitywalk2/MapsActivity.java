@@ -234,7 +234,8 @@ public class MapsActivity extends AppCompatActivity implements
         mapFragment.getMapAsync(this);
 
         LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
+        mDataManager.printPlaces();
+        mDataManager.printVisits();
         /*if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             new AlertDialog.Builder(this)
                     .setTitle("Location")
@@ -643,6 +644,7 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     public void regionChanged(String region, String Country) {
+        Toast.makeText(this,"Redraw Map", Toast.LENGTH_SHORT).show();
         drawMap();
     }
 

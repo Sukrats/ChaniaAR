@@ -48,7 +48,7 @@ public class ProfileActivity extends AppCompatActivity {
             actionBar.setDisplayShowTitleEnabled(false);
         }
         mDataManager = DataManager.getInstance();
-        mPlayer = mDataManager.getPlayer();
+        mPlayer = mDataManager.getActivePlayer();
 
         TextView name = (TextView) findViewById(R.id.user_profile_name);
         TextView email = (TextView) findViewById(R.id.user_profile_short_bio);

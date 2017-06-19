@@ -131,6 +131,7 @@ public class LoginActivity extends AppCompatActivity {
         mDataManager.init(this);
         mRestClient = RestClient.getInstance();
         startService(new Intent(this, LocationService.class));
+        bindService(new Intent(this, LocationService.class),mConnection, BIND_NOT_FOREGROUND);
 
         formsContainer = (LinearLayout) findViewById(R.id.forms_container);
         formsContainer.setVisibility(View.GONE);
@@ -569,35 +570,39 @@ public class LoginActivity extends AppCompatActivity {
             mDataManager.clearActivePlayer();
         } else if (message.equals("Guest")) {
             mDataManager.insertPlayer(mPlayer);
-
             startMapsActivity();
             //downloadContent("Guest");
-
         } else {
             //Intent intent = new Intent(getApplicationContext(), SplashActivity.class);
             mDataManager.printPlayers();
-
             if (!mDataManager.playerExists(mPlayer.getUsername())) {
                 Log.i("DB_SYNC", "Inserted new Player on: " + mPlayer.getRecentActivity().toString());
-                mDataManager.insertPlayer(mPlayer);
-                startMapsActivity();
-                //downloadContent("local");
+                mDataManager.initNewPlayer(mPlayer);
+                //mDataManager.insertPlayer(mPlayer);
+                downloadPlayerData();
+                //startMapsActivity();
             } else {
                 Log.i("DB_SYNC", "MYSQL last update: " + mPlayer.getRecentActivity().toString());
                 Log.i("DB_SYNC", "SQLite last update: " + mDataManager.getPlayerLastActivity(mPlayer.getUsername()));
                 if (mPlayer.getRecentActivity().after(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
                     //intent.putExtra("sync_key","local");
+                    Log.i("DB_SYNC", "Downloaded From MYSQL");
                     mDataManager.insertPlayer(mPlayer);
-                    startMapsActivity();
-                    //downloadContent("local");
+                    downloadPlayerData();
+                    //startMapsActivity();
                 } else if (mPlayer.getRecentActivity().before(mDataManager.getPlayerLastActivity(mPlayer.getUsername()))) {
                     //intent.putExtra("sync_key","remote");
+                    Log.i("DB_SYNC", "Uploaded to MYSQL");
                     mDataManager.setActivePlayer(mPlayer);
-                    startMapsActivity();
+                    //postPlayerData();
+                    downloadPlayerData();
+                    //startMapsActivity();
                     //downloadContent("remote");
                 } else {
-                    mDataManager.setActivePlayer(mPlayer);
-                    startMapsActivity();
+                    Log.i("DB_SYNC", "Downloaded From MYSQL");
+                    mDataManager.insertPlayer(mPlayer);
+                    downloadPlayerData();
+                    //startMapsActivity();
                     //downloadContent("");
                 }
             }
@@ -743,6 +748,28 @@ public class LoginActivity extends AppCompatActivity {
         builder.show();
     }
 
+
+    void downloadPlayerData(){
+        progressBar.show();
+        if(mDataManager.isInstantiated()){
+            progressBar.setMessage("Downloading Player Data...");
+            progressBar.setProgress(0);
+            mRestClient.getPlayerData(new ClientListener() {
+                @Override
+                public void onCompleted(boolean success, int httpCode, String msg) {
+                    startMapsActivity();
+                }
+
+                @Override
+                public void onUpdate(int progress, String msg) {
+                    progressBar.setProgress(progress);
+                }
+            });
+
+
+        }
+
+    }
 /*
     void downloadContent(final String sync) {
         progressBar.show();
