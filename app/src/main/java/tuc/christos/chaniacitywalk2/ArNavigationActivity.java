@@ -200,11 +200,11 @@ public class ArNavigationActivity extends Activity {
                     case "score":
                         if (invokedUri.getBooleanQueryParameter("success", false)) {
                             Log.i("Answer", "correct"+invokedUri.getQueryParameter("id"));
-                            mDataManager.getActivePlayer().updateScore(true);
+                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")),true, getApplicationContext());
                             mDataManager.addVisit(Long.valueOf(invokedUri.getQueryParameter("id")));
                         } else {
                             Log.i("Answer", "wrong");
-                            mDataManager.getActivePlayer().updateScore(false);
+                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")),true, getApplicationContext());
                         }
                         break;
 
@@ -362,8 +362,8 @@ public class ArNavigationActivity extends Activity {
                 } else if (WorldToLoad.contains("ArNavigation"))
                     injectData(mDataManager.getActiveMapContent());
                 else if(WorldToLoad.contains("ModelAtGeoLocation")) {
-                    if(!mDataManager.hasVisited(scene_id)) {
-                        mDataManager.updatePlayer(true, this);
+                    if(!mDataManager.getActivePlayer().hasVisited(scene_id)) {
+                        mDataManager.updatePlayer(scene_id, true, this);
                         mDataManager.addVisit(scene_id);
                     }
                     injectArgs("World.getScene", new String[]{JsonHelper.sceneToJson(mDataManager.getScene(scene_id)).toString()});

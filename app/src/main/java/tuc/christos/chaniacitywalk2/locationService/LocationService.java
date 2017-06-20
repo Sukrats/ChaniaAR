@@ -443,7 +443,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                                 scheduledRegionUpdate = false;
                             } else {
                                 Toast.makeText(getApplicationContext(),
-                                        "Scenes Service seems to be offline, scheduled to check again in 1 min!",
+                                        "Server seems to be offline, scheduled to check again in 1 min!",
                                         Toast.LENGTH_LONG).show();
                                 scheduledRegionUpdate = true;
                                 retryCount = 0;

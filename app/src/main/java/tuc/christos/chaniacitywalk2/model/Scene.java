@@ -2,6 +2,7 @@ package tuc.christos.chaniacitywalk2.model;
 
 import android.net.Uri;
 
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,10 +17,11 @@ public class Scene {
     private long period_id;
     private String name;
     private String region;
+    private String country;
+    private String comment;
+    private Date created;
     private double latitude;
     private double longitude;
-    private boolean visited;
-    private boolean saved;
     private boolean hasAR;
 
     private Map<String,String> links = new HashMap<>();
@@ -29,6 +31,8 @@ public class Scene {
     private Uri uriImages;
     private Uri uriThumb;
     private String TAG;
+
+
 
     public boolean hasAR() {
         return hasAR;
@@ -62,6 +66,11 @@ public class Scene {
 
     }
 
+    public Scene(long id, String name, Uri thumb){
+        this.id = id;
+        this.name = name;
+        this.uriThumb = thumb;
+    }
     public Scene( double latitude, double longitude, int id,int periodid, String name, String description) {
         this.id = id;
         this.latitude = latitude;
@@ -69,18 +78,6 @@ public class Scene {
         this.name = name;
         this.period_id = periodid;
         this.description = description;
-    }
-
-    public Scene( double latitude, double longitude, long id, String name, boolean visited, boolean saved, boolean hasAR, String description, String TAG) {
-        this.id = id;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.name = name;
-        this.visited = visited;
-        this.saved = saved;
-        this.briefDesc = description;
-        this.hasAR = hasAR;
-        this.TAG = TAG;
     }
 
     public long getPeriod_id() {
@@ -113,22 +110,6 @@ public class Scene {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
-    }
-
-    public boolean isVisited() {
-        return visited;
-    }
-
-    public void setVisited(boolean visited) {
-        this.visited = visited;
-    }
-
-    public boolean isSaved() {
-        return saved;
-    }
-
-    public void setSaved(boolean saved) {
-        this.saved = saved;
     }
 
     public String getBriefDesc() {
@@ -179,4 +160,27 @@ public class Scene {
         this.region = region;
     }
 
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
+    }
 }

@@ -8,14 +8,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import android.util.Log;
 
+import tuc.christos.chaniacitywalk2.mInterfaces.LocalDBWriteListener;
+import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Period;
+import tuc.christos.chaniacitywalk2.model.Place;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
+import tuc.christos.chaniacitywalk2.model.Visit;
 
-/**
- * Created by Christos on 16-Feb-17.
- *
- */
 
 final class mDBHelper extends SQLiteOpenHelper {
 
@@ -70,20 +70,37 @@ final class mDBHelper extends SQLiteOpenHelper {
         db.execSQL(SQL_CREATE_PERIODS);
 
         final String SQL_CREATE_VISITS = "CREATE TABLE IF NOT EXISTS " + VisitsEntry.TABLE_NAME + " (" +
-                VisitsEntry.COLUMN_USERNAME + " TEXT NOT NULL, " +
                 VisitsEntry.COLUMN_SCENE_ID + " INTEGER NOT NULL, " +
-                VisitsEntry.COLUMN_CREATED + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                " PRIMARY KEY ( " + VisitsEntry.COLUMN_USERNAME + " , " + VisitsEntry.COLUMN_SCENE_ID + " )" +
+                VisitsEntry.COLUMN_SCENE_NAME + " TEXT NOT NULL, " +
+                VisitsEntry.COLUMN_THUMB + " TEXT , " +
+                VisitsEntry.COLUMN_ADMIN_AREA + " TEXT , " +
+                VisitsEntry.COLUMN_COUNTRY + " TEXT , " +
+                VisitsEntry.COLUMN_CREATED + " TEXT DEFAULT CURRENT_DATE, " +
+                " PRIMARY KEY (  " + VisitsEntry.COLUMN_SCENE_ID + " )" +
                 ");";
         db.execSQL(SQL_CREATE_VISITS);
 
+
         final String SQL_CREATE_PLACES = "CREATE TABLE IF NOT EXISTS " + PlacesEntry.TABLE_NAME + " (" +
-                PlacesEntry.COLUMN_USERNAME + " TEXT NOT NULL," +
                 PlacesEntry.COLUMN_SCENE_ID + " INTEGER NOT NULL," +
-                PlacesEntry.COLUMN_CREATED + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                "PRIMARY KEY ( " + PlacesEntry.COLUMN_USERNAME + " , " + PlacesEntry.COLUMN_SCENE_ID + " )" +
+                PlacesEntry.COLUMN_SCENE_NAME + " TEXT NOT NULL," +
+                PlacesEntry.COLUMN_COMMENT + " TEXT," +
+                PlacesEntry.COLUMN_ADMIN_AREA + " TEXT , " +
+                PlacesEntry.COLUMN_COUNTRY + " TEXT , " +
+                PlacesEntry.COLUMN_THUMB + " TEXT," +
+                PlacesEntry.COLUMN_CREATED + " TEXT DEFAULT CURRENT_DATE," +
+                "PRIMARY KEY ( " + PlacesEntry.COLUMN_SCENE_ID + " )" +
                 ");";
         db.execSQL(SQL_CREATE_PLACES);
+
+        final String SQL_CREATE_LOCALITY = "CREATE TABLE IF NOT EXISTS " + LocalityEntry.TABLE_NAME + " (" +
+                LocalityEntry.COLUMN_COUNTRY + " TEXT NOT NULL, " +
+                LocalityEntry.COLUMN_COUNTRY_CODE + " TEXT NOT NULL, " +
+                LocalityEntry.COLUMN_ADMIN_AREA + " TEXT NOT NULL, " +
+                LocalityEntry.COLUMN_LOCALITY + " TEXT NOT NULL, " +
+                " PRIMARY KEY ( " + LocalityEntry.COLUMN_COUNTRY + " , " + LocalityEntry.COLUMN_ADMIN_AREA + " )" +
+                ");";
+        db.execSQL(SQL_CREATE_LOCALITY);
 
         final String SQL_CREATE_MODIFICATIONS = "CREATE TABLE IF NOT EXISTS " + ModificationsEntry.TABLE_NAME + " (" +
                 ModificationsEntry.COLUMN_TABLE_NAME + " TEXT NOT NULL PRIMARY KEY," +
@@ -154,8 +171,7 @@ final class mDBHelper extends SQLiteOpenHelper {
                 " CREATE TRIGGER IF NOT EXISTS visits_insert AFTER INSERT ON Visits" +
                         " BEGIN " +
                         " UPDATE " + PlayerEntry.TABLE_NAME + " SET " +
-                        PlayerEntry.COLUMN_RECENT_ACTIVITY + " = current_timestamp" +
-                        " WHERE " + PlayerEntry.COLUMN_USERNAME + " = new." + VisitsEntry.COLUMN_USERNAME + " ;" +
+                        PlayerEntry.COLUMN_RECENT_ACTIVITY + " = current_timestamp ;" +
                         " END ;";
 
         Log.i("Schema", "DB Schema: " + trigger);
@@ -167,8 +183,7 @@ final class mDBHelper extends SQLiteOpenHelper {
                 " CREATE TRIGGER IF NOT EXISTS " + PlacesEntry.TABLE_NAME + "_" + action + " AFTER " + action + " ON " + PlacesEntry.TABLE_NAME +
                         " BEGIN " +
                         " UPDATE " + PlayerEntry.TABLE_NAME + " SET " +
-                        PlayerEntry.COLUMN_RECENT_ACTIVITY + " = current_timestamp" +
-                        " WHERE " + PlayerEntry.COLUMN_USERNAME + " = new." + PlacesEntry.COLUMN_USERNAME + " ;" +
+                        PlayerEntry.COLUMN_RECENT_ACTIVITY + " = current_timestamp ;" +
                         " END ;";
 
         Log.i("Schema", "DB Schema: " + trigger);
@@ -180,8 +195,7 @@ final class mDBHelper extends SQLiteOpenHelper {
                 " CREATE TRIGGER IF NOT EXISTS " + PlacesEntry.TABLE_NAME + "_" + action + " AFTER " + action + " ON " + PlacesEntry.TABLE_NAME +
                         " BEGIN " +
                         " UPDATE " + PlayerEntry.TABLE_NAME + " SET " +
-                        PlayerEntry.COLUMN_RECENT_ACTIVITY + " = current_timestamp" +
-                        " WHERE " + PlayerEntry.COLUMN_USERNAME + " = old." + PlacesEntry.COLUMN_USERNAME + " ;" +
+                        PlayerEntry.COLUMN_RECENT_ACTIVITY + " = current_timestamp ;" +
                         " END ;";
 
         Log.i("Schema", "DB Schema: " + trigger);
@@ -201,6 +215,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         Log.i("Schema", "DB Schema: " + trigger);
         return trigger;
     }
+
 
     /**************************************************************************************MODIFICATIONS****************************************************************************************/
 
@@ -260,6 +275,28 @@ final class mDBHelper extends SQLiteOpenHelper {
         int count = c.getInt(0);
         c.close();
         return count == 0;
+    }
+
+    /***************************************************************LOCALITY*****************************************************************************/
+
+
+    Cursor getLocality() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selectQ = "SELECT * FROM " + LocalityEntry.TABLE_NAME;
+        return db.rawQuery(selectQ, null);
+    }
+
+    boolean insertLocality(Level level) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DELETE FROM " + LocalityEntry.TABLE_NAME);
+        ContentValues values = new ContentValues();
+        values.put(LocalityEntry.COLUMN_COUNTRY, level.getCountry());
+        values.put(LocalityEntry.COLUMN_COUNTRY_CODE, level.getCountry_code());
+        values.put(LocalityEntry.COLUMN_ADMIN_AREA, level.getAdminArea());
+        values.put(LocalityEntry.COLUMN_LOCALITY, level.getCity());
+
+        long count = db.insertWithOnConflict(LocalityEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+        return count != -1;
     }
 
     /**************************************************************************************PLAYERS****************************************************************************************/
@@ -325,7 +362,6 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(PlayerEntry.COLUMN_LAST_NAME, player.getLastname());
         values.put(PlayerEntry.COLUMN_CREATED, player.getCreated().toString());
         values.put(PlayerEntry.COLUMN_SCORE, player.getScore());
-        values.put(PlayerEntry.COLUMN_REGION, player.getRegion());
         values.put(PlayerEntry.COLUMN_RECENT_ACTIVITY, player.getRecentActivity().toString());
         values.put(PlayerEntry.COLUMN_ACTIVE, 1);
 
@@ -342,7 +378,6 @@ final class mDBHelper extends SQLiteOpenHelper {
                 PlayerEntry.COLUMN_FIRST_NAME + " = '" + player.getFirstname() + "'," +
                 PlayerEntry.COLUMN_LAST_NAME + " = '" + player.getLastname() + "'," +
                 PlayerEntry.COLUMN_SCORE + " = '" + player.getScore() + "'," +
-                PlayerEntry.COLUMN_REGION + " = '" + player.getRegion() + "'," +
                 PlayerEntry.COLUMN_RECENT_ACTIVITY + " =  current_timestamp " +
                 " WHERE " + PlayerEntry.COLUMN_ACTIVE + " = '1' ";
         db.execSQL(updateQ);
@@ -359,14 +394,14 @@ final class mDBHelper extends SQLiteOpenHelper {
         db.update(PlayerEntry.TABLE_NAME,values, PlayerEntry.COLUMN_USERNAME +" = ? " ,args);*/
     }
 
-    public void clearPlayersAndData(){
+    public void clearPlayersAndData() {
         SQLiteDatabase db = this.getWritableDatabase();
         /*String deleteQ = "DELETE FROM " + SceneEntry.TABLE_NAME;
         db.rawQuery(deleteQ, null);*/
-        Log.i("DB_CLEAR","DELETE PLAYERS AND DATA");
-        db.delete(PlayerEntry.TABLE_NAME, null , null);
-        db.delete(PlacesEntry.TABLE_NAME, null , null);
-        db.delete(VisitsEntry.TABLE_NAME, null , null);
+        Log.i("DB_CLEAR", "DELETE PLAYERS AND DATA");
+        db.delete(PlayerEntry.TABLE_NAME, null, null);
+        db.delete(PlacesEntry.TABLE_NAME, null, null);
+        db.delete(VisitsEntry.TABLE_NAME, null, null);
     }
 
     /**************************************************************************************SCENES****************************************************************************************/
@@ -416,8 +451,8 @@ final class mDBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         /*String deleteQ = "DELETE FROM " + SceneEntry.TABLE_NAME;
         db.rawQuery(deleteQ, null);*/
-        Log.i("DB_CLEAR","DELETE QUERY EXECUTED");
-        db.delete(SceneEntry.TABLE_NAME,null , null);
+        Log.i("DB_CLEAR", "DELETE QUERY EXECUTED");
+        db.delete(SceneEntry.TABLE_NAME, null, null);
     }
 
     /**************************************************************************************PERIODS****************************************************************************************/
@@ -441,6 +476,8 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(PeriodEntry.PERIODS_COLUMN_ID, period.getId());
         values.put(PeriodEntry.PERIODS_COLUMN_NAME, period.getName());
         values.put(PeriodEntry.PERIODS_COLUMN_DESCRIPTION, period.getDescription());
+        values.put(PeriodEntry.PERIODS_COLUMN_STARTED, period.getStarted());
+        values.put(PeriodEntry.PERIODS_COLUMN_ENDED, period.getEnded());
         values.put(PeriodEntry.PERIODS_COLUMN_IMAGES_URL, period.getUriImages().toString());
         values.put(PeriodEntry.PERIODS_COLUMN_LOGO_URL, period.getUriLogo().toString());
 
@@ -456,30 +493,34 @@ final class mDBHelper extends SQLiteOpenHelper {
 
     /**************************************************************************************PLACES****************************************************************************************/
 
-    Cursor getPlaces(String username) {
+    Cursor getPlaces() {
         SQLiteDatabase db = this.getWritableDatabase();
-        String selectQ = "SELECT * FROM " + PlacesEntry.TABLE_NAME +
-                " WHERE " + PlacesEntry.COLUMN_USERNAME + " = '" + username + "';";
+        String selectQ = "SELECT * FROM " + PlacesEntry.TABLE_NAME;
         Log.i("Place", selectQ);
         return db.rawQuery(selectQ, null);
     }
 
-    Cursor getPlace(long scene_id, String username) {
+    Cursor getPlace(long scene_id) {
         SQLiteDatabase db = this.getWritableDatabase();
         String selectQ = "SELECT * FROM " + PlacesEntry.TABLE_NAME +
                 " WHERE " +
-                PlacesEntry.COLUMN_USERNAME + " = '" + username + "' AND " +
                 PlacesEntry.COLUMN_SCENE_ID + " = '" + scene_id + "';";
         Log.i("Place", selectQ);
         return db.rawQuery(selectQ, null);
     }
 
-    boolean insertPlace(long scene_id, String username) {
+    boolean insertPlace(Place place) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(PlacesEntry.COLUMN_USERNAME, username);
-        values.put(PlacesEntry.COLUMN_SCENE_ID, scene_id);
+        values.put(PlacesEntry.COLUMN_SCENE_ID, place.getScene_id());
+        values.put(PlacesEntry.COLUMN_SCENE_NAME, place.getScene_name());
+        values.put(PlacesEntry.COLUMN_COMMENT, place.getComment());
+        values.put(PlacesEntry.COLUMN_ADMIN_AREA, place.getRegion());
+        values.put(PlacesEntry.COLUMN_COUNTRY, place.getCountry());
+        if (place.getCreated() != null)
+            values.put(PlacesEntry.COLUMN_CREATED, String.valueOf(place.getCreated()));
+        values.put(PlacesEntry.COLUMN_THUMB, String.valueOf(place.getThumb()));
 
         long count = db.insertWithOnConflict(PlacesEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
         return count != -1;
@@ -487,41 +528,44 @@ final class mDBHelper extends SQLiteOpenHelper {
 
     }
 
-    void deletePlace(long scene_id, String username) {
+    void deletePlace(long scene_id) {
         SQLiteDatabase db = this.getWritableDatabase();
 
-        String WHERE = PlacesEntry.COLUMN_SCENE_ID + "= ?  AND " + PlacesEntry.COLUMN_USERNAME + " = ?";
-        String[] args = new String[]{String.valueOf(scene_id), username};
+        String WHERE = PlacesEntry.COLUMN_SCENE_ID + "= ?";
+        String[] args = new String[]{String.valueOf(scene_id)};
         db.delete(PlacesEntry.TABLE_NAME, WHERE, args);
 
     }
 
     /**************************************************************************************VISITS****************************************************************************************/
 
-    Cursor getVisits(String username) {
+    Cursor getVisits() {
         SQLiteDatabase db = this.getWritableDatabase();
-        String selectQ = "SELECT * FROM " + VisitsEntry.TABLE_NAME +
-                " WHERE " + VisitsEntry.COLUMN_USERNAME + " = '" + username + "';";
+        String selectQ = "SELECT * FROM " + VisitsEntry.TABLE_NAME;
         Log.i("Place", selectQ);
         return db.rawQuery(selectQ, null);
     }
 
-    Cursor getVisit(long scene_id, String username) {
+    Cursor getVisit(long scene_id) {
         SQLiteDatabase db = this.getWritableDatabase();
         String selectQ = "SELECT * FROM " + VisitsEntry.TABLE_NAME +
                 " WHERE " +
-                VisitsEntry.COLUMN_USERNAME + " = '" + username + "' AND " +
                 VisitsEntry.COLUMN_SCENE_ID + " = '" + scene_id + "';";
         Log.i("Place", selectQ);
         return db.rawQuery(selectQ, null);
     }
 
-    boolean insertVisit(long scene_id, String username) {
+    boolean insertVisit(Visit visit) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(VisitsEntry.COLUMN_USERNAME, username);
-        values.put(VisitsEntry.COLUMN_SCENE_ID, scene_id);
+        values.put(VisitsEntry.COLUMN_SCENE_ID, visit.getScene_id());
+        values.put(VisitsEntry.COLUMN_SCENE_NAME, visit.getScene_name());
+        values.put(VisitsEntry.COLUMN_ADMIN_AREA, visit.getRegion());
+        values.put(VisitsEntry.COLUMN_COUNTRY, visit.getCountry());
+        if (visit.getCreated() != null)
+            values.put(VisitsEntry.COLUMN_CREATED, String.valueOf(visit.getCreated()));
+        values.put(VisitsEntry.COLUMN_THUMB, String.valueOf(visit.getThumb()));
 
         long count = db.insertWithOnConflict(VisitsEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
         //db.insert(PlacesEntry.TABLE_NAME, null, values);
@@ -577,17 +621,24 @@ final class mDBHelper extends SQLiteOpenHelper {
     static class VisitsEntry implements BaseColumns {
         static final String TABLE_NAME = "Visits";
 
-        static final String COLUMN_USERNAME = "username";
         static final String COLUMN_SCENE_ID = "scene_id";
+        static final String COLUMN_SCENE_NAME = "scene_name";
+        static final String COLUMN_ADMIN_AREA = "admin";
+        static final String COLUMN_COUNTRY = "country";
         static final String COLUMN_CREATED = "created";
+        static final String COLUMN_THUMB = "thumb";
     }
 
     static class PlacesEntry implements BaseColumns {
         static final String TABLE_NAME = "Places";
 
-        static final String COLUMN_USERNAME = "username";
         static final String COLUMN_SCENE_ID = "scene_id";
+        static final String COLUMN_SCENE_NAME = "scene_name";
+        static final String COLUMN_COMMENT = "comment";
+        static final String COLUMN_ADMIN_AREA = "admin";
+        static final String COLUMN_COUNTRY = "country";
         static final String COLUMN_CREATED = "created";
+        static final String COLUMN_THUMB = "thumb";
     }
 
     static class ModificationsEntry implements BaseColumns {
@@ -596,6 +647,15 @@ final class mDBHelper extends SQLiteOpenHelper {
         static final String COLUMN_TABLE_NAME = "table_name";
         static final String COLUMN_ACTION = "action";
         static final String COLUMN_LAST_MODIFIED = "updated";
+    }
+
+    static class LocalityEntry implements BaseColumns {
+        static final String TABLE_NAME = "Locality";
+
+        static final String COLUMN_LOCALITY = "locality";
+        static final String COLUMN_ADMIN_AREA = "admin";
+        static final String COLUMN_COUNTRY = "country";
+        static final String COLUMN_COUNTRY_CODE = "code";
     }
 
 }

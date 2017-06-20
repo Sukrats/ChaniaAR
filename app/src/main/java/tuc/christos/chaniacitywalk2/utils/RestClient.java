@@ -2,6 +2,7 @@ package tuc.christos.chaniacitywalk2.utils;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -49,43 +50,44 @@ public class RestClient implements ContentListener {
 
     public void getInitialContent(ClientListener clientListener) {
         //if (!isLoading) {
-            currentListener = clientListener;
-            currentListener.onUpdate(0, "Downloading Periods...");
-            isLoading = true;
-            downloadPeriods(this);
-       // }else{
-          // Log.i(TAG,"Can't Load Content Client is Already running...");
+        currentListener = clientListener;
+        currentListener.onUpdate(0, "Downloading Periods...");
+        isLoading = true;
+        downloadPeriods(this);
+        // }else{
+        // Log.i(TAG,"Can't Load Content Client is Already running...");
         //}
     }
 
-    public void login(String uname, String pass, ClientListener clientListener ){
+    public void login(String uname, String pass, ClientListener clientListener) {
         //if (!isLoading) {
-            currentListener = clientListener;
-            currentListener.onUpdate(0, "Logging in...");
-            isLoading = true;
-            invokeWSLogin(uname, pass, this);
+        currentListener = clientListener;
+        currentListener.onUpdate(0, "Logging in...");
+        isLoading = true;
+        invokeWSLogin(uname, pass, this);
         //}else{
         //    Log.i("REST","Can't Login Client is Already running...");
         //}
 
     }
-    public void register(JSONObject jsonObject, ClientListener clientListener, Context context){
+
+    public void register(JSONObject jsonObject, ClientListener clientListener, Context context) {
         //if (!isLoading) {
-            currentListener = clientListener;
-            currentListener.onUpdate(0, "Logging in...");
-            isLoading = true;
-            invokeWSRegister(jsonObject, this, context);
+        currentListener = clientListener;
+        currentListener.onUpdate(0, "Logging in...");
+        isLoading = true;
+        invokeWSRegister(jsonObject, this, context);
         //}else{
         //    Log.i("REST","Can't Register Client is Already running...");
         //}
     }
 
-    public void getPlayerData( ClientListener clientListener){
+    public void getPlayerData(ClientListener clientListener) {
         //if (!isLoading) {
-            currentListener = clientListener;
-            currentListener.onUpdate(0, "Downloading Visits...");
-            isLoading = true;
-            downloadData(mDataManager.getActivePlayer().getLinks().get("visits"),this, mDBHelper.VisitsEntry.TABLE_NAME);
+        currentListener = clientListener;
+        currentListener.onUpdate(0, "Downloading Visits...");
+        isLoading = true;
+        downloadData(mDataManager.getActivePlayer().getLinks().get("visits"), this, mDBHelper.VisitsEntry.TABLE_NAME);
         //}else{
         //    Log.i("REST","Cant get Player Data Client is Already running...");
         //}
@@ -111,7 +113,7 @@ public class RestClient implements ContentListener {
                     break;
                 case mDBHelper.VisitsEntry.TABLE_NAME:
                     currentListener.onUpdate(50, "Downloading Places...");
-                    downloadData(mDataManager.getActivePlayer().getLinks().get("places"),this,mDBHelper.PlacesEntry.TABLE_NAME);
+                    downloadData(mDataManager.getActivePlayer().getLinks().get("places"), this, mDBHelper.PlacesEntry.TABLE_NAME);
                     break;
                 case mDBHelper.PlacesEntry.TABLE_NAME:
                     currentListener.onCompleted(true, httpCode, msg);
@@ -119,11 +121,12 @@ public class RestClient implements ContentListener {
                     break;
             }
 
-        }else{
-            currentListener.onCompleted(false, httpCode , msg);
+        } else {
+            currentListener.onCompleted(false, httpCode, msg);
             isLoading = false;
         }
     }
+
     /**********************************************************GET PERIODS***********************************************************************/
 
     public void downloadPeriods(final ContentListener cl) {
@@ -161,7 +164,7 @@ public class RestClient implements ContentListener {
                 } catch (JSONException ex) {
                     Log.i("JSON EXCEPTION: ", ex.getMessage());
                 }
-                cl.downloadComplete(false, i, mDBHelper.PeriodEntry.TABLE_NAME,result);
+                cl.downloadComplete(false, i, mDBHelper.PeriodEntry.TABLE_NAME, result);
             }
         });
         mClient = client;
@@ -209,6 +212,7 @@ public class RestClient implements ContentListener {
         });
         mClient = client;
     }
+
     /**********************************************************UPDATE PLAYER*************************************************************************/
 
     void putPlayer(Player player, Context context) {
@@ -230,7 +234,7 @@ public class RestClient implements ContentListener {
                     for (byte b : bytes) {
                         code = code + ((char) b);
                     }
-                    Log.i("PUT", "BODY: "+ code);
+                    Log.i("PUT", "BODY: " + code);
                 }
 
                 @Override
@@ -240,7 +244,7 @@ public class RestClient implements ContentListener {
                     for (byte b : bytes) {
                         code = code + ((char) b);
                     }
-                    Log.i("PUT","BODY: "+ code);
+                    Log.i("PUT", "BODY: " + code);
                 }
             });
         mClient = client;
@@ -249,7 +253,7 @@ public class RestClient implements ContentListener {
 
     /*********************************************LOGIN/GET PLAYER***********************************************************************/
 
-    private void invokeWSLogin(String cred, String password ,final ContentListener contentListener) {
+    private void invokeWSLogin(String cred, String password, final ContentListener contentListener) {
         AsyncHttpClient client = new AsyncHttpClient();
         final String login_url = Constants.URL_LOGIN_USER + "?auth=" + cred;
         client.setBasicAuth(cred, password);
@@ -279,7 +283,7 @@ public class RestClient implements ContentListener {
                 Log.i("Failure Response code: ", " code: " + i);
                 if (i == 0) {
                     final String result = throwable.getMessage();
-                    contentListener.downloadComplete(false,i, mDBHelper.PlayerEntry.TABLE_NAME ,result);
+                    contentListener.downloadComplete(false, i, mDBHelper.PlayerEntry.TABLE_NAME, result);
                     return;
                 }
 
@@ -297,10 +301,10 @@ public class RestClient implements ContentListener {
                 try {
                     JSONObject errorMessage = new JSONObject(code);
                     result = errorMessage.getString("message");
-                    contentListener.downloadComplete(false,i, mDBHelper.PlayerEntry.TABLE_NAME ,result);
+                    contentListener.downloadComplete(false, i, mDBHelper.PlayerEntry.TABLE_NAME, result);
                 } catch (JSONException ex) {
                     Log.i("JSON EXCEPTION: ", ex.getMessage());
-                    contentListener.downloadComplete(false,505, mDBHelper.PlayerEntry.TABLE_NAME ,result);
+                    contentListener.downloadComplete(false, 505, mDBHelper.PlayerEntry.TABLE_NAME, result);
                 }
             }
         });
@@ -313,11 +317,10 @@ public class RestClient implements ContentListener {
     //GET PLAYER PLACES
 
 
-
     /*********************************************REGISTER/POST PLAYER***********************************************************************/
 
 
-    public void invokeWSRegister(JSONObject jsonObject,final ContentListener ContentListener, Context context) {
+    public void invokeWSRegister(JSONObject jsonObject, final ContentListener ContentListener, Context context) {
         try {
             ByteArrayEntity entity = new ByteArrayEntity(jsonObject.toString().getBytes("UTF-8"));
             AsyncHttpClient client = new AsyncHttpClient();
@@ -335,7 +338,7 @@ public class RestClient implements ContentListener {
                         code = code + ((char) b);
                     }
                     Log.i("Response Body: ", code);
-                    ContentListener.downloadComplete(true,i, mDBHelper.PlayerEntry.TABLE_NAME , code);
+                    ContentListener.downloadComplete(true, i, mDBHelper.PlayerEntry.TABLE_NAME, code);
 
                 }
 
@@ -346,7 +349,7 @@ public class RestClient implements ContentListener {
                     Log.i("Failure Response code: ", " code: " + i);
                     if (i == 0) {
                         final String result = throwable.getMessage();
-                        ContentListener.downloadComplete(false,i, mDBHelper.PlayerEntry.TABLE_NAME ,result);
+                        ContentListener.downloadComplete(false, i, mDBHelper.PlayerEntry.TABLE_NAME, result);
                         return;
                     }
 
@@ -364,10 +367,10 @@ public class RestClient implements ContentListener {
                     try {
                         JSONObject errorMessage = new JSONObject(code);
                         result = errorMessage.getString("message");
-                        ContentListener.downloadComplete(false,i, mDBHelper.PlayerEntry.TABLE_NAME ,result);
+                        ContentListener.downloadComplete(false, i, mDBHelper.PlayerEntry.TABLE_NAME, result);
                     } catch (JSONException ex) {
                         Log.i("JSON EXCEPTION: ", ex.getMessage());
-                        ContentListener.downloadComplete(false,i, mDBHelper.PlayerEntry.TABLE_NAME ,result);
+                        ContentListener.downloadComplete(false, i, mDBHelper.PlayerEntry.TABLE_NAME, result);
                     }
                 }
             });
@@ -378,8 +381,8 @@ public class RestClient implements ContentListener {
         }
     }
 
-    public void downloadData(String uri,final ContentListener contentListener,final String tag){
-        Log.i("DATA", "DOWLOADING: "+ tag);
+    public void downloadData(String uri, final ContentListener contentListener, final String tag) {
+        Log.i("DATA", "DOWLOADING: " + tag);
         AsyncHttpClient client = new AsyncHttpClient();
         client.setBasicAuth(mDataManager.getActivePlayer().getUsername(), mDataManager.getActivePlayer().getPassword());
         client.setMaxRetriesAndTimeout(4, 20000);
@@ -419,20 +422,20 @@ public class RestClient implements ContentListener {
             }
 
             @Override
-            public void onProgress(long bytesWritten, long totalSize){
-                currentListener.onUpdate((int)(bytesWritten/totalSize),"");
+            public void onProgress(long bytesWritten, long totalSize) {
+                currentListener.onUpdate((int) (bytesWritten / totalSize), "");
             }
         });
         mClient = client;
 
     }
 
-    public void downloadScenesForLocation(String country,String area,final ContentListener contentListener){
+    public void downloadScenesForLocation(String country, String area, final ContentListener contentListener) {
         mDataManager.clearScenes();
         Log.i(TAG, "Downloading Scenes For Location");
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(4,20000);
-        client.get(Constants.URL_SCENES+"?country="+country+"&area="+area, null, new AsyncHttpResponseHandler() {
+        client.setMaxRetriesAndTimeout(4, 20000);
+        client.get(Constants.URL_SCENES + "?country=" + country + "&area=" + area, null, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(final int i, Header[] headers, byte[] bytes) {
                 try {
@@ -440,7 +443,7 @@ public class RestClient implements ContentListener {
                     mDataManager.populateUserData(json, "Scenes", new LocalDBWriteListener() {
                         @Override
                         public void OnWriteComplete(boolean success) {
-                            contentListener.downloadComplete(success, i,"","Download Complete!");
+                            contentListener.downloadComplete(success, i, "", "Download Complete!");
                         }
                     });
                 } catch (JSONException e) {
@@ -469,18 +472,133 @@ public class RestClient implements ContentListener {
         });
         mClient = client;
     }
-    //TODO IMPORTANTE!!
 
-    public void postVisit(){
+    void postVisit(long scene_id, final Context context) {
+        try {
+            Player player = mDataManager.getActivePlayer();
+            Log.i(TAG, "Posting Visit");
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("scene_id", scene_id);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            ByteArrayEntity entity = new ByteArrayEntity(jsonObject.toString().getBytes("UTF-8"));
+            AsyncHttpClient client = new AsyncHttpClient();
+            client.setBasicAuth(player.getUsername(), player.getPassword());
+            client.setMaxRetriesAndTimeout(4, 20000);
+            client.post(context, Constants.URL_USER + player.getUsername() + "/visits", entity, "application/json", new AsyncHttpResponseHandler() {
+                @Override
+                public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                    Toast.makeText(context, "updated visits", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                    String code = "";
+                    if (bytes != null) {
+                        for (byte b : bytes) {
+                            code = code + ((char) b);
+                        }
+                        Log.i("Response Body: ", code);
+                    }
+                    String result = "Error on Download";
+                    try {
+                        JSONObject errorMessage = new JSONObject(code);
+                        result = errorMessage.getString("message");
+                    } catch (JSONException ex) {
+                        Log.i("JSON EXCEPTION: ", ex.getMessage());
+                    }
+                    Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
+                }
+            });
+            mClient = client;
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
     }
 
-    public void postPlace(){
+    void postPlace(long scene_id, final Context context) {
+        try {
+            Player player = mDataManager.getActivePlayer();
+            Log.i(TAG, "Posting Place");
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("scene_id", scene_id);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            ByteArrayEntity entity = new ByteArrayEntity(jsonObject.toString().getBytes("UTF-8"));
+            AsyncHttpClient client = new AsyncHttpClient();
+            client.setBasicAuth(player.getUsername(),player.getPassword());
+            client.setMaxRetriesAndTimeout(4, 20000);
+            client.post(context, Constants.URL_USER + player.getUsername() + "/places", entity, "application/json", new AsyncHttpResponseHandler() {
+                @Override
+                public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                    Toast.makeText(context, "updated visits", Toast.LENGTH_SHORT).show();
+                }
 
+                @Override
+                public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                    String code = "";
+                    if (bytes != null) {
+                        for (byte b : bytes) {
+                            code = code + ((char) b);
+                        }
+                        Log.i("Response Body: ", code);
+                    }
+                    String result = "Error on Download";
+                    try {
+                        JSONObject errorMessage = new JSONObject(code);
+                        result = errorMessage.getString("message");
+                    } catch (JSONException ex) {
+                        Log.i("JSON EXCEPTION: ", ex.getMessage());
+                    }
+                    Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
+                }
+            });
+            mClient = client;
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void cancel(){
-        if(mClient != null)
+    void deletePlace(long scene_id,final Context context){
+        Log.i(TAG, "Deleting Place");
+        Player player = mDataManager.getActivePlayer();
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.setBasicAuth(player.getUsername(),player.getPassword());
+        client.delete(context, Constants.URL_USER + player.getUsername() + "/places/"+scene_id, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                Toast.makeText(context, "Cleared Place", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                String code = "";
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                String result = "Error on Download";
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    result = errorMessage.getString("message");
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                }
+                Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
+            }
+        });
+        mClient = client;
+    }
+
+    public void cancel() {
+        if (mClient != null)
             mClient.cancelAllRequests(true);
     }
 }

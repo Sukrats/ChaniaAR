@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.Image;
+import android.os.AsyncTask;
+import android.provider.ContactsContract;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.ContextCompat;
@@ -38,6 +40,7 @@ import android.widget.ToggleButton;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.util.ExceptionCatchingInputStream;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
@@ -45,9 +48,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
+import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.utils.ImageHelper;
@@ -118,8 +123,55 @@ public class CollectionActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPageSelected(int position) {
+            public void onPageSelected(final int position) {
                 findViewById(R.id.logocont).setVisibility(View.VISIBLE);
+                TextView started = (TextView) findViewById(R.id.started);
+                TextView ended = (TextView) findViewById(R.id.ended);
+
+                if (position < numOfFragments - 1) {
+                    String start = periods.get(position).getStarted();
+                    if (start.contains("-")) {
+                        start = start.replace("-","");
+                        start += " BC";
+                    }else
+                        start += " AD";
+                    started.setText(start);
+
+                    String end = periods.get(position).getEnded();
+                    if (end.contains("-")) {
+                        end = end.replace("-","");
+                        end += " BC";
+                    }else
+                        end += " AD";
+                    ended.setText(end);
+
+                    AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+                        @Override
+                        protected Void doInBackground(Void... params) {
+                            Bitmap temp;
+                            try {
+                                temp = Glide.with(getApplicationContext())
+                                        .load(periods.get(position).getUriLogo())
+                                        .asBitmap()
+                                        .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                                        .override(mImageSize, mImageSize)
+                                        .into(100, 100)
+                                        .get();
+                            } catch (ExecutionException | InterruptedException e) {
+                                temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_1);
+                            }
+
+                            setImageDrawable(temp);
+                            return null;
+                        }
+                    };
+                    task.execute();
+                } else {
+                    findViewById(R.id.logocont).setVisibility(View.GONE);
+                    started.setText("");
+                    ended.setText("");
+                }
+                /*
                 if (position == 0) {
                     Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_1);
                     RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
@@ -154,6 +206,18 @@ public class CollectionActivity extends AppCompatActivity {
                             .placeholder(R.drawable.empty_photo)
                             .override(mImageSize, mImageSize)
                             .into(imgView);*/
+
+            }
+
+            private void setImageDrawable(final Bitmap bitmap) {
+                CollectionActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
+                        bm.setCircular(true);
+                        imgView.setImageDrawable(bm);
+                    }
+                });
             }
 
             @Override
@@ -195,15 +259,15 @@ public class CollectionActivity extends AppCompatActivity {
             public int compare(Period lhs, Period rhs) {
                 String dateCur = lhs.getStarted();
                 if (dateCur == null)
-                    return 1;
+                    return -1;
                 int cur = Integer.valueOf(dateCur);
 
                 String dateNext = rhs.getStarted();
                 if (dateNext == null)
-                    return -1;
+                    return 1;
                 int next = Integer.valueOf(dateNext);
                 // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
-                return cur > next ? -1 : (cur < next) ? 1 : 0;
+                return cur > next ? 1 : (cur < next) ? -1 : 0;
             }
         });
         return list;
@@ -304,7 +368,7 @@ public class CollectionActivity extends AppCompatActivity {
 
                 ArrayList<Scene> content = new ArrayList<>();
                 for (Scene scene : period.getScenesAsList()) {
-                    if (scene.isVisited())
+                    if (DataManager.getInstance().getActivePlayer().hasVisited(scene.getId()))
                         content.add(scene);
                 }
                 if (content.isEmpty()) {
@@ -352,7 +416,7 @@ public class CollectionActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             final Scene item = mValues.get(position);
-            DataManager dm = DataManager.getInstance();
+            final Player player = DataManager.getInstance().getActivePlayer();
             holder.mView.setText(item.getName());
             Glide.with(MyApp.getAppContext())
                     .load(item.getUriThumb())
@@ -361,7 +425,7 @@ public class CollectionActivity extends AppCompatActivity {
                     .placeholder(R.drawable.empty_photo)
                     .into(holder.logo);
 
-            if (dm.hasSaved(item.getId()))
+            if (player.hasPlaced(item.getId()))
                 holder.save.setChecked(true);
             else
                 holder.save.setChecked(false);
@@ -372,7 +436,7 @@ public class CollectionActivity extends AppCompatActivity {
                     Context context = v.getContext();
                     Intent intent = new Intent(context, SceneDetailActivity.class);
                     intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
-                    if (DataManager.getInstance().getScene(item.getId()).isVisited())
+                    if (player.hasVisited(item.getId()))
                         context.startActivity(intent);
 
                 }
@@ -390,10 +454,10 @@ public class CollectionActivity extends AppCompatActivity {
                     DataManager dm = DataManager.getInstance();
                     if (tg.isChecked()) {
                         Log.i("Place", "Save place: " + item.getId());
-                        dm.savePlace(item.getId());
+                        dm.savePlace(item.getId(),MyApp.getAppContext());
                     } else {
                         Log.i("Place", "Delete place: " + item.getId());
-                        dm.clearPlace(item.getId());
+                        dm.clearPlace(item.getId(),MyApp.getAppContext());
                     }
                 }
             });

@@ -27,6 +27,24 @@
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:toolbarId="@+id/toolbar">
 
+            <TextView
+                android:id="@+id/started"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start|bottom"
+                android:textColor="#fff"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/ended"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|bottom"
+                android:textColor="#fff"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
             <FrameLayout
                 android:id="@+id/logocont"
                 android:layout_width="150dp"
@@ -34,15 +52,16 @@
                 android:layout_gravity="bottom|center_horizontal"
                 android:background="@drawable/circle"
                 android:padding="2dp"
-                android:visibility="visible">
+                android:visibility="gone">
 
                 <ImageView
                     android:id="@+id/logo"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:contentDescription="@android:string/ok"
-                    android:scaleType="fitXY" />
+                    android:scaleType="centerCrop" />
             </FrameLayout>
+
 
             <android.support.v7.widget.Toolbar
                 android:id="@+id/toolbar"

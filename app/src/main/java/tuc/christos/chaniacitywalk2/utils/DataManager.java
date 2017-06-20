@@ -2,8 +2,12 @@ package tuc.christos.chaniacitywalk2.utils;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 
 import org.json.JSONArray;
@@ -21,8 +25,10 @@ import tuc.christos.chaniacitywalk2.mInterfaces.LocalDBWriteListener;
 import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Period;
+import tuc.christos.chaniacitywalk2.model.Place;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
+import tuc.christos.chaniacitywalk2.model.Visit;
 
 /**
  * Created by Christos on 24/1/2017.
@@ -122,8 +128,11 @@ public class DataManager {
 
     public ArrayList<Scene> getActiveMapContent() {
         Log.i(TAG, "" + scenesLoaded);
+        if(getActivePlayer().getUsername().equals("Guest"))
+            return new ArrayList<>(getRoute());
+
         if (scenesLoaded) {
-            if (getActivePlayer().getScore() < 1000 && !getActivePlayer().getUsername().equals("Guest"))
+            if (getActivePlayer().getScore() < 1000 )
                 return new ArrayList<>(getRoute());
             else
                 return new ArrayList<>(getScenes());
@@ -167,7 +176,6 @@ public class DataManager {
     public Player getActivePlayer() {
         if (this.activePlayer != null)
             return this.activePlayer;
-
         return this.getPlayer();
     }
 
@@ -209,7 +217,6 @@ public class DataManager {
 
 
     // Player Methods
-
     public boolean playerExists(String username) {
         return mDBh.getPlayer(username).moveToNext();
     }
@@ -218,11 +225,22 @@ public class DataManager {
         return mDBh.isPlayersEmpty();
     }
 
-    public void updatePlayer(boolean success, Context context) {
-        getActivePlayer().updateScore(success);
-        mDBh.updatePlayer(getActivePlayer());
-        RestClient rs = RestClient.getInstance();
-        rs.putPlayer(getActivePlayer(), context);
+    public void updatePlayer(long scene_id,boolean success, Context context) {
+        if(activePlayer.getUsername().contains("Guest"))
+            return;
+
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+        if( activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
+            getActivePlayer().updateScore(success);
+            mDBh.updatePlayer(getActivePlayer());
+            RestClient rs = RestClient.getInstance();
+            rs.putPlayer(getActivePlayer(), context);
+            rs.postVisit(scene_id,context);
+            addVisit(scene_id);
+        }
+        Toast.makeText(context, "No Internet Connection cannot update your Progress :(", Toast.LENGTH_SHORT).show();
     }
 
     public void insertPlayer(Player player) {
@@ -239,7 +257,6 @@ public class DataManager {
             player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_PASSWORD)));
             player.setFirstname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_FIRST_NAME)));
             player.setLastname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_LAST_NAME)));
-            player.setRegion(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_REGION)));
             player.setScore(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_SCORE)));
             try {
                 player.setCreated(Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_CREATED))));
@@ -250,6 +267,13 @@ public class DataManager {
                 player.setRecentActivity(Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
             } catch (IllegalArgumentException e) {
                 player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
+            }
+
+            for(Place p: getPlaces()){
+                player.addPlace(p);
+            }
+            for(Visit v: getVisits()){
+                player.addVisit(v);
             }
             activePlayer = player;
         }
@@ -266,7 +290,6 @@ public class DataManager {
             player.setPassword(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_PASSWORD)));
             player.setFirstname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_FIRST_NAME)));
             player.setLastname(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_LAST_NAME)));
-            player.setRegion(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_REGION)));
             int active = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_ACTIVE));
             player.setScore(c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_SCORE)));
 
@@ -359,9 +382,6 @@ public class DataManager {
                 if (!Route.containsKey(String.valueOf(temp.getId())))
                     temp.setHasAR(false);
                 else temp.setHasAR(true);
-
-                temp.setSaved(hasSaved(temp.getId()));
-                temp.setVisited(hasVisited(temp.getId()));
                 temp.setUriImages(images);
                 temp.setUriThumb(thumbnail);
                 scenes.add(temp);
@@ -378,7 +398,7 @@ public class DataManager {
 
     /**********************************************************SCENE METHODS*****************************************************************/
 
-    private boolean isScenesEmpty() {
+    public boolean isScenesEmpty() {
         return mDBh.isScenesEmpty();
     }
 
@@ -400,8 +420,7 @@ public class DataManager {
                 s.setPeriod_id(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID)));
                 s.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL)));
                 s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
-                s.setSaved(hasSaved(s.getId()));
-                s.setVisited(hasVisited(s.getId()));
+                //s.setVisited(hasVisited(s.getId()));
                 if (!Route.containsKey(String.valueOf(s.getId())))
                     s.setHasAR(false);
                 else s.setHasAR(true);
@@ -431,8 +450,7 @@ public class DataManager {
                     String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
                     Scene temp = new Scene(lat, lon, id, period_id, name, description);
-                    temp.setSaved(hasSaved(temp.getId()));
-                    temp.setVisited(hasVisited(temp.getId()));
+                    //temp.setVisited(hasVisited(temp.getId()));
                     temp.setUriImages(images);
                     temp.setUriThumb(thumbnail);
                     if (!Route.containsKey(String.valueOf(temp.getId())))
@@ -456,111 +474,148 @@ public class DataManager {
 
     /*****************************************************PLACES METHODS************************************************************************/
 
-    public void savePlace(long id) {
-        Player p = getPlayer();
-        mDBh.insertPlace(id, p.getUsername());
-        if (scenesLoaded)
-            ScenesMap.get(id).setSaved(true);
+    public void savePlace(long id, Context context) {
+        Place p = new Place();
+        Scene temp = getScene(id);
+        p.setScene_id(id);
+        p.setThumb(temp.getUriThumb());
+        p.setComment("");
+        p.setRegion(getCurrentLevel().getAdminArea());
+        p.setScene_name(temp.getName());
+        p.setCountry(getCurrentLevel().getCountry());
+        mDBh.insertPlace(p);
+        activePlayer.addPlace(p);
+
+        RestClient rs = RestClient.getInstance();
+        rs.postPlace(id,context);
     }
 
-    public void clearPlace(long id) {
-        Player p = getPlayer();
-        mDBh.deletePlace(id, p.getUsername());
-        if (scenesLoaded)
-            ScenesMap.get(id).setSaved(false);
+    public void clearPlace(long id, Context context) {
+        mDBh.deletePlace(id);
+        activePlayer.removePlace(id);
+        RestClient rs = RestClient.getInstance();
+        rs.deletePlace(id,context);
     }
 
+    /*
     public boolean hasSaved(long scene_id) {
         if (!scenesLoaded) {
             Player p = getPlayer();
-            Cursor c = mDBh.getPlace(scene_id, p.getUsername());
+            Cursor c = mDBh.getPlace(scene_id);
             return c.moveToNext();
         } else
             return ScenesMap.get(scene_id).isSaved();
-    }
+    }*/
 
     public void printPlaces() {
-        Player p = getPlayer();
-        Cursor c = mDBh.getPlaces(p.getUsername());
-        String username;
+        Cursor c = mDBh.getPlaces();
         int scene_id;
-        Timestamp created;
+        String sceneName;
+        String thumb;
+        String comment;
+        Date created;
         Log.i("Place", "Attempt Print: " + c.getCount());
         while (c.moveToNext()) {
-            username = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_USERNAME));
             scene_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
-            created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_CREATED)));
-            Log.i("Place", "Username: " + username + "\tScene: " + scene_id + "\tCreated: " + created.toString());
+            sceneName = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_NAME));
+            thumb = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_THUMB));
+            comment = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_COMMENT));
+            created = Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_CREATED)));
+            Log.i("Place", "Scene: " + scene_id + "\tCreated: " + created.toString());
         }
     }
 
-    public ArrayList<Scene> getPlaces(String username) {
-        ArrayList<Scene> scenes = new ArrayList<>();
-        if (!scenesLoaded) {
-            Log.i(TAG,"Places From Local DB");
-            Cursor c = mDBh.getPlaces(username);
-            while (c.moveToNext()) {
-                long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
-                scenes.add(getScene(scene_id));
-            }
-        } else {
-            Log.i(TAG,"Places From MEMMORY");
-            for (Scene temp : ScenesMap.values()) {
-                if (temp.isSaved()) scenes.add(temp);
-            }
+    private ArrayList<Place> getPlaces() {
+        ArrayList<Place> places = new ArrayList<>();
+        Log.i(TAG, "Places From Local DB");
+        Cursor c = mDBh.getPlaces();
+        while (c.moveToNext()) {
+            long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_ID));
+            String sceneName = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_SCENE_NAME));
+            String admin = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_ADMIN_AREA));
+            String country = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_COUNTRY));
+            String comment = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_COMMENT));
+            String thumb = c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_THUMB));
+            Date created = Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlacesEntry.COLUMN_CREATED)));
+
+            Place place = new Place();
+            place.setScene_id(scene_id);
+            place.setScene_name(sceneName);
+            place.setRegion(admin);
+            place.setCountry(country);
+            place.setThumb(Uri.parse(thumb));
+            place.setCreated(created);
+            place.setComment(comment);
+
+            places.add(place);
         }
-        return scenes;
+
+        return places;
     }
 
     /*****************************************************VISITS METHODS************************************************************************/
 
     public void addVisit(long id) {
-        Player p = getPlayer();
-        mDBh.insertVisit(id, p.getUsername());
-        if (scenesLoaded)
-            ScenesMap.get(id).setVisited(true);
+        Visit v = new Visit();
+        Scene temp = getScene(id);
+        v.setScene_id(id);
+        v.setThumb(temp.getUriThumb());
+        v.setRegion(getCurrentLevel().getAdminArea());
+        v.setScene_name(temp.getName());
+        v.setCountry(getCurrentLevel().getCountry());
+        mDBh.insertVisit(v);
+        activePlayer.addVisit(v);
     }
 
+   /*
     public boolean hasVisited(long scene_id) {
         Player p = getPlayer();
         if (!scenesLoaded) {
-            Cursor c = mDBh.getVisit(scene_id, p.getUsername());
+            Cursor c = mDBh.getVisit(scene_id);
             return c.moveToNext();
         } else return ScenesMap.get(scene_id).isVisited();
-    }
+    }*/
 
     public void printVisits() {
-        Player p = getPlayer();
-        Cursor c = mDBh.getVisits(p.getUsername());
+        Cursor c = mDBh.getVisits();
         String username;
         int scene_id;
-        Timestamp created;
+        String sceneName;
+        String thumb;
+        String comment;
+        Date created;
         Log.i("Visit", "Attempt Print: " + c.getCount());
         while (c.moveToNext()) {
-            username = c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_USERNAME));
             scene_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
-            created = Timestamp.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_CREATED)));
-            Log.i("Visit", "Username: " + username + "\tScene: " + scene_id + "\tCreated: " + created.toString());
+            sceneName = c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_NAME));
+            thumb = c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_THUMB));
+            created = Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_CREATED)));
+            Log.i("Visit", "Scene: " + scene_id + "\tCreated: " + created.toString());
         }
     }
 
-    public ArrayList<Scene> getVisits(String username) {
-        ArrayList<Scene> scenes = new ArrayList<>();
+    private ArrayList<Visit> getVisits() {
+        ArrayList<Visit> visits = new ArrayList<>();
 
-        if (!scenesLoaded) {
-            Log.i(TAG,"VISITS FROM LOCAL DB");
-            Cursor c = mDBh.getVisits(username);
-            while (c.moveToNext()) {
-                long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
-                scenes.add(getScene(scene_id));
-            }
-        } else {
-            Log.i(TAG,"VISITS FROM MEMMORY DB");
-            for (Scene temp : ScenesMap.values()) {
-                if (temp.isVisited()) scenes.add(temp);
-            }
+        Log.i(TAG, "VISITS FROM LOCAL DB");
+        Cursor c = mDBh.getVisits();
+        while (c.moveToNext()) {
+            long scene_id = c.getLong(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_ID));
+            String sceneName = c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_SCENE_NAME));
+            String admin = c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_ADMIN_AREA));
+            String country = c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_COUNTRY));
+            String thumb = c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_THUMB));
+            Date created = Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.VisitsEntry.COLUMN_CREATED)));
+            Visit visit = new Visit();
+            visit.setScene_id(scene_id);
+            visit.setScene_name(sceneName);
+            visit.setRegion(admin);
+            visit.setCountry(country);
+            visit.setThumb(Uri.parse(thumb));
+            visit.setCreated(created);
+            visits.add(visit);
         }
-        return scenes;
+        return visits;
     }
 
    /* /*****************************************************POLYLINES************************************************************************/
@@ -621,25 +676,15 @@ public class DataManager {
     }
 
     public void setLevelLocality(Level level) {
-        //TODO LOCALITY FOR SCENES NOT PLAYER
-        this.locality = level;
-        if (activePlayer != null) {
-            this.activePlayer.setRegion(level.getAdminArea());
-            mDBh.updatePlayer(activePlayer);
-        } else {
-            Player player = getPlayer();
-            player.setRegion(level.getAdminArea());
-            mDBh.updatePlayer(activePlayer);
-        }
+        mDBh.insertLocality(level);
         this.currentLevel = level;
     }
 
-    //TODO: LOCAL DB SYNC AND CACHING
     public boolean checkExistingLocality(Level level) {
-        Cursor c = mDBh.getActivePlayer();
+        Cursor c = mDBh.getLocality();
         if (!c.moveToNext())
             return true;
-        else if (level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_REGION))))
+        else if (level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA))))
             return false;
 
         return true;
@@ -648,10 +693,16 @@ public class DataManager {
     public Level getCurrentLevel() {
         if (currentLevel != null)
             return this.currentLevel;
+        Cursor c = mDBh.getLocality();
         currentLevel = new Level();
-        Player player = getActivePlayer();
-        currentLevel.setAdminArea(player.getRegion());
-        return currentLevel;
+        if (c.moveToNext()) {
+            currentLevel.setAdminArea(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA)));
+            currentLevel.setCountry(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY)));
+            currentLevel.setCountry_code(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY_CODE)));
+            currentLevel.setCity(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_LOCALITY)));
+            return currentLevel;
+        }
+        return null;
     }
 
     /*public ArrayList<ArScene> getRouteAsList() {
@@ -706,7 +757,7 @@ public class DataManager {
                             publishProgress((double) (i + 1) / jsonArray.length() * 100);
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
                             Scene scene = JsonHelper.parseSceneFromJson(obj);
-                            scene.setRegion(currentLevel.getAdminArea());
+                            scene.setRegion(getCurrentLevel().getAdminArea());
                             if (!mDBh.insertScene(scene)) {
                                 Log.i(TAG, "DELETED SCENES");
                                 mDBh.clearScenes();
@@ -735,13 +786,16 @@ public class DataManager {
                             publishProgress((double) (i + 1) / jsonArray.length() * 100);
 
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
-
-                            if (!mDBh.insertVisit(obj.getLong("scene_id"), obj.getString("username"))) {
+                            Visit visit = new Visit();
+                            visit.setScene_id(obj.getLong("scene_id"));
+                            visit.setScene_name("To Do In Service");
+                            visit.setCreated(Date.valueOf(obj.getString("created")));
+                            activePlayer.addVisit(visit);
+                            Log.i("Visit", "inserted: " + activePlayer.getVisit(visit.getScene_id()).getScene_name());
+                            if (!mDBh.insertVisit(visit)) {
                                 Log.i(TAG, "ERROR ON INSERT PLACE");
                                 return false;
                             }
-                            //TODO THIS IS FISHY!!
-                            ScenesMap.get(obj.getLong("scene_id")).setVisited(true);
                         }
                         break;
                     case mDBHelper.PlacesEntry.TABLE_NAME:
@@ -750,16 +804,22 @@ public class DataManager {
                             publishProgress((double) (i + 1) / jsonArray.length() * 100);
 
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
-                            if (!mDBh.insertPlace(obj.getLong("scene_id"), obj.getString("username"))) {
+                            Place place = new Place();
+                            place.setScene_id(obj.getLong("scene_id"));
+                            place.setScene_name("To Do In Service");
+                            place.setCreated(Date.valueOf(obj.getString("created")));
+                            place.setComment(obj.getString("comment"));
+                            activePlayer.addPlace(place);
+                            Log.i("Place", "inserted: " + activePlayer.getPlace(place.getScene_id()).getScene_name());
+                            if (!mDBh.insertPlace(place)) {
                                 Log.i(TAG, "ERROR ON INSERT VISIT");
                                 return false;
                             }
-                            //TODO THIS IS FISHY!!
-                            ScenesMap.get(obj.getLong("scene_id")).setSaved(true);
                         }
                         break;
                 }
             } catch (JSONException e) {
+                Log.i(TAG, e.getMessage());
                 Log.i(TAG, e.getMessage());
                 return false;
             }

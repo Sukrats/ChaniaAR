@@ -130,8 +130,8 @@ public class LoginActivity extends AppCompatActivity {
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
         mRestClient = RestClient.getInstance();
-        startService(new Intent(this, LocationService.class));
-        bindService(new Intent(this, LocationService.class),mConnection, BIND_NOT_FOREGROUND);
+        //startService(new Intent(this, LocationService.class));
+        //bindService(new Intent(this, LocationService.class),mConnection, BIND_NOT_FOREGROUND);
 
         formsContainer = (LinearLayout) findViewById(R.id.forms_container);
         formsContainer.setVisibility(View.GONE);
@@ -177,7 +177,6 @@ public class LoginActivity extends AppCompatActivity {
                             if (success) {
                                 try {
                                     mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
-                                    mPlayer.setRegion(mDataManager.getCurrentLevel().getAdminArea());
                                     handleResponse(httpCode, "ok");
                                 } catch (JSONException e) {
                                     progressView.setText(e.getMessage());
@@ -234,7 +233,7 @@ public class LoginActivity extends AppCompatActivity {
                     })
                     .create()
                     .show();
-            unbindService(mConnection);
+            //unbindService(mConnection);
         } else if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             /*new AlertDialog.Builder(this)
                     .setTitle("Location")
@@ -249,10 +248,10 @@ public class LoginActivity extends AppCompatActivity {
                     .create()
                     .show();
                     */
-            bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
+            //bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
 
         } else {
-            startService(new Intent(this, LocationService.class));
+            //startService(new Intent(this, LocationService.class));
         }
     }
 
@@ -292,8 +291,8 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onPause() {
         super.onPause();
-        if (mBount)
-            unbindService(mConnection);
+        //if (mBount)
+            //unbindService(mConnection);
         mBount = false;
     }
 
@@ -382,7 +381,6 @@ public class LoginActivity extends AppCompatActivity {
                         if (success) {
                             try {
                                 mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
-                                mPlayer.setRegion(mDataManager.getCurrentLevel().getAdminArea());
                                 handleResponse(httpCode, "ok");
                             } catch (JSONException e) {
                                 progressView.setText(e.getMessage());
@@ -492,7 +490,6 @@ public class LoginActivity extends AppCompatActivity {
                         if (success) {
                             try {
                                 mPlayer = JsonHelper.parsePlayerFromJson(new JSONObject(code));
-                                mPlayer.setRegion(mDataManager.getCurrentLevel().getAdminArea());
                                 handleResponse(httpCode, "ok");
                             } catch (JSONException e) {
                                 progressView.setText(e.getMessage());
@@ -793,10 +790,10 @@ public class LoginActivity extends AppCompatActivity {
                                 mRestClient.downloadData(mDataManager.getActivePlayer().getLinks().get("visits"), this, "Visits");
                                 progressBar.setProgress(50);
                                 progressBar.setMessage("Downloading Visits...");
-                                //Toast.makeText(getApplicationContext(),"TODO: Download player data", Toast.LENGTH_LONG).show();
+                                //Toast.makeText(getApplicationContext(),"
                                 //startMapsActivity();
                             } else if (!sync.isEmpty() && sync.equals("remote")) {
-                                Toast.makeText(getApplicationContext(), "TODO: Upload to remote DB", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "
                                 startMapsActivity();
                             } else {
                                 progressBar.setProgress(100);
@@ -883,7 +880,6 @@ public class LoginActivity extends AppCompatActivity {
         mPlayer.setCreated(new Date());
         mPlayer.setRecentActivity(new Date());
         mPlayer.setScore(0L);
-        mPlayer.setRegion(mDataManager.getCurrentLevel().getAdminArea());
         handleResponse(250, "Guest");
     }
 

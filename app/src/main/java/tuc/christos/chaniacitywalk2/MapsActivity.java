@@ -82,6 +82,7 @@ import java.util.List;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
+import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.utils.RestClient;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
@@ -128,7 +129,7 @@ public class MapsActivity extends AppCompatActivity implements
     private boolean isFenceTriggered = false;
     private long fenceTriggered;
     MapWrapperLayout mapWrapperLayout;
-
+    private Player activePlayer;
 
     boolean mBount = false;
     private LocationService.mIBinder mBinder;
@@ -164,22 +165,7 @@ public class MapsActivity extends AppCompatActivity implements
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
         mDataManager.init(this);
-
-        //RestClient mRestClient = RestClient.getInstance();
-        /*if (!mDataManager.isInitialised()) {
-            mRestClient.getInitialContent(new ClientListener() {
-                @Override
-                public void onCompleted(boolean success, int httpCode, String msg) {
-                    MapsActivity.this.drawMap();
-                }
-
-                @Override
-                public void onUpdate(int progress, String msg) {
-                    Toast.makeText(MapsActivity.this, msg, Toast.LENGTH_SHORT).show();
-                }
-            });
-        }*/
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        activePlayer = mDataManager.getActivePlayer();
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
         if (savedInstanceState == null) {
@@ -195,7 +181,7 @@ public class MapsActivity extends AppCompatActivity implements
                 if (isFenceTriggered && mDataManager.getScene(fenceTriggered).hasAR()) {
                     intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
                     intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
-                } else if (isFenceTriggered && !mDataManager.getScene(fenceTriggered).isVisited()) {
+                } else if (isFenceTriggered && !activePlayer.hasVisited(fenceTriggered)) {
                     intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
                     intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
                 } else {
@@ -232,32 +218,9 @@ public class MapsActivity extends AppCompatActivity implements
             camToStart = true;
         }
         mapFragment.getMapAsync(this);
-
-        LocationManager lm = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         mDataManager.printPlaces();
         mDataManager.printVisits();
-        /*if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Location")
-                    .setTitle("Location")
-                    .setMessage("Please enable GPS and Location Services!")
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                            startActivity(myIntent);
-                        }
-                    })
-                    .create()
-                    .show();
-        }*/
     }
-
-
-    void cancel() {
-        finish();
-    }
-
 
     /**
      * Manipulates the map once available.
@@ -323,10 +286,64 @@ public class MapsActivity extends AppCompatActivity implements
         String mapStyle = sharedPreferences.getString(SettingsActivity.pref_key_map_type, "");
         setMapStyle(mapStyle);
         setupMapOptions();
-        drawMap();
-        //enableMyLocation();
-    }
 
+        if(!mDataManager.isScenesEmpty()) {
+            for(Scene temp: mDataManager.getActiveMapContent()){
+                scenesShown.put(String.valueOf(temp.getId()),temp);
+            }
+            drawMap();
+        }
+    }
+    private void drawMap() {
+        if (mMap != null) {
+            mMap.clear();
+            sceneToMarkerMap.clear();
+            markerToSceneMap.clear();
+            if (mLocationMarker != null) {
+                mLocationMarker.setVisible(false);
+                defaultCameraPosition = new CameraPosition.Builder()
+                        .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
+                        .bearing(0).tilt(50).build();
+            }
+            if (camToStart) {
+                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
+                camToStart = false;
+            }
+
+            if (!scenesShown.isEmpty())
+                for (Scene temp : scenesShown.values()) {
+                    LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
+                    Period currentPeriod = mDataManager.getPeriod(String.valueOf(temp.getPeriod_id()));
+                    Marker marker = mMap.addMarker(new MarkerOptions()
+                            .position(pos)
+                            .title(temp.getName())
+                            .snippet(currentPeriod.getName()));
+
+                    if (temp.hasAR()) {
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.ar_photo)));
+                    } else {
+
+                        if (activePlayer.hasVisited(temp.getId())) {
+                            if ( currentPeriod.getName().equals("OTTOMAN")) {
+                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
+                            } else if (currentPeriod.getName().equals("VENETIAN")) {
+                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_venetian));
+                            } else if (currentPeriod.getName().equals("MODERN")) {
+                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_modern));
+                            } else if (currentPeriod.getName().equals("BYZANTINE") || currentPeriod.getName().equals("HELLENISTIC")) {
+                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
+                            } else {
+
+                            }
+                        } else {
+                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.unknown_32));
+                        }
+                    }
+                    sceneToMarkerMap.put(temp, marker);
+                    markerToSceneMap.put(marker, temp);
+                }
+        }
+    }
     public void moveMyLocationMarker(Location location) {
         if (mLocationMarker == null || !mLocationMarker.isVisible()) {
 
@@ -335,7 +352,7 @@ public class MapsActivity extends AppCompatActivity implements
                     .position(new LatLng(location.getLatitude(), location.getLongitude()))
                     .title("mLocationMarker")
                     .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm, 64, 64, false))));
-            setCameraPosition(location.getLatitude(),location.getLongitude(),DEFAULT_ZOOM_LEVEL);
+            setCameraPosition(location.getLatitude(), location.getLongitude(), DEFAULT_ZOOM_LEVEL);
         } else {
             Location loc = latLngToLoc(mLocationMarker.getPosition());
             /*final Handler handler = new Handler();
@@ -405,7 +422,7 @@ public class MapsActivity extends AppCompatActivity implements
                         }
                     }
                 });*/
-  //          }
+        //          }
 //        }
     }
 
@@ -453,62 +470,17 @@ public class MapsActivity extends AppCompatActivity implements
             }
     }
 
-    private void drawMap() {
-        if (mMap != null) {
-            mMap.clear();
-            sceneToMarkerMap.clear();
-            markerToSceneMap.clear();
-            if (mLocationMarker != null) {
-                mLocationMarker.setVisible(false);
-                defaultCameraPosition = new CameraPosition.Builder()
-                        .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
-                        .bearing(0).tilt(50).build();
-            }
-            if (camToStart) {
-                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
-                camToStart = false;
-            }
-            Log.i("NEW", "" + mDataManager.getActiveMapContent().size());
-            for (Scene temp : mDataManager.getActiveMapContent()) {
-                scenesShown.put(String.valueOf(temp.getId()), temp);
-                LatLng pos = new LatLng(temp.getLatitude(), temp.getLongitude());
-                Marker marker = mMap.addMarker(new MarkerOptions()
-                        .position(pos)
-                        .title(temp.getName())
-                        .snippet(temp.getTAG()));
 
-                if (temp.hasAR()) {
-                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.ar_photo)));
-                } else {
-
-                    if (temp.isVisited()) {
-                        if (temp.getTAG() != null && temp.getTAG().equals("Ottoman")) {
-                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
-                        } else if (temp.getTAG() != null && temp.getTAG().equals("Venetian")) {
-                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_venetian));
-                        } else if (temp.getTAG() != null && temp.getTAG().equals("Modern")) {
-                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_modern));
-                        } else if (temp.getTAG() != null && temp.getTAG().equals("NeoGreek")) {
-                            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
-                        } else {
-
-                        }
-                    } else {
-                        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.unknown_32));
-                    }
-                }
-                sceneToMarkerMap.put(temp, marker);
-                markerToSceneMap.put(marker, temp);
-            }
-        }
-    }
 
     public void handleBottomBarSelection(View view) {
         Intent intent = null;
 
         switch (view.getId()) {
             case R.id.profile_activity:
-                intent = new Intent(this, ProfileActivity.class);
+                if (!mDataManager.getActivePlayer().getUsername().contains("Guest")) {
+                    intent = new Intent(this, ProfileActivity.class);
+                }else
+                    Toast.makeText(this, "Guest Session", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.activity_settings:
                 intent = new Intent(this, SettingsActivity.class);
@@ -583,6 +555,9 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onResume() {
         super.onResume();
+        for(Scene scene : mDataManager.getActiveMapContent()) {
+            scenesShown.put(String.valueOf(scene.getId()), scene);
+        }
         drawMap();
         //Check Preferences File and Update locally
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -644,8 +619,13 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     public void regionChanged(String region, String Country) {
-        Toast.makeText(this,"Redraw Map", Toast.LENGTH_SHORT).show();
-        drawMap();
+        Toast.makeText(this, "Redraw Map", Toast.LENGTH_SHORT).show();
+        if (!mDataManager.getActiveMapContent().isEmpty()) {
+            for (Scene scene : mDataManager.getActiveMapContent()) {
+                scenesShown.put(String.valueOf(scene.getId()), scene);
+            }
+            drawMap();
+        }
     }
 
     private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {

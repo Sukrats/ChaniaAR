@@ -18,6 +18,7 @@ public class Constants {
     public static final String URL_PERIODS_SYNC = URL_PERIODS + "/sync";
 
     public static final String URL_PUT_USER = URL_APP + "users/secure/";
+    public static final String URL_USER = URL_APP + "users/secure/";
     public static final String URL_REGISTER_USER = URL_APP + "users/";
     public static final String URL_LOGIN_USER = URL_APP + "users/secure/login";
 

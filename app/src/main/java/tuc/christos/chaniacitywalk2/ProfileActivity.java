@@ -21,18 +21,21 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.model.Place;
+import tuc.christos.chaniacitywalk2.model.Visit;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
 
 public class ProfileActivity extends AppCompatActivity {
 
+    static Player mPlayer;
     DataManager mDataManager;
-    Player mPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,22 +140,31 @@ public class ProfileActivity extends AppCompatActivity {
             int index = getArguments().getInt(ARG_SECTION_NUMBER);
             View rootView;
             if(index == 2){
+                ArrayList<Scene> items = new ArrayList<>();
+                for(Place p: mPlayer.getPlaces().values()) {
+                    Scene temp = new Scene(p.getScene_id(), p.getScene_name(), p.getThumb());
+                    temp.setComment(p.getComment());
+                    temp.setCreated(p.getCreated());
+                    temp.setCountry(p.getCountry());
+                    temp.setRegion(p.getRegion());
+                    items.add(temp);
+                }
                 rootView = inflater.inflate(R.layout.fragment_profile_siblings, container, false);
                 RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
-                recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(
-                        DataManager.getInstance().getPlaces(
-                                DataManager.getInstance().getActivePlayer().getUsername()
-                        )
-                ));
+                recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(items));
 
             }else if(index == 3){
+                ArrayList<Scene> items = new ArrayList<>();
+                for(Visit v: mPlayer.getVisited().values()) {
+                    Scene temp = new Scene(v.getScene_id(), v.getScene_name(), v.getThumb());
+                    temp.setCreated(v.getCreated());
+                    temp.setCountry(v.getCountry());
+                    temp.setRegion(v.getRegion());
+                    items.add(temp);
+                }
                 rootView = inflater.inflate(R.layout.fragment_profile_siblings, container, false);
                 RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
-                recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(
-                        DataManager.getInstance().getVisits(
-                                DataManager.getInstance().getActivePlayer().getUsername()
-                        )
-                ));
+                recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(items));
             }else if(index == 0){
                 rootView = inflater.inflate(R.layout.profile_details, container, false);
 
@@ -189,7 +201,7 @@ public class ProfileActivity extends AppCompatActivity {
                 float overControl = 0;
                 List<Scene> o = DataManager.getInstance().getScenes();
                 for(Scene scene: o){
-                    if(scene.isVisited())
+                    if(mPlayer.hasVisited(scene.getId()))
                         overControl++;
                 }
                 overall_tx.setText((int)overControl+"/"+o.size());
@@ -208,7 +220,7 @@ public class ProfileActivity extends AppCompatActivity {
                     List<Scene> scenes =DataManager.getInstance().getPeriodScenes(i);
                     float control = 0;
                     for(Scene temp: scenes){
-                        if(temp.isVisited()){
+                        if(mPlayer.hasVisited(temp.getId())){
                             control ++;
                             if(temp.getPeriod_id()==3) {
                                 venProg = Math.round(control / scenes.size() * 100);

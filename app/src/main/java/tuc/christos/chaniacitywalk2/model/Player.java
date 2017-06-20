@@ -17,7 +17,6 @@ public class Player {
     private String password;
     private String firstname;
     private String lastname;
-    private String region;
     private Date created;
     private Date recentActivity;
     private Long numOfPlaces;
@@ -29,8 +28,8 @@ public class Player {
 
     private Map<String, String> links = new HashMap<>();
 
-    private SparseArray<Scene> visited = new SparseArray<>();
-    private SparseArray<Scene> places = new SparseArray<>();
+    private HashMap<String,Place> places = new HashMap<>();
+    private HashMap<String,Visit> visited = new HashMap<>();
 
 
     public Player() {
@@ -97,13 +96,6 @@ public class Player {
         this.isAtScene = isAtScene;
     }
 
-    public SparseArray<Scene> getVisited() {
-        return visited;
-    }
-
-    public void setVisited(SparseArray<Scene> visited) {
-        this.visited = visited;
-    }
 
 
     public boolean isCompletedRoute() {
@@ -112,14 +104,6 @@ public class Player {
 
     public void setCompletedRoute(boolean completedRoute) {
         this.completedRoute = completedRoute;
-    }
-
-    public SparseArray<Scene> getPlaces() {
-        return places;
-    }
-
-    public void setPlaces(SparseArray<Scene> places) {
-        this.places = places;
     }
 
 
@@ -183,11 +167,44 @@ public class Player {
             this.score -= 250;
     }
 
-    public String getRegion() {
-        return region;
+
+    public HashMap<String,Place> getPlaces() {
+        return places;
     }
 
-    public void setRegion(String region) {
-        this.region = region;
+    public void setPlaces(HashMap<String,Place> places) {
+        this.places = places;
+    }
+
+    public void addPlace(Place place){
+        this.places.put(String.valueOf(place.getScene_id()),place);
+    }
+    public void removePlace(long id){
+        this.places.remove(String.valueOf(id));
+    }
+    public boolean hasPlaced(long scene_id){
+        return this.places.containsKey(String.valueOf(scene_id));
+    }
+    public Place getPlace(long scene_id){
+        return this.places.get(String.valueOf(scene_id));
+    }
+
+
+    public HashMap<String,Visit> getVisited() {
+        return visited;
+    }
+
+    public void setVisited(HashMap<String,Visit> visited) {
+        this.visited = visited;
+    }
+
+    public void addVisit(Visit visit){
+        this.visited.put(String.valueOf(visit.getScene_id()),visit);
+    }
+    public boolean hasVisited(long scene_id){
+        return this.visited.containsKey(String.valueOf(scene_id));
+    }
+    public Visit getVisit(long scene_id){
+        return this.visited.get(String.valueOf(scene_id));
     }
 }
