@@ -47,7 +47,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.ExecutionException;
 
 import tuc.christos.chaniacitywalk2.MyApp;
@@ -78,6 +80,7 @@ public class CollectionActivity extends AppCompatActivity {
     RestClient mRestClient = RestClient.getInstance();
     static int mImageSize;
     static int numOfFragments;
+    static Player activePlayer;
 
     public static List<Period> periods;
 
@@ -88,6 +91,7 @@ public class CollectionActivity extends AppCompatActivity {
         setTitle("");
         mImageSize = getResources().getDimensionPixelSize(R.dimen.image_size) * 2;
         //empty on click listener so that no accidental clicks occur
+        activePlayer = mDataManager.getActivePlayer();
 
 
         final ImageView imgView = (ImageView) findViewById(R.id.logo);
@@ -131,17 +135,17 @@ public class CollectionActivity extends AppCompatActivity {
                 if (position < numOfFragments - 1) {
                     String start = periods.get(position).getStarted();
                     if (start.contains("-")) {
-                        start = start.replace("-","");
+                        start = start.replace("-", "");
                         start += " BC";
-                    }else
+                    } else
                         start += " AD";
                     started.setText(start);
 
                     String end = periods.get(position).getEnded();
                     if (end.contains("-")) {
-                        end = end.replace("-","");
+                        end = end.replace("-", "");
                         end += " BC";
-                    }else
+                    } else
                         end += " AD";
                     ended.setText(end);
 
@@ -368,7 +372,7 @@ public class CollectionActivity extends AppCompatActivity {
 
                 ArrayList<Scene> content = new ArrayList<>();
                 for (Scene scene : period.getScenesAsList()) {
-                    if (DataManager.getInstance().getActivePlayer().hasVisited(scene.getId()))
+                    if (activePlayer.hasVisited(scene.getId()))
                         content.add(scene);
                 }
                 if (content.isEmpty()) {
@@ -388,7 +392,13 @@ public class CollectionActivity extends AppCompatActivity {
             rootView.findViewById(R.id.section_div).setVisibility(View.GONE);
 
             RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
-            recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DataManager.getInstance().getScenes()));
+
+            ArrayList<Scene> scenes = new ArrayList<>();
+            for (Scene s : DataManager.getInstance().getScenes()) {
+                if (!activePlayer.hasVisited(s.getId()))
+                    scenes.add(s);
+            }
+            recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(scenes));
             return rootView;
 
         }
@@ -416,7 +426,6 @@ public class CollectionActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             final Scene item = mValues.get(position);
-            final Player player = DataManager.getInstance().getActivePlayer();
             holder.mView.setText(item.getName());
             Glide.with(MyApp.getAppContext())
                     .load(item.getUriThumb())
@@ -425,7 +434,7 @@ public class CollectionActivity extends AppCompatActivity {
                     .placeholder(R.drawable.empty_photo)
                     .into(holder.logo);
 
-            if (player.hasPlaced(item.getId()))
+            if (activePlayer.hasPlaced(item.getId()))
                 holder.save.setChecked(true);
             else
                 holder.save.setChecked(false);
@@ -436,7 +445,7 @@ public class CollectionActivity extends AppCompatActivity {
                     Context context = v.getContext();
                     Intent intent = new Intent(context, SceneDetailActivity.class);
                     intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
-                    if (player.hasVisited(item.getId()))
+                    if (activePlayer.hasVisited(item.getId()))
                         context.startActivity(intent);
 
                 }
@@ -454,10 +463,10 @@ public class CollectionActivity extends AppCompatActivity {
                     DataManager dm = DataManager.getInstance();
                     if (tg.isChecked()) {
                         Log.i("Place", "Save place: " + item.getId());
-                        dm.savePlace(item.getId(),MyApp.getAppContext());
+                        dm.savePlace(item.getId(), MyApp.getAppContext());
                     } else {
                         Log.i("Place", "Delete place: " + item.getId());
-                        dm.clearPlace(item.getId(),MyApp.getAppContext());
+                        dm.clearPlace(item.getId(), MyApp.getAppContext());
                     }
                 }
             });

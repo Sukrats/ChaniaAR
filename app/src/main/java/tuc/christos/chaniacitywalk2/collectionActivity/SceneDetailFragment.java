@@ -68,7 +68,7 @@ public class SceneDetailFragment extends Fragment {
 
         // Show the dummy content as text in a TextView.
         if (mItem != null) {
-            ((TextView) rootView.findViewById(R.id.scene_detail)).setText(mItem.getTAG());
+            ((TextView) rootView.findViewById(R.id.scene_detail)).setText(mItem.getDescription());
         }
 
         return rootView;

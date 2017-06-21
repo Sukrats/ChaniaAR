@@ -287,13 +287,14 @@ public class MapsActivity extends AppCompatActivity implements
         setMapStyle(mapStyle);
         setupMapOptions();
 
-        if(!mDataManager.isScenesEmpty()) {
-            for(Scene temp: mDataManager.getActiveMapContent()){
-                scenesShown.put(String.valueOf(temp.getId()),temp);
+        if (!mDataManager.isScenesEmpty()) {
+            for (Scene temp : mDataManager.getActiveMapContent()) {
+                scenesShown.put(String.valueOf(temp.getId()), temp);
             }
             drawMap();
         }
     }
+
     private void drawMap() {
         if (mMap != null) {
             mMap.clear();
@@ -324,17 +325,26 @@ public class MapsActivity extends AppCompatActivity implements
                     } else {
 
                         if (activePlayer.hasVisited(temp.getId())) {
-                            if ( currentPeriod.getName().equals("OTTOMAN")) {
-                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
-                            } else if (currentPeriod.getName().equals("VENETIAN")) {
-                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_venetian));
-                            } else if (currentPeriod.getName().equals("MODERN")) {
-                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_modern));
-                            } else if (currentPeriod.getName().equals("BYZANTINE") || currentPeriod.getName().equals("HELLENISTIC")) {
-                                marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
-                            } else {
-
+                            switch(currentPeriod.getName()){
+                                case "OTTOMAN":
+                                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
+                                    break;
+                                case "VENETIAN":
+                                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_venetian));
+                                    break;
+                                case "MODERN":
+                                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_modern));
+                                    break;
+                                case "BYZANTINE":
+                                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
+                                    break;
+                                case "HELLENISTIC":
+                                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
+                                    break;
+                                default:
+                                    break;
                             }
+
                         } else {
                             marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.unknown_32));
                         }
@@ -344,6 +354,7 @@ public class MapsActivity extends AppCompatActivity implements
                 }
         }
     }
+
     public void moveMyLocationMarker(Location location) {
         if (mLocationMarker == null || !mLocationMarker.isVisible()) {
 
@@ -471,7 +482,6 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
 
-
     public void handleBottomBarSelection(View view) {
         Intent intent = null;
 
@@ -479,7 +489,7 @@ public class MapsActivity extends AppCompatActivity implements
             case R.id.profile_activity:
                 if (!mDataManager.getActivePlayer().getUsername().contains("Guest")) {
                     intent = new Intent(this, ProfileActivity.class);
-                }else
+                } else
                     Toast.makeText(this, "Guest Session", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.activity_settings:
@@ -555,7 +565,7 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        for(Scene scene : mDataManager.getActiveMapContent()) {
+        for (Scene scene : mDataManager.getActiveMapContent()) {
             scenesShown.put(String.valueOf(scene.getId()), scene);
         }
         drawMap();
