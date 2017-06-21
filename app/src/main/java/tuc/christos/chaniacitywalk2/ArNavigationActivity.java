@@ -34,6 +34,7 @@ import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.model.Level;
+import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -204,7 +205,7 @@ public class ArNavigationActivity extends Activity {
                             mDataManager.addVisit(Long.valueOf(invokedUri.getQueryParameter("id")));
                         } else {
                             Log.i("Answer", "wrong");
-                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")),true, getApplicationContext());
+                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")),false, getApplicationContext());
                         }
                         break;
 
@@ -320,10 +321,13 @@ public class ArNavigationActivity extends Activity {
 
     private JSONArray scenesToJson(List<Scene> scenes) {
         JSONArray array = new JSONArray();
+        Player player = mDataManager.getActivePlayer();
         for (Scene scene : scenes) {
             try {
                 JSONObject json = JsonHelper.sceneToJson(scene);
                 json.put("hasAR", scene.hasAR());
+                json.put("saved", player.hasPlaced(scene.getId()) );
+                json.put("visited", player.hasVisited(scene.getId()) );
                 array.put(json);
             }catch (JSONException e){
                 Log.i(TAG,e.getMessage());

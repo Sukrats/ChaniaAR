@@ -89,6 +89,7 @@ var World = {
         $("#ar-btn").unbind();
         $("#ar-btn").click(function(){
             if(World.isInArea){
+                alert("it IS")
                 if(!World.areaMarker.poiData.visited && !World.areaMarker.poiData.hasAR){
 
                     $("#backBtn").unbind();
@@ -109,7 +110,7 @@ var World = {
                 World.panelOpen = false;
                 World.currentMarker = null;
                 World.areaMarker.enabled = false;*/
-            }
+            }else{alert("NOT IN AREA")}
         });
         //if(!World.isMarkerInFocus)
 		    //World.focusScene(markerInFocus)
@@ -126,7 +127,7 @@ var World = {
     onMarkerDeSelected: function onMarkerDeSelectedFn(marker){
         $("#panel-poidetail").slideToggle();
         panelOpen = false;
-        $("#ar-btn").css({'color':'#A9A9A9'});
+        $("#ar-btn").css({"color":"#A9A9A9"});
         World.currentMarker = null;
     },
 	// fired when user pressed maker in cam
@@ -177,6 +178,12 @@ var World = {
             document.location = architectSdkUrl;
 		});
         $("#mark-place").unbind();
+        if(marker.poiData.saved){
+            $("#mark-place").buttonMarkup({theme: "b"});
+        }
+        else{
+            $("#mark-place").buttonMarkup({theme: "d"});
+        }
 		$("#mark-place").click(function(){
                     var themeToUse = ($("#mark-place").attr("data-theme") == "d"? "b" : "d");
                     $("#mark-place").buttonMarkup({
@@ -197,9 +204,9 @@ var World = {
             }
         }
         if(!marker.poiData.visited && World.isInArea){
-            $("#ar-btn").css({'color':'#000000'});
+            $("#ar-btn").css({color:'#000000'});
         }else{
-            $("#ar-btn").css({'color':'#A9A9A9'});
+            $("#ar-btn").css({color:'#A9A9A9'});
         }
 
         $("#panel-poidetail").slideToggle();

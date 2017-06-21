@@ -484,7 +484,6 @@ public class MapsActivity extends AppCompatActivity implements
 
     public void handleBottomBarSelection(View view) {
         Intent intent = null;
-
         switch (view.getId()) {
             case R.id.profile_activity:
                 if (!mDataManager.getActivePlayer().getUsername().contains("Guest")) {
@@ -507,14 +506,12 @@ public class MapsActivity extends AppCompatActivity implements
     public void aSyncActivity(final Intent intent) {
         Handler mHandler = new Handler();
         mHandler.postDelayed(new Runnable() {
-
             @Override
             public void run() {
                 //start your activity here
                 startActivity(intent);
             }
-
-        }, 200L);
+        }, 20L);
     }
 
     public void setCameraPosition(double latitude, double longitude, float zoomf) {
