@@ -324,21 +324,21 @@ public class MapsActivity extends AppCompatActivity implements
                         marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.ar_photo)));
                     } else {
 
-                        if (activePlayer.hasVisited(temp.getId())) {
-                            switch(currentPeriod.getName()){
-                                case "OTTOMAN":
+                        if (activePlayer.hasVisited(temp.getId()) ) {
+                            switch((int) temp.getPeriod_id()){
+                                case 4:
                                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
                                     break;
-                                case "VENETIAN":
+                                case 3:
                                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_venetian));
                                     break;
-                                case "MODERN":
+                                case 5:
                                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_modern));
                                     break;
-                                case "BYZANTINE":
+                                case 2:
                                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
                                     break;
-                                case "HELLENISTIC":
+                                case 1:
                                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_ruins));
                                     break;
                                 default:

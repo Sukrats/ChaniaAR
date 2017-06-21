@@ -744,7 +744,8 @@ public class LoginActivity extends AppCompatActivity {
         }
         builder.show();
     }
-
+    int prog = 0;
+    int prev = 0;
 
     void downloadPlayerData(){
         progressBar.show();
@@ -759,7 +760,10 @@ public class LoginActivity extends AppCompatActivity {
 
                 @Override
                 public void onUpdate(int progress, String msg) {
-                    progressBar.setProgress(progress);
+                    prog += progress/2 - prev;
+                    prev = progress;
+
+                    progressBar.setProgress(prog);
                 }
             });
 

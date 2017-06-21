@@ -88,6 +88,7 @@ public class NotificationResult extends AppCompatActivity {
 
                 toggle.setText(getResources().getString(R.string.notification_toggle_start));
                 toggle.setOnClickListener(stopClickListener);
+                NotificationResult.this.finish();
             }
         });
     }

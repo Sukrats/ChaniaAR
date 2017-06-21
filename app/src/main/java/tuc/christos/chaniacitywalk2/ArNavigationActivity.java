@@ -1,25 +1,32 @@
 package tuc.christos.chaniacitywalk2;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.webkit.WebView;
 import android.widget.Toast;
 
 //import com.wikitude.architect.ArchitectJavaScriptInterfaceListener;
 //import com.wikitude.architect.ArchitectStartupConfiguration;
+import com.wikitude.architect.ArchitectJavaScriptInterfaceListener;
+import com.wikitude.architect.ArchitectStartupConfiguration;
 import com.wikitude.architect.ArchitectView;
-import com.wikitude.architect.StartupConfiguration;
+import com.wikitude.common.camera.CameraSettings;
 //import com.wikitude.common.camera.CameraSettings;
 
 import org.json.JSONArray;
@@ -70,7 +77,7 @@ public class ArNavigationActivity extends Activity {
     /*
      * JS interface listener handling e.g. 'AR.platform.sendJSONObject({foo:"bar", bar:123})' calls in JavaScript
      */
-    //protected ArchitectJavaScriptInterfaceListener mArchitectJavaScriptInterfaceListener;
+    protected ArchitectJavaScriptInterfaceListener mArchitectJavaScriptInterfaceListener;
 
     /**
      * worldLoadedListener receives calls when the AR WorldToLoad is finished loading or when it failed to laod.
@@ -153,10 +160,17 @@ public class ArNavigationActivity extends Activity {
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
         config.setCameraResolution(CameraSettings.CameraResolution.AUTO);
         config.setCameraPosition(CameraSettings.CameraPosition.DEFAULT);*/
-        final StartupConfiguration config = new StartupConfiguration(Constants.WIKITUDE_SDK_KEY, 1, StartupConfiguration.CameraPosition.DEFAULT);
+        final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
+        config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
+        config.setFeatures(1);
+        config.setFeatures(4);
+        config.setCameraPosition(CameraSettings.CameraPosition.DEFAULT);
+        config.setCameraResolution(CameraSettings.CameraResolution.AUTO);
+        config.setCamera2Enabled(false);
 
-        //architectView.setCameraLifecycleListener(null);
+        //final StartupConfiguration config = new StartupConfiguration(Constants.WIKITUDE_SDK_KEY, 1, StartupConfiguration.CameraPosition.DEFAULT);
 
+        architectView.setCameraLifecycleListener(null);
         try {
             /* first mandatory life-cycle notification */
             architectView.onCreate(config);
@@ -166,6 +180,12 @@ public class ArNavigationActivity extends Activity {
             Log.e(this.getClass().getName(), "Exception in ArchitectView.onCreate()", rex);
         }
 
+        worldLoadedListener = getWorldLoadedListener();
+        if (worldLoadedListener != null && architectView != null) {
+            architectView.registerWorldLoadedListener(worldLoadedListener);
+        }
+
+//TODO FIX MARKERS AND COMUNICATION BETWEEN NATIVE AND JS CODE
         urlListener = new ArchitectView.ArchitectUrlListener() {
             @Override
             public boolean urlWasInvoked(String s) {
@@ -217,17 +237,15 @@ public class ArNavigationActivity extends Activity {
             }
         };
         // register valid urlListener in architectView, ensure this is set before content is loaded to not miss any event
-        if (architectView != null) {
-            architectView.registerUrlListener(urlListener);
+        //if (architectView != null) {
+        //    architectView.registerUrlListener(urlListener);
+        //}
+        this.mArchitectJavaScriptInterfaceListener = this.getArchitectJavaScriptInterfaceListener();
+        if (this.mArchitectJavaScriptInterfaceListener != null && this.architectView != null) {
+            this.architectView.addArchitectJavaScriptInterfaceListener(mArchitectJavaScriptInterfaceListener);
         }
-
-        worldLoadedListener = getWorldLoadedListener();
-        if (worldLoadedListener != null && architectView != null) {
-            architectView.registerWorldLoadedListener(worldLoadedListener);
-        }
-
         sensorAccuracyListener = getSensorAccuracyListener();
-        architectView.registerSensorAccuracyChangeListener(sensorAccuracyListener);
+        //architectView.registerSensorAccuracyChangeListener(sensorAccuracyListener);
 
         WebView.setWebContentsDebuggingEnabled(true);
         Log.i(TAG, "World: " + WorldToLoad);
@@ -379,7 +397,28 @@ public class ArNavigationActivity extends Activity {
             }
         };
     }
-
+    public ArchitectJavaScriptInterfaceListener getArchitectJavaScriptInterfaceListener() {
+        return new ArchitectJavaScriptInterfaceListener() {
+            @Override
+            public void onJSONObjectReceived(JSONObject jsonObject) {
+                try {
+                    switch (jsonObject.getString("action")) {
+                        case "present_poi_details":
+                            Toast.makeText(ArNavigationActivity.this, "AKOUSE", Toast.LENGTH_SHORT).show();
+                            break;
+                        case "capture_screen":
+                            Toast.makeText(ArNavigationActivity.this, "AKOUSE", Toast.LENGTH_SHORT).show();
+                            break;
+                        default:
+                            Toast.makeText(ArNavigationActivity.this, "AKOUSE", Toast.LENGTH_SHORT).show();
+                            break;
+                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, "onJSONObjectReceived: ", e);
+                }
+            }
+        };
+    }
 
     @Override
     protected void onResume() {
