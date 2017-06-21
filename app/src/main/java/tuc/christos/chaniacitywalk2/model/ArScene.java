@@ -1,19 +1,48 @@
 package tuc.christos.chaniacitywalk2.model;
 
-/**
- * Created by Christos on 30-May-17.
- *
- */
+import java.util.ArrayList;
 
-public class ArScene extends Scene {
-    private String modelLocation;
 
-    public ArScene(String modelLocation) {
-        this.modelLocation = modelLocation;
+public class ArScene {
+    private String path;
+    private double latitude;
+    private double longitude;
+
+
+    public ArScene() {
     }
 
-    public ArScene(double latitude, double longitude, int id, int periodid, String name, String description, String modelLocation) {
-        super(latitude, longitude, id, periodid, name, description);
-        this.modelLocation = modelLocation;
+    public ArScene(String path){
+        this.path = path;
+    }
+
+    public ArScene(String path, double latitude, double longitude) {
+        this.path = path;
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 }

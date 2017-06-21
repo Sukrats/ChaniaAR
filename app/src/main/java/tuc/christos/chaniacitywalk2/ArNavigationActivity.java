@@ -184,7 +184,7 @@ public class ArNavigationActivity extends Activity {
                         try {
                             architectView.load("ModelAtGeoLocation/index.html");
                             callJavaScript("World.ShowBackBtn", new String[]{});
-                            injectArgs("World.getScene", new String[]{JsonHelper.sceneToJson(mDataManager.getScene(Long.parseLong(invokedUri.getQueryParameter("id")))).toString()});
+                            injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(invokedUri.getQueryParameter("id"))).toString()});
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -231,6 +231,36 @@ public class ArNavigationActivity extends Activity {
         WebView.setWebContentsDebuggingEnabled(true);
         Log.i(TAG, "World: " + WorldToLoad);
     }
+
+
+    @Override
+    protected void onPostCreate(final Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        if (architectView != null) {
+            // call mandatory live-cycle method of architectView
+            this.architectView.onPostCreate();
+            try {
+                // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
+                // have a look at wikitude.com's developer section for API references
+                architectView.load(WorldToLoad);
+                if (WorldToLoad.contains("ArNavigation") && scene_id != 0) {
+                    injectArgs("World.focusScene", new String[]{String.valueOf(mDataManager.getScene(scene_id).getId())});
+                    injectData(mDataManager.getActiveMapContent());
+                } else if (WorldToLoad.contains("ArNavigation"))
+                    injectData(mDataManager.getActiveMapContent());
+                else if(WorldToLoad.contains("ModelAtGeoLocation")) {
+                    if(!mDataManager.getActivePlayer().hasVisited(scene_id)) {
+                        mDataManager.updatePlayer(scene_id, true, this);
+                        mDataManager.addVisit(scene_id);
+                    }
+                    injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
+                }
+            } catch (IOException e1) {
+                Log.i("ARNAV",e1.getMessage());
+            }
+        }
+    }
+
 
     private void injectArgs(final String method, final String[] args) {
         if (!isLoading) {
@@ -344,34 +374,6 @@ public class ArNavigationActivity extends Activity {
                 }
             }
         };
-    }
-
-    @Override
-    protected void onPostCreate(final Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        if (architectView != null) {
-            // call mandatory live-cycle method of architectView
-            this.architectView.onPostCreate();
-            try {
-                // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
-                // have a look at wikitude.com's developer section for API references
-                architectView.load(WorldToLoad);
-                if (WorldToLoad.contains("ArNavigation") && scene_id != 0) {
-                    injectArgs("World.focusScene", new String[]{String.valueOf(mDataManager.getScene(scene_id).getId())});
-                    injectData(mDataManager.getActiveMapContent());
-                } else if (WorldToLoad.contains("ArNavigation"))
-                    injectData(mDataManager.getActiveMapContent());
-                else if(WorldToLoad.contains("ModelAtGeoLocation")) {
-                    if(!mDataManager.getActivePlayer().hasVisited(scene_id)) {
-                        mDataManager.updatePlayer(scene_id, true, this);
-                        mDataManager.addVisit(scene_id);
-                    }
-                    injectArgs("World.getScene", new String[]{JsonHelper.sceneToJson(mDataManager.getScene(scene_id)).toString()});
-                }
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-        }
     }
 
 

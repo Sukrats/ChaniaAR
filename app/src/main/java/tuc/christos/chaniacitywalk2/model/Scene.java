@@ -3,6 +3,7 @@ package tuc.christos.chaniacitywalk2.model;
 import android.net.Uri;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +33,8 @@ public class Scene {
     private Uri uriThumb;
     private String TAG;
 
-
+    private int numOfScenes = 0;
+    private ArrayList<ArScene> scenes =new ArrayList<>();
 
     public boolean hasAR() {
         return hasAR;
@@ -182,5 +184,26 @@ public class Scene {
 
     public void setCreated(Date created) {
         this.created = created;
+    }
+
+    public ArrayList<ArScene> getArScene() {
+        return scenes;
+    }
+    public void setArScene(ArrayList<ArScene> scenes) {
+        this.numOfScenes = scenes.size();
+        this.scenes = scenes;
+    }
+
+    public void addArScene(ArScene scene){
+        this.numOfScenes+=numOfScenes;
+        this.scenes.add(scene);
+    }
+
+    public int getNumOfScenes() {
+        return numOfScenes;
+    }
+
+    public void setNumOfScenes(int numOfScenes) {
+        this.numOfScenes = numOfScenes;
     }
 }

@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -147,8 +148,32 @@ public class JsonHelper {
         return json;
     }
 
-    public static JSONObject periodToJson(Period period){
+    public static JSONObject arSceneToJson(Scene scene){
         JSONObject json = new JSONObject();
+        try {
+            json.put("id", scene.getId());
+            json.put("name", scene.getName());
+            json.put("description", scene.getDescription());
+            json.put("latitude", scene.getLatitude());
+            json.put("longitude", scene.getLongitude());
+            json.put("period_id", scene.getPeriod_id());
+            json.put("thumb_uri", scene.getUriThumb());
+            json.put("images_uri", scene.getUriImages());
+            json.put("num",scene.getNumOfScenes());
+            JSONArray array= new JSONArray();
+            for(ArScene s : scene.getArScene()){
+                JSONObject object = new JSONObject();
+                object.put("path",s.getPath());
+                object.put("latitude",s.getLatitude());
+                object.put("longitude",s.getLongitude());
+                array.put(object);
+            }
+            json.put("ar_scenes",array);
+
+        }catch(JSONException e){
+            Log.i("JSON EXCEPTION", e.getMessage());
+        }
+        Log.i("ARScene parsed:", json.toString());
         return json;
     }
 

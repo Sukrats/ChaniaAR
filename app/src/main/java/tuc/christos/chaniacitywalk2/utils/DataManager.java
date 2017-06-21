@@ -45,7 +45,7 @@ public class DataManager {
     private Level locality;
     private Level currentLevel;
 
-    private HashMap<String, ArScene> Route = new HashMap<>();
+    private HashMap<String, Scene> Route = new HashMap<>();
     private HashMap<Long, Scene> ScenesMap = new HashMap<>();
 
     //private HashMap<Polyline, Scene> lineToSceneMap = new HashMap<>();
@@ -450,7 +450,6 @@ public class DataManager {
                     String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
 
                     Scene temp = new Scene(lat, lon, id, period_id, name, description);
-                    //temp.setVisited(hasVisited(temp.getId()));
                     temp.setUriImages(images);
                     temp.setUriThumb(thumbnail);
                     if (!Route.containsKey(String.valueOf(temp.getId())))
@@ -664,15 +663,29 @@ public class DataManager {
 
     /**********************************************************ROUTE HARD CODED *************************************************************/
     private void initRoute() {
-        ArrayList<ArScene> mRoute = new ArrayList<>();
-        mRoute.add(new ArScene(35.517398, 24.01779, 36, 4, "Glass Mosque", "", "assets/earth.wt3"));
-        mRoute.add(new ArScene(35.51711, 24.020557, 37, 2, "The Byzantine Wall", "", "assets/earth.wt3"));
-        mRoute.add(new ArScene(35.5171461, 24.019581, 38, 1, "Minoiki Kidonia", "", "assets/earth.wt3"));
-        mRoute.add(new ArScene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "", "assets/earth.wt3"));
-        for (ArScene temp : mRoute) {
-            temp.setHasAR(true);
+        ArrayList<Scene> mRoute = new ArrayList<>();
+        mRoute.add(new Scene(35.517398, 24.01779, 36, 4, "Glass Mosque", ""));
+        mRoute.add(new Scene(35.51711, 24.020557, 37, 2, "The Byzantine Wall", ""));
+        mRoute.add(new Scene(35.5171461, 24.019581, 38, 1, "Minoiki Kidonia", ""));
+
+        Scene rocco = new Scene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "");
+
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_high_poly_low_tex.wt3",35.5164899, 24.021208));
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_high_geo_high_tex.wt3",35.5164899, 24.021208));
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_low_poly_high_tex.wt3",35.5164899, 24.021208));
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_high_geo_high_tex_weird.wt3",35.5164899, 24.021208));
+        rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part.wt3",35.5164899, 24.021208));
+        rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part_no_tex.wt3",35.516551, 24.021191));
+        rocco.addArScene(new ArScene("assets/rocco/rocco_complete_no_tex.wt3",35.516551, 24.021191));
+        rocco.addArScene(new ArScene("assets/rocco/rocco_complete_no_tex_scale.wt3",35.516551, 24.021191));
+
+        mRoute.add(rocco);
+        for (Scene temp : mRoute) {
             Route.put(String.valueOf(temp.getId()), temp);
         }
+    }
+    public Scene getArScene(String scene_id){
+        return Route.get(scene_id);
     }
 
     public void setLevelLocality(Level level) {
