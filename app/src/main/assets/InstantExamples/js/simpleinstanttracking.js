@@ -18,7 +18,7 @@ var World = {
             //rotate : { x: 90}
         });
 
-        var target = new AR.Circle(3,{
+        /*var target = new AR.Circle(3,{
             opacity: 1,
             style:{
                 fillColor : '#00000000',
@@ -34,6 +34,7 @@ var World = {
           cam: [target]
           }
         });
+        */
 
 
         this.tracker = new AR.InstantTracker({
@@ -55,15 +56,19 @@ var World = {
             },
             onTrackingStarted: function onTrackingStartedFn() {
 
-                var model = new AR.Model("assets/rocco_2048_slam.wt3", {
+                var model = new AR.Model("assets/rocco_1024_slam_skt.wt3", {
                    scale: {
-                       x: 1.0,
-                       y: 1.0,
-                       z: 1.0
+                       x: 0.75,
+                       y: 0.75,
+                       z: 0.75
+                   },
+                   rotate: {
+                       x: 0,
+                       y: 0,
+                       z: 0
                    }
                 });
-                //model.translate.global.x = World.posX;
-                //model.translate.global.y = World.posY;
+                model.translate.y = 0;
                 World.model = model;
                 this.drawables.addCamDrawable(model);
                 // do something when tracking is started (recognized)
