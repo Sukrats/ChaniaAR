@@ -129,7 +129,7 @@ public class DataManager {
     public ArrayList<Scene> getActiveMapContent() {
         Log.i(TAG, "" + scenesLoaded);
         if(getActivePlayer().getUsername().equals("Guest"))
-            return new ArrayList<>(getRoute());
+            return new ArrayList<>(Route.values());
 
         if (scenesLoaded) {
             if (getActivePlayer().getScore() < 1000 )
@@ -669,17 +669,18 @@ public class DataManager {
         mRoute.add(new Scene(35.5171461, 24.019581, 38, 1, "Minoiki Kidonia", ""));
 
         Scene rocco = new Scene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "");
-        rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part.wt3",35.5164899, 24.021208));
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part.wt3",35.5164899, 24.021208));
         rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part_no_tex.wt3",35.516551, 24.021191));
-        rocco.addArScene(new ArScene("assets/rocco/rocco_complete_no_tex.wt3",35.516551, 24.021191));
-        rocco.addArScene(new ArScene("assets/rocco/rocco_complete_no_tex_scale.wt3",35.516551, 24.021191));
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_high_poly_comp_tex.wt3",35.516551, 24.021191));
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_complete_no_tex_scale.wt3",35.516551, 24.021191));
         //OLD ROCCO SCENES
         //rocco.addArScene(new ArScene("assets/rocco/rocco_high_poly_low_tex.wt3",35.5164899, 24.021208));
-        //rocco.addArScene(new ArScene("assets/rocco/rocco_high_geo_high_tex.wt3",35.5164899, 24.021208));
+        //rocco.addArScene(new ArScene("assets/rocco/clock.wt3",35.5164899, 24.021208));
         //rocco.addArScene(new ArScene("assets/rocco/rocco_low_poly_high_tex.wt3",35.5164899, 24.021208));
         //rocco.addArScene(new ArScene("assets/rocco/rocco_high_geo_high_tex_weird.wt3",35.5164899, 24.021208));
         mRoute.add(rocco);
         for (Scene temp : mRoute) {
+            temp.setHasAR(true);
             Route.put(String.valueOf(temp.getId()), temp);
         }
     }

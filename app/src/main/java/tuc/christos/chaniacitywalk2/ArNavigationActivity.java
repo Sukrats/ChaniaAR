@@ -136,7 +136,7 @@ public class ArNavigationActivity extends Activity {
         public void handleNewLocation(Location location) {
             ArNavigationActivity.this.lastKnownLocation = location;
             //update JS Location
-            ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
+            ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getAltitude(), location.getLongitude(), location.getAccuracy());
         }
     };
 
@@ -152,7 +152,7 @@ public class ArNavigationActivity extends Activity {
         setContentView(R.layout.activity_architect);
         architectView = (ArchitectView) findViewById(R.id.architectView);
         WorldToLoad = getIntent().getStringExtra(Constants.ARCHITECT_WORLD_KEY);
-        scene_id = getIntent().getLongExtra(Constants.ARCHITECT_AR_SCENE_KEY,0);
+        scene_id = getIntent().getLongExtra(Constants.ARCHITECT_AR_SCENE_KEY, 0);
         if (getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY) != null)
             question_id = getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY);
         /*final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
@@ -185,7 +185,6 @@ public class ArNavigationActivity extends Activity {
             architectView.registerWorldLoadedListener(worldLoadedListener);
         }
 
-//TODO FIX MARKERS AND COMUNICATION BETWEEN NATIVE AND JS CODE
         urlListener = new ArchitectView.ArchitectUrlListener() {
             @Override
             public boolean urlWasInvoked(String s) {
@@ -220,12 +219,12 @@ public class ArNavigationActivity extends Activity {
                         break;
                     case "score":
                         if (invokedUri.getBooleanQueryParameter("success", false)) {
-                            Log.i("Answer", "correct"+invokedUri.getQueryParameter("id"));
-                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")),true, getApplicationContext());
+                            Log.i("Answer", "correct" + invokedUri.getQueryParameter("id"));
+                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")), true, getApplicationContext());
                             mDataManager.addVisit(Long.valueOf(invokedUri.getQueryParameter("id")));
                         } else {
                             Log.i("Answer", "wrong");
-                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")),false, getApplicationContext());
+                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")), false, getApplicationContext());
                         }
                         break;
 
@@ -265,21 +264,35 @@ public class ArNavigationActivity extends Activity {
                 if (WorldToLoad.contains("ArNavigation") && scene_id != 0) {
                     injectArgs("World.focusScene", new String[]{String.valueOf(mDataManager.getScene(scene_id).getId())});
                     injectData(mDataManager.getActiveMapContent());
-                } else if (WorldToLoad.contains("ArNavigation"))
+                }else if (WorldToLoad.contains("ArNavigation"))
                     injectData(mDataManager.getActiveMapContent());
-                else if(WorldToLoad.contains("ModelAtGeoLocation")) {
-                    if(!mDataManager.getActivePlayer().hasVisited(scene_id)) {
+                else if (WorldToLoad.contains("ModelAtGeoLocation")) {
+                    if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(scene_id)) {
                         mDataManager.updatePlayer(scene_id, true, this);
                         mDataManager.addVisit(scene_id);
                     }
                     injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
+                }else if(WorldToLoad.contains("Instant")){
+                    float origin[] = getIntent().getFloatArrayExtra(Constants.ARCHITECT_ORIGIN);
+                    injectInstant("World.getInstantiation",origin);
+
                 }
             } catch (IOException e1) {
-                Log.i("ARNAV",e1.getMessage());
+                Log.i("ARNAV", e1.getMessage());
             }
         }
     }
-
+    private void injectInstant(String method, float[] args){
+        JSONObject json = new JSONObject();
+        try {
+            json.put("posx", args[0]);
+            json.put("posy", args[1]);
+            Log.i("JSON",json.toString());
+        }catch(JSONException e ){
+            Log.i("JSON", e.getMessage());
+        }
+        injectArgs(method, new String[]{json.toString()});
+    }
 
     private void injectArgs(final String method, final String[] args) {
         if (!isLoading) {
@@ -344,11 +357,11 @@ public class ArNavigationActivity extends Activity {
             try {
                 JSONObject json = JsonHelper.sceneToJson(scene);
                 json.put("hasAR", scene.hasAR());
-                json.put("saved", player.hasPlaced(scene.getId()) );
-                json.put("visited", player.hasVisited(scene.getId()) );
+                json.put("saved", player.hasPlaced(scene.getId()));
+                json.put("visited", player.hasVisited(scene.getId()));
                 array.put(json);
-            }catch (JSONException e){
-                Log.i(TAG,e.getMessage());
+            } catch (JSONException e) {
+                Log.i(TAG, e.getMessage());
             }
         }
         return array;
@@ -397,20 +410,42 @@ public class ArNavigationActivity extends Activity {
             }
         };
     }
+
     public ArchitectJavaScriptInterfaceListener getArchitectJavaScriptInterfaceListener() {
         return new ArchitectJavaScriptInterfaceListener() {
             @Override
             public void onJSONObjectReceived(JSONObject jsonObject) {
                 try {
                     switch (jsonObject.getString("action")) {
-                        case "present_poi_details":
-                            Toast.makeText(ArNavigationActivity.this, "AKOUSE", Toast.LENGTH_SHORT).show();
+                        case "details":
+                            Intent intent = new Intent(getApplicationContext(), SceneDetailActivity.class);
+                            intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, jsonObject.getString("id"));
+                            startActivity(intent);
                             break;
-                        case "capture_screen":
-                            Toast.makeText(ArNavigationActivity.this, "AKOUSE", Toast.LENGTH_SHORT).show();
+                        case "map":
+                            Intent mapIntent = NavUtils.getParentActivityIntent(ArNavigationActivity.this);
+                            mapIntent.putExtra(SceneDetailFragment.ARG_ITEM_ID, jsonObject.getString("id"));
+                            NavUtils.navigateUpTo(ArNavigationActivity.this, mapIntent);
                             break;
+                        case "GEOAR":
+                            loadWorld("GEOAR", jsonObject.getString("id"));
+                            break;
+                        case "arNav":
+                            loadWorld("arNav",null);
+                            break;
+                        case "score":
+                            if (jsonObject.getBoolean("success")) {
+                                Log.i("Answer", "correct" + jsonObject.getString("id"));
+                                mDataManager.updatePlayer(jsonObject.getLong("id"), true, getApplicationContext());
+                                mDataManager.addVisit(jsonObject.getLong("id"));
+                            } else {
+                                Log.i("Answer", "wrong");
+                                mDataManager.updatePlayer(jsonObject.getLong("id"), false, getApplicationContext());
+                            }
+                            break;
+
                         default:
-                            Toast.makeText(ArNavigationActivity.this, "AKOUSE", Toast.LENGTH_SHORT).show();
+                            Log.i("Got url", jsonObject.getString("action"));
                             break;
                     }
                 } catch (JSONException e) {
@@ -418,6 +453,30 @@ public class ArNavigationActivity extends Activity {
                 }
             }
         };
+    }
+
+    public void loadWorld(final String world, final String id) {
+        ArNavigationActivity.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    switch (world) {
+                        case "GEOAR":
+                            architectView.load("ModelAtGeoLocation/index.html");
+                            callJavaScript("World.ShowBackBtn", new String[]{});
+                            injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(id)).toString()});
+                            break;
+                        case "arNav":
+                            architectView.load("ArNavigation/index.html");
+                            injectData(mDataManager.getActiveMapContent());
+                            break;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
     }
 
     @Override

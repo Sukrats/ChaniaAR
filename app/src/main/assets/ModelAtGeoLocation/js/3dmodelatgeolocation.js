@@ -119,7 +119,11 @@ var World = {
 	ShowBackBtn: function ShowBackBtnFn(){
         $("#backBtn").show();
         $("#backBtn").click(function(){
-            document.location = "architectsdk://arNav";
+            //document.location = "architectsdk://arNav";
+            var args = {
+                action: "arNav"
+            };
+            AR.platform.sendJSONObject(args);
         });
 	},
 

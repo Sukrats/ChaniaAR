@@ -177,8 +177,9 @@ public class MapsActivity extends AppCompatActivity implements
         pushButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //TODO TEMPORARY
                 Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                if (isFenceTriggered && mDataManager.getScene(fenceTriggered).hasAR()) {
+                if (isFenceTriggered && mDataManager.getArScene(String.valueOf(fenceTriggered)).hasAR()) {
                     intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
                     intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
                 } else if (isFenceTriggered && !activePlayer.hasVisited(fenceTriggered)) {
@@ -211,7 +212,10 @@ public class MapsActivity extends AppCompatActivity implements
 
         String camToItem = getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID);
         if (camToItem != null) {
-            Scene temp = mDataManager.getScene(Long.parseLong(camToItem));
+            Scene temp;
+            if(!activePlayer.getUsername().contains("Guest"))
+                temp = mDataManager.getScene(Long.parseLong(camToItem));
+            else temp = mDataManager.getArScene(camToItem);
             defaultCameraPosition = new CameraPosition.Builder()
                     .target(new LatLng(temp.getLatitude(), temp.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL).bearing(0).tilt(50).build();
             if (sceneToMarkerMap.containsKey(temp)) sceneToMarkerMap.get(temp).showInfoWindow();
@@ -247,7 +251,6 @@ public class MapsActivity extends AppCompatActivity implements
                     intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(scene.getId()));
                     startActivity(intent);
                 }
-
             }
         });
 
@@ -288,6 +291,11 @@ public class MapsActivity extends AppCompatActivity implements
         setupMapOptions();
 
         if (!mDataManager.isScenesEmpty()) {
+            for (Scene temp : mDataManager.getActiveMapContent()) {
+                scenesShown.put(String.valueOf(temp.getId()), temp);
+            }
+            drawMap();
+        }else{
             for (Scene temp : mDataManager.getActiveMapContent()) {
                 scenesShown.put(String.valueOf(temp.getId()), temp);
             }
@@ -497,10 +505,40 @@ public class MapsActivity extends AppCompatActivity implements
             case R.id.collection_activity:
                 intent = new Intent(this, CollectionActivity.class);
                 break;
+            case R.id.pending_activity:
+                if(isFenceTriggered) {
+                    intent = new Intent(this, ArNavigationActivity.class);
+                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "InstantExamples/index.html");
+                    float[] args = calculateDistanceToSceneInXY();
+                    intent.putExtra(Constants.ARCHITECT_ORIGIN, args);
+                }break;
         }
         if (intent != null) {
             aSyncActivity(intent);
         }
+    }
+
+    public float[] calculateDistanceToSceneInXY(){
+        Scene t = mDataManager.getArScene(String.valueOf(fenceTriggered));
+        Location targetX = new Location("");
+        Location targetY = new Location("");
+
+        targetX.setLatitude(t.getLatitude());
+        targetX.setLongitude(0);
+        targetY.setLatitude(0);
+        targetY.setLongitude(t.getLongitude());
+
+        Location originX = new Location("");
+        Location originY = new Location("");
+
+        originX.setLatitude(mCurrentLocation.getLatitude());
+        originX.setLongitude(0);
+        originY.setLatitude(0);
+        originY.setLongitude(mCurrentLocation.getLongitude());
+        float distanceX = targetX.distanceTo(originX);
+        float distanceY = targetY.distanceTo(originY);
+
+        return new float[]{distanceX,distanceY};
     }
 
     public void aSyncActivity(final Intent intent) {

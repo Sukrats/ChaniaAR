@@ -89,7 +89,7 @@ var World = {
         $("#ar-btn").unbind();
         $("#ar-btn").click(function(){
             if(World.isInArea){
-                alert("it IS")
+                //alert("it IS")
                 if(!World.areaMarker.poiData.visited && !World.areaMarker.poiData.hasAR){
 
                     $("#backBtn").unbind();
@@ -102,15 +102,20 @@ var World = {
                     World.question = new QuestionObject(World.areaMarker.poiData);
                     World.isAnswering = true;
                 }else if(World.areaMarker.poiData.hasAR){
-                    var architectSdkUrl = "architectsdk://GEOAR?id=" + encodeURIComponent(World.areaMarker.poiData.id);
-                    document.location = architectSdkUrl;
+                    //var architectSdkUrl = "architectsdk://GEOAR?id=" + encodeURIComponent(World.areaMarker.poiData.id);
+                    //document.location = architectSdkUrl;
+                    var args = {
+                        action: "GEOAR",
+                        id: World.areaMarker.poiData.id
+                    };
                     World.areaMarker.setDeselected(World.areaMarker);
+                    AR.platform.sendJSONObject(args);
                 }
              /*   $("#panel-poidetail").slideToggle();
                 World.panelOpen = false;
                 World.currentMarker = null;
                 World.areaMarker.enabled = false;*/
-            }else{alert("NOT IN AREA")}
+            }
         });
         //if(!World.isMarkerInFocus)
 		    //World.focusScene(markerInFocus)
@@ -161,7 +166,7 @@ var World = {
 		});
         $("#open-details-activity").unbind();
 		$("#open-details-activity").click(function(){
-            var architectSdkUrl = "architectsdk://details?id=" + encodeURIComponent(marker.poiData.id);
+            //var architectSdkUrl = "architectsdk://details?id=" + encodeURIComponent(marker.poiData.id);
             /*
                 The urlListener of the native project intercepts this call and parses the arguments.
                 This is the only way to pass information from JavaSCript to your native code.
@@ -169,13 +174,23 @@ var World = {
                 Note: you must use 'document.location = "architectsdk://...' to pass information from JavaScript to native.
                 ! This will cause an HTTP error if you didn't register a urlListener in native architectView !
             */
-            document.location = architectSdkUrl;
+            //document.location = architectSdkUrl;
+
+            var args = {
+                action: "details",
+                id: marker.poiData.id
+            };
+            AR.platform.sendJSONObject(args);
 		});
         $("#open-map").unbind();
 		$("#open-map").click(function(){
-            var architectSdkUrl = "architectsdk://map?id=" + encodeURIComponent(marker.poiData.id);
-
-            document.location = architectSdkUrl;
+            //var architectSdkUrl = "architectsdk://map?id=" + encodeURIComponent(marker.poiData.id);
+            //document.location = architectSdkUrl;
+            var args = {
+                action: "map",
+                id: marker.poiData.id
+            };
+            AR.platform.sendJSONObject(args);
 		});
         $("#mark-place").unbind();
         if(marker.poiData.saved){
@@ -189,8 +204,13 @@ var World = {
                     $("#mark-place").buttonMarkup({
                         theme: themeToUse
                     });
-                    var architectSdkUrl = "architectsdk://mark?id=" + encodeURIComponent(marker.poiData.id);
-                    document.location = architectSdkUrl;
+                    //var architectSdkUrl = "architectsdk://mark?id=" + encodeURIComponent(marker.poiData.id);
+                    //document.location = architectSdkUrl;
+                    var args = {
+                        action: "mark",
+                        id: marker.poiData.id
+                    };
+                    AR.platform.sendJSONObject(args);
         });
 
 
@@ -241,13 +261,25 @@ var World = {
     questionAnswered: function questionAnsweredFn(success){
         if(success){
             //update SCORE
-            alert("Answered Correctly!")
-            document.location = "architectsdk://score?id=" + encodeURIComponent(World.question.poiData.id)+"&success=true";
+            //alert("Answered Correctly!")
+            //document.location = "architectsdk://score?id=" + encodeURIComponent(World.question.poiData.id)+"&success=true";
+            var args = {
+                action: "score",
+                id: World.question.poiData.id,
+                success: true
+            };
+            AR.platform.sendJSONObject(args);
             World.resume();
         }else{
-            alert("Nope!")
+            //alert("Nope!")
             //update SCORE NEGATIVE
-            document.location = "architectsdk://score?id=" + encodeURIComponent(World.question.poiData.id)+"&success=false";
+            //document.location = "architectsdk://score?id=" + encodeURIComponent(World.question.poiData.id)+"&success=false";
+            var args = {
+                action: "score",
+                id: World.question.poiData.id,
+                success: false
+            };
+            AR.platform.sendJSONObject(args);
         }
     },
     resume: function resumeFn(){

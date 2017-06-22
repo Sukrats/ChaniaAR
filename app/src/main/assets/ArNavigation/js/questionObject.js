@@ -236,17 +236,24 @@ Button.prototype.setSelected = function(question) {
         // create AR.PropertyAnimation that animates the opacity to 1.0 in order to show the selected-state-drawable
         var showSelectedDrawableAnimation = new AR.PropertyAnimation(question.selectedDrawable, "opacity", null, 1.0, kMarker_AnimationDuration_ChangeDrawable);
         // create AR.PropertyAnimation that animates the scaling of the idle-state-drawable to 1.2
-        var idleDrawableResizeAnimation = new AR.PropertyAnimation(question.idleDrawable, 'scaling', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var idleDrawableResizeAnimationX = new AR.PropertyAnimation(question.idleDrawable, 'scale.x', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+            amplitude: 2.0
+        }));
+        var idleDrawableResizeAnimationY = new AR.PropertyAnimation(question.idleDrawable, 'scale.y', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
         // create AR.PropertyAnimation that animates the scaling of the selected-state-drawable to 1.2
-        var selectedDrawableResizeAnimation = new AR.PropertyAnimation(question.selectedDrawable, 'scaling', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var selectedDrawableResizeAnimationX = new AR.PropertyAnimation(question.selectedDrawable, 'scale.x', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+            amplitude: 2.0
+        }));
+        // create AR.PropertyAnimation that animates the scaling of the selected-state-drawable to 1.2
+        var selectedDrawableResizeAnimationY = new AR.PropertyAnimation(question.selectedDrawable, 'scale.y', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
         /*
             There are two types of AR.AnimationGroups. Parallel animations are running at the same time, sequentials are played one after another. This example uses a parallel AR.AnimationGroup.
         */
-        question.animationGroup_selected = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL, [hideIdleDrawableAnimation, showSelectedDrawableAnimation, idleDrawableResizeAnimation, selectedDrawableResizeAnimation]);
+        question.animationGroup_selected = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL, [hideIdleDrawableAnimation, showSelectedDrawableAnimation, idleDrawableResizeAnimationX, idleDrawableResizeAnimationY, selectedDrawableResizeAnimationX,selectedDrawableResizeAnimationY]);
     }
 
     // removes function that is set on the onClick trigger of the idle-state marker
@@ -269,17 +276,24 @@ Button.prototype.setDeselected = function(question) {
         // create AR.PropertyAnimation that animates the opacity to 0.0 in order to hide the selected-state-drawable
         var hideSelectedDrawableAnimation = new AR.PropertyAnimation(question.selectedDrawable, "opacity", null, 0, kMarker_AnimationDuration_ChangeDrawable);
         // create AR.PropertyAnimation that animates the scaling of the idle-state-drawable to 1.0
-        var idleDrawableResizeAnimation = new AR.PropertyAnimation(question.idleDrawable, 'scaling', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var idleDrawableResizeAnimationX = new AR.PropertyAnimation(question.idleDrawable, 'scale.x', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+            amplitude: 2.0
+        }));
+        var idleDrawableResizeAnimationY = new AR.PropertyAnimation(question.idleDrawable, 'scale.y', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
         // create AR.PropertyAnimation that animates the scaling of the selected-state-drawable to 1.0
-        var selectedDrawableResizeAnimation = new AR.PropertyAnimation(question.selectedDrawable, 'scaling', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var selectedDrawableResizeAnimationX = new AR.PropertyAnimation(question.selectedDrawable, 'scale.x', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+            amplitude: 2.0
+        }));
+        // create AR.PropertyAnimation that animates the scaling of the selected-state-drawable to 1.0
+        var selectedDrawableResizeAnimationY = new AR.PropertyAnimation(question.selectedDrawable, 'scale.y', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
         /*
             There are two types of AR.AnimationGroups. Parallel animations are running at the same time, sequentials are played one after another. This example uses a parallel AR.AnimationGroup.
         */
-        question.animationGroup_idle = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL, [showIdleDrawableAnimation, hideSelectedDrawableAnimation, idleDrawableResizeAnimation, selectedDrawableResizeAnimation]);
+        question.animationGroup_idle = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL, [showIdleDrawableAnimation, hideSelectedDrawableAnimation, idleDrawableResizeAnimationX, idleDrawableResizeAnimationY, selectedDrawableResizeAnimationX, selectedDrawableResizeAnimationY]);
     }
 
     // sets the click trigger function for the idle state question

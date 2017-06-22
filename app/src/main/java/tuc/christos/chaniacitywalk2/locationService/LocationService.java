@@ -510,6 +510,8 @@ public class LocationService extends Service implements LocationCallback, Locati
                     mDataManager.setLevelLocality(level);
                     triggerRegionChange(level);
                 }else scheduledRegionUpdate = false;
+                //TODO TEMPORARY
+                mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
             }
         };
 

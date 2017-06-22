@@ -48,10 +48,15 @@ public class SceneDetailFragment extends Fragment {
             // Load the dummy content specified by the fragment
             // arguments. In a real-WorldToLoad scenario, use a Loader
             // to load content from a content provider.
-            Scene tmpScene = mDataManager.getScene(Long.parseLong(getArguments().getString(ARG_ITEM_ID)));
-            if(tmpScene != null)
-                mItem = tmpScene;
-
+            if(!mDataManager.getActivePlayer().getUsername().contains("Guest")) {
+                Scene tmpScene = mDataManager.getScene(Long.parseLong(getArguments().getString(ARG_ITEM_ID)));
+                if (tmpScene != null)
+                    mItem = tmpScene;
+            }else{
+                Scene tmpScene = mDataManager.getArScene(getArguments().getString(ARG_ITEM_ID));
+                if (tmpScene != null)
+                    mItem = tmpScene;
+            }
             Activity activity = this.getActivity();
             CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
             if (appBarLayout != null) {
