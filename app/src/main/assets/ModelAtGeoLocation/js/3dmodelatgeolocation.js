@@ -21,11 +21,11 @@ var World = {
                 Next the model object is loaded.
             */
             var model = new AR.Model(World.sceneList[i].path, {
-                /*scale: {
-                    x: 0.25,
-                    y: 0.25,
-                    z: 0.25
-                },*/
+                scale: {
+                    x: 1.0,
+                    y: 1.0,
+                    z: 1.0
+                },
                 onLoaded: this.worldLoaded,
                 verticalAnchor: AR.CONST.VERTICAL_ANCHOR.BOTTOM
             });
@@ -63,7 +63,6 @@ var World = {
 
     getScene: function getSceneFn(args) {
         World.sceneList = [];
-
         for(var i =0; i < args.ar_scenes.length; i++){
             var ar = {
               "path": args.ar_scenes[i].path,
@@ -88,15 +87,21 @@ var World = {
 		World.loaded = true;
 		var e = document.getElementById('loadingMessage');
 		e.parentElement.removeChild(e);
+//        alert("NUM: "+World.sceneList.length);
 
-		var val = $("#slider").val();
-		World.showModel(val);
-
-		$("#slider").slider( "option", "max", World.sceneList.length  );
+        $("#slider").prop({
+            min: 1,
+            max: World.sceneList.length
+        }).slider("refresh");
+		//$("#slider").slider( "option", "max", World.sceneList.length  );
+		//$("#slider").slider( "option", "min", World.sceneList.length  );
 		$("#slider").on( "slidestop", function( event, ui ) {
 		    var val = $("#slider").val();
 		    World.showModel(val);
 		} );
+
+		var val = $("#slider").val();
+		World.showModel(val);
 
 		$("#overflow").click(function(){
 		    World.controlsShown = World.controlsShown ? false : true ;
@@ -131,7 +136,7 @@ var World = {
         if(World.currentModelShown != null){
 	        World.currentModelShown.enabled = false;
 	    }
-        World.currentModelShown = World.objList[index];
+        World.currentModelShown = World.objList[index-1];
         World.currentModelShown.enabled = true;
 	},
 

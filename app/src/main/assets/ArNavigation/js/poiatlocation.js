@@ -132,7 +132,16 @@ var World = {
     onMarkerDeSelected: function onMarkerDeSelectedFn(marker){
         $("#panel-poidetail").slideToggle();
         panelOpen = false;
-        $("#ar-btn").css({"color":"#A9A9A9"});
+        var $button = $("#ar-btn");
+        var $clone = $button.clone();
+        $button.button();
+
+        $clone.css({"color":"#A9A9A9"});
+        $clone.button();
+        $button.replaceWith($clone);
+        //$("#ar-btn").css({"color":"#A9A9A9"});
+        //$("#ar-btn").button().button("refresh");
+
         World.currentMarker = null;
     },
 	// fired when user pressed maker in cam
@@ -222,13 +231,15 @@ var World = {
                    World.currentMarker = marker;
                    return;
             }
-        }
+        }/*
         if(!marker.poiData.visited && World.isInArea){
             $("#ar-btn").css({color:'#000000'});
+            $("#ar-btn").button().button("refresh");
         }else{
-            $("#ar-btn").css({color:'#A9A9A9'});
+            //$("#ar-btn").css({color:'#A9A9A9'});
+            //$("#ar-btn").button().button("refresh");
         }
-
+        */
         $("#panel-poidetail").slideToggle();
     	World.currentMarker = marker;
     },
@@ -237,11 +248,10 @@ var World = {
         World.isInArea = true
         World.currentArea = areaId;
         if(World.initiallyLoadedData && !World.isMarkerInFocus){
-            World.areaMarker = World.hideRest(areaId);
-            if(!World.areaMarker.poiData.visited || !World.areaMarker.poiData.hasAR){
-                //$("#ar-btn").css({'color':'#ff000000'});
-                document.getElementById("ar-btn").style.color = "#ff0000";
-            }
+            World.areaMarker = World.minimizeRest(areaId);
+            /*if(!World.areaMarker.poiData.visited || World.areaMarker.poiData.hasAR){
+                $("#ar-btn").css({'color':'#ff000000'}).button().button("refresh");
+            }*/
         }
     },
 
@@ -250,8 +260,8 @@ var World = {
         World.currentArea = null;
         if(!World.isAnswering){
             World.areaMarker = null;
-            World.showAll();
-            $("#ar-btn").css({'color':'#A9A9A9'});
+            World.restoreRest();
+            //$("#ar-btn").css({'color':'#A9A9A9'}).button().button("refresh");
         }
     },
     // screen was clicked but no geo-object was hit
@@ -330,6 +340,36 @@ var World = {
             }
         }
         return marker;
+    },
+    minimizeRest: function scaleRestFn(scene_id){
+        var marker = null;
+        var animate = null;
+        var animList = [];
+        for(var i=0; i < World.markerList.length; i++){
+            for(var j=0; j < World.markerList[i].markerObject.drawables.cam.length;j++ ){
+                if(World.markerList[i].poiData.id == scene_id){
+                     marker =  World.markerList[i];
+                }else{
+                    var animX = new AR.PropertyAnimation(World.markerList[i].markerObject.drawables.cam[j], 'scale.x', null, 0.3, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+                        amplitude: 2.0
+                    }));
+                    var animY = new AR.PropertyAnimation(World.markerList[i].markerObject.drawables.cam[j], 'scale.y', null, 0.3, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+                        amplitude: 2.0
+                    }));
+                    animList.push(animX);
+                    animList.push(animY);
+                }
+            }
+        }
+        animate = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL, animList);
+        animate.start()
+        return marker;
+    },
+    restoreRest: function showAll(){
+        for(var i=0; i < World.markerList.length; i++){
+            World.markerList[i].markerObject.scale.x = 1;
+            World.markerList[i].markerObject.scale.y = 1;
+        }
     },
     showAll: function showAll(){
         for(var i=0; i < World.markerList.length; i++){

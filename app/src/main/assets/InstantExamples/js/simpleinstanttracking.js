@@ -10,12 +10,12 @@ var World = {
     createOverlays: function createOverlaysFn() {
         var crossHairsRedImage = new AR.ImageResource("assets/crosshairs_red.png");
         var crossHairsRedDrawable = new AR.ImageDrawable(crossHairsRedImage, 1.0, {
-            rotate : { x: 90}
+            //rotate : { x: 90}
         });
 
         var crossHairsBlueImage = new AR.ImageResource("assets/crosshairs_blue.png");
         var crossHairsBlueDrawable = new AR.ImageDrawable(crossHairsBlueImage, 1.0,{
-            rotate : { x: 90}
+            //rotate : { x: 90}
         });
 
         var target = new AR.Circle(3,{
@@ -42,7 +42,7 @@ var World = {
             },
             // device height needs to be as accurate as possible to have an accurate scale
             // returned by the Wikitude SDK
-            deviceHeight: 1.8,
+            deviceHeight: 1.6,
             onError: function(errorMessage) {
                 alert(errorMessage);
             }
@@ -55,15 +55,15 @@ var World = {
             },
             onTrackingStarted: function onTrackingStartedFn() {
 
-                var model = new AR.Model("assets/rocco_2048.wt3", {
+                var model = new AR.Model("assets/rocco_2048_slam.wt3", {
                    scale: {
                        x: 1.0,
                        y: 1.0,
                        z: 1.0
                    }
                 });
-                model.translate.global.x = World.posX;
-                model.translate.global.y = World.posY;
+                //model.translate.global.x = World.posX;
+                //model.translate.global.y = World.posY;
                 World.model = model;
                 this.drawables.addCamDrawable(model);
                 // do something when tracking is started (recognized)

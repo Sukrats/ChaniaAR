@@ -671,8 +671,10 @@ public class DataManager {
         Scene rocco = new Scene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "");
         //rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part.wt3",35.5164899, 24.021208));
         rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part_no_tex.wt3",35.516551, 24.021191));
-        //rocco.addArScene(new ArScene("assets/rocco/rocco_high_poly_comp_tex.wt3",35.516551, 24.021191));
-        //rocco.addArScene(new ArScene("assets/rocco/rocco_complete_no_tex_scale.wt3",35.516551, 24.021191));
+        rocco.addArScene(new ArScene("assets/rocco/rocco_complete_no_tex_scale.wt3",35.516551, 24.021191));
+        rocco.addArScene(new ArScene("assets/rocco/rocco_1024_geo.wt3",35.516551, 24.021191));
+        rocco.addArScene(new ArScene("assets/rocco/rocco_2048_geo.wt3",35.516551, 24.021191));
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_4096_geo.wt3",35.516551, 24.021191));
         //OLD ROCCO SCENES
         //rocco.addArScene(new ArScene("assets/rocco/rocco_high_poly_low_tex.wt3",35.5164899, 24.021208));
         //rocco.addArScene(new ArScene("assets/rocco/clock.wt3",35.5164899, 24.021208));

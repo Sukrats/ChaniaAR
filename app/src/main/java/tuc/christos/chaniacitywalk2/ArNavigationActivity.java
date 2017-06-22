@@ -136,7 +136,7 @@ public class ArNavigationActivity extends Activity {
         public void handleNewLocation(Location location) {
             ArNavigationActivity.this.lastKnownLocation = location;
             //update JS Location
-            ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getAltitude(), location.getLongitude(), location.getAccuracy());
+            ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(),  location.getAccuracy());
         }
     };
 
@@ -163,7 +163,7 @@ public class ArNavigationActivity extends Activity {
         final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
         config.setFeatures(1);
-        config.setFeatures(4);
+        //config.setFeatures(4);
         config.setCameraPosition(CameraSettings.CameraPosition.DEFAULT);
         config.setCameraResolution(CameraSettings.CameraResolution.AUTO);
         config.setCamera2Enabled(false);
