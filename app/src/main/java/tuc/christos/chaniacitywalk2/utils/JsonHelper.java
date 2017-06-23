@@ -13,6 +13,7 @@ import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
+import tuc.christos.chaniacitywalk2.model.Viewport;
 
 /**
  * Created by Christos on 22-May-17.
@@ -159,7 +160,7 @@ public class JsonHelper {
             json.put("period_id", scene.getPeriod_id());
             json.put("thumb_uri", scene.getUriThumb());
             json.put("images_uri", scene.getUriImages());
-            json.put("num",scene.getNumOfScenes());
+            json.put("num",scene.getNumOfGeoScenes());
             JSONArray array= new JSONArray();
             for(ArScene s : scene.getArScene()){
                 JSONObject object = new JSONObject();
@@ -177,5 +178,60 @@ public class JsonHelper {
         return json;
     }
 
+    public static JSONObject slamSceneToJson(Scene scene){
+        JSONObject json = new JSONObject();
+        try {
+            json.put("id", scene.getId());
+            json.put("name", scene.getName());
+            json.put("description", scene.getDescription());
+            json.put("latitude", scene.getLatitude());
+            json.put("longitude", scene.getLongitude());
+            json.put("period_id", scene.getPeriod_id());
+            json.put("thumb_uri", scene.getUriThumb());
+            json.put("images_uri", scene.getUriImages());
+            json.put("num",scene.getNumOfSlamScenes());
+            JSONArray array= new JSONArray();
+            for(ArScene s : scene.getSlamScene()){
+                JSONObject object = new JSONObject();
+                object.put("path",s.getPath());
+                object.put("latitude",s.getLatitude());
+                object.put("longitude",s.getLongitude());
+                array.put(object);
+            }
+            json.put("ar_scenes",array);
+
+        }catch(JSONException e){
+            Log.i("JSON EXCEPTION", e.getMessage());
+        }
+        Log.i("ARScene parsed:", json.toString());
+        return json;
+    }
+
+    private static JSONObject viewportToJSON(Viewport viewport){
+        JSONObject json = new JSONObject();
+        try{
+            json.put("latitude",viewport.getLatitude());
+            json.put("longitude",viewport.getLongitude());
+            json.put("rotation",viewport.getRotation());
+            json.put("radius",viewport.getRadius());
+            json.put("translateX",viewport.getTranslateX());
+            json.put("translateY",viewport.getTranslateY());
+        }catch (JSONException e){
+            Log.i("JSON",e.getMessage());
+        }
+        Log.i("JSON",json.toString());
+        return json;
+    }
+
+    public static JSONObject sceneWithViewportToJSON(Scene scene,Viewport viewport){
+        JSONObject json = slamSceneToJson(scene);
+        try {
+            json.put("viewport", viewportToJSON(viewport));
+        }catch(JSONException e){
+            Log.i("JSON",e.getMessage());
+        }
+        Log.i("JSON",json.toString());
+        return json;
+    }
 
 }

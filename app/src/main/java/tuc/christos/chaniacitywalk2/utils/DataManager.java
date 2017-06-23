@@ -28,6 +28,7 @@ import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Place;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
+import tuc.christos.chaniacitywalk2.model.Viewport;
 import tuc.christos.chaniacitywalk2.model.Visit;
 
 /**
@@ -669,23 +670,23 @@ public class DataManager {
         mRoute.add(new Scene(35.5171461, 24.019581, 38, 1, "Minoiki Kidonia", ""));
 
         Scene rocco = new Scene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "");
-        //rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part.wt3",35.5164899, 24.021208));
+        rocco.addViewport(new Viewport("1", 35.516459, 24.021050, 0, 0.0f, 0.0f));
+        rocco.addViewport(new Viewport("2", 35.516419, 24.021270, -90,(float) -5.3, 8.0f));
+        rocco.addSlamScene(new ArScene("assets/rocco_1024_slam_skt.wt3",35.516551, 24.021191));
+        rocco.addSlamScene(new ArScene("assets/rocco_1024_slam.wt3",35.516551, 24.021191));
+        rocco.addSlamScene(new ArScene("assets/rocco_2048_slam.wt3",35.516551, 24.021191));
+
         rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part_no_tex.wt3",35.516551, 24.021191));
         rocco.addArScene(new ArScene("assets/rocco/rocco_complete_no_tex_scale.wt3",35.516551, 24.021191));
         rocco.addArScene(new ArScene("assets/rocco/rocco_1024_geo.wt3",35.516551, 24.021191));
         rocco.addArScene(new ArScene("assets/rocco/rocco_2048_geo.wt3",35.516551, 24.021191));
-        //rocco.addArScene(new ArScene("assets/rocco/rocco_4096_geo.wt3",35.516551, 24.021191));
-        //OLD ROCCO SCENES
-        //rocco.addArScene(new ArScene("assets/rocco/rocco_high_poly_low_tex.wt3",35.5164899, 24.021208));
-        //rocco.addArScene(new ArScene("assets/rocco/clock.wt3",35.5164899, 24.021208));
-        //rocco.addArScene(new ArScene("assets/rocco/rocco_low_poly_high_tex.wt3",35.5164899, 24.021208));
-        //rocco.addArScene(new ArScene("assets/rocco/rocco_high_geo_high_tex_weird.wt3",35.5164899, 24.021208));
         mRoute.add(rocco);
         for (Scene temp : mRoute) {
             temp.setHasAR(true);
             Route.put(String.valueOf(temp.getId()), temp);
         }
     }
+
     public Scene getArScene(String scene_id){
         return Route.get(scene_id);
     }

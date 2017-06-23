@@ -83,6 +83,7 @@ import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.model.Period;
+import tuc.christos.chaniacitywalk2.model.Viewport;
 import tuc.christos.chaniacitywalk2.utils.RestClient;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
@@ -213,7 +214,7 @@ public class MapsActivity extends AppCompatActivity implements
         String camToItem = getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID);
         if (camToItem != null) {
             Scene temp;
-            if(!activePlayer.getUsername().contains("Guest"))
+            if (!activePlayer.getUsername().contains("Guest"))
                 temp = mDataManager.getScene(Long.parseLong(camToItem));
             else temp = mDataManager.getArScene(camToItem);
             defaultCameraPosition = new CameraPosition.Builder()
@@ -295,7 +296,7 @@ public class MapsActivity extends AppCompatActivity implements
                 scenesShown.put(String.valueOf(temp.getId()), temp);
             }
             drawMap();
-        }else{
+        } else {
             for (Scene temp : mDataManager.getActiveMapContent()) {
                 scenesShown.put(String.valueOf(temp.getId()), temp);
             }
@@ -332,8 +333,8 @@ public class MapsActivity extends AppCompatActivity implements
                         marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.ar_photo)));
                     } else {
 
-                        if (activePlayer.hasVisited(temp.getId()) ) {
-                            switch((int) temp.getPeriod_id()){
+                        if (activePlayer.hasVisited(temp.getId())) {
+                            switch ((int) temp.getPeriod_id()) {
                                 case 4:
                                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.icon_otto));
                                     break;
@@ -506,19 +507,30 @@ public class MapsActivity extends AppCompatActivity implements
                 intent = new Intent(this, CollectionActivity.class);
                 break;
             case R.id.pending_activity:
-                if(isFenceTriggered) {
-                    intent = new Intent(this, ArNavigationActivity.class);
-                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "InstantExamples/index.html");
-                    float[] args = calculateDistanceToSceneInXY();
-                    intent.putExtra(Constants.ARCHITECT_ORIGIN, args);
-                }break;
+                if (isFenceTriggered) {
+                    for (Viewport v : viewports.values()) {
+                        if (v.getDistanceFromLocation(mCurrentLocation) < v.getRadius()) {
+                            intent = new Intent(this, ArNavigationActivity.class);
+                            intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "InstantExamples/index.html");
+                            intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
+                            intent.putExtra(Constants.ARCHITECT_ORIGIN, v.getId());
+                        }
+                    }
+                }
+                break;
         }
         if (intent != null) {
             aSyncActivity(intent);
         }
     }
 
-    public float[] calculateDistanceToSceneInXY(){
+
+   /*
+   public float[] packViewPortValues(Viewport viewport) {
+        return new float[]{viewport.getTranslateX(), viewport.getTranslateY(), viewport.getRadius()};
+    }
+
+    public float[] calculateDistanceInXY() {
         Scene t = mDataManager.getArScene(String.valueOf(fenceTriggered));
         Location targetX = new Location("");
         Location targetY = new Location("");
@@ -537,9 +549,9 @@ public class MapsActivity extends AppCompatActivity implements
         originY.setLongitude(mCurrentLocation.getLongitude());
         float distanceX = targetX.distanceTo(originX);
         float distanceY = targetY.distanceTo(originY);
-
-        return new float[]{distanceX,distanceY};
+        return new float[]{distanceX, distanceY};
     }
+    */
 
     public void aSyncActivity(final Intent intent) {
         Handler mHandler = new Handler();
@@ -640,6 +652,8 @@ public class MapsActivity extends AppCompatActivity implements
         moveMyLocationMarker(location);
     }
 
+    private HashMap<String, Viewport> viewports = new HashMap<>();
+    private HashMap<Viewport, Circle> circles = new HashMap<>();
 
     public void userEnteredArea(long areaID) {
         if (isFenceTriggered) {
@@ -649,12 +663,33 @@ public class MapsActivity extends AppCompatActivity implements
         }
         isFenceTriggered = true;
         fenceTriggered = areaID;
+        Scene scene = scenesShown.get(String.valueOf(areaID));
+        if (scene.hasAR() && !scene.getViewports().isEmpty()) {
+            for (Viewport view : scene.getViewports()) {
+                Circle circle = mMap.addCircle(new CircleOptions()
+                        .center(new LatLng(view.getLatitude(), view.getLongitude()))
+                        .radius(view.getRadius())
+                        .strokeWidth(2)
+                        .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
+                        .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
+
+                viewports.put(view.getId(), view);
+                circles.put(view, circle);
+            }
+        }
     }
 
     public void userLeftArea(long areaID) {
         isFenceTriggered = false;
         fenceTriggered = -1;
-        //if (circleMap.containsKey(areaID)){
+
+        if (!circles.isEmpty()) {
+            for (Viewport key : circles.keySet()) {
+                circles.get(key).remove();
+            }
+            circles.clear();
+            viewports.clear();
+        }//if (circleMap.containsKey(areaID)){
         //Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
         //Circle circle = circleMap.get(areaID);
         //circle.remove();

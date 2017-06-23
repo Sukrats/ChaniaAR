@@ -34,7 +34,10 @@ public class Scene {
     private String TAG;
 
     private int numOfScenes = 0;
-    private ArrayList<ArScene> scenes =new ArrayList<>();
+    private ArrayList<ArScene> geoScenes =new ArrayList<>();
+    private int numOfSlamScenes = 0;
+    private ArrayList<ArScene> slamScenes =new ArrayList<>();
+    private ArrayList<Viewport> viewports = new ArrayList<>();
 
     public boolean hasAR() {
         return hasAR;
@@ -187,23 +190,66 @@ public class Scene {
     }
 
     public ArrayList<ArScene> getArScene() {
-        return scenes;
+        return geoScenes;
     }
+
     public void setArScene(ArrayList<ArScene> scenes) {
         this.numOfScenes = scenes.size();
-        this.scenes = scenes;
+        this.geoScenes = scenes;
     }
 
     public void addArScene(ArScene scene){
         this.numOfScenes+=numOfScenes;
-        this.scenes.add(scene);
+        this.geoScenes.add(scene);
     }
 
-    public int getNumOfScenes() {
+    public int getNumOfGeoScenes() {
         return numOfScenes;
     }
 
     public void setNumOfScenes(int numOfScenes) {
         this.numOfScenes = numOfScenes;
+    }
+
+
+    public ArrayList<ArScene> getSlamScene() {
+        return slamScenes;
+    }
+
+    public void setSlamScene(ArrayList<ArScene> scenes) {
+        this.numOfSlamScenes = scenes.size();
+        this.slamScenes = scenes;
+    }
+
+    public void addSlamScene(ArScene scene){
+        this.numOfSlamScenes+=numOfSlamScenes;
+        this.slamScenes.add(scene);
+    }
+
+    public int getNumOfSlamScenes() {
+        return numOfSlamScenes;
+    }
+
+    public void setNumOfSlamScenes(int numOfScenes) {
+        this.numOfSlamScenes = numOfScenes;
+    }
+
+
+    public ArrayList<Viewport> getViewports() {
+        return viewports;
+    }
+
+    public void setViewports(ArrayList<Viewport> viewports) {
+        this.viewports = viewports;
+    }
+    public void addViewport(Viewport viewport){
+        this.viewports.add(viewport);
+    }
+    public Viewport getViewport(String id){
+        for(Viewport v : viewports){
+            if(v.getId().equals(id))
+                return v;
+        }
+        return null;
     }
 }

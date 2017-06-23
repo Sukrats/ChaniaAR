@@ -34,6 +34,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
@@ -42,6 +43,7 @@ import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Player;
+import tuc.christos.chaniacitywalk2.model.Viewport;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -273,8 +275,9 @@ public class ArNavigationActivity extends Activity {
                     }
                     injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
                 }else if(WorldToLoad.contains("Instant")){
-                    float origin[] = getIntent().getFloatArrayExtra(Constants.ARCHITECT_ORIGIN);
-                    injectInstant("World.getInstantiation",origin);
+                    String origin = getIntent().getStringExtra(Constants.ARCHITECT_ORIGIN);
+                    Scene scene = mDataManager.getArScene(String.valueOf(scene_id));
+                    injectArgs("World.getInstantiation",new String[]{JsonHelper.sceneWithViewportToJSON(scene, scene.getViewport(origin)).toString()});
 
                 }
             } catch (IOException e1) {
