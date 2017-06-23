@@ -459,6 +459,7 @@ public class DataManager {
                         temp.setHasAR(true);
                         Route.get(String.valueOf(temp.getId())).setUriImages(temp.getUriImages().toString());
                         Route.get(String.valueOf(temp.getId())).setUriThumb(temp.getUriThumb().toString());
+                        temp = Route.get(String.valueOf(temp.getId()));
                     }
                     scenes.add(temp);
                     ScenesMap.put(temp.getId(), temp);
