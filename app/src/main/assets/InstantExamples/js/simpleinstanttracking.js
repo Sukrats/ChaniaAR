@@ -8,6 +8,8 @@ var World = {
     location:null,
     currentModelShown: null,
     areas:[],
+    scale:1,
+    rotate:0,
 
     posX:0,
     posY:0,
@@ -64,6 +66,9 @@ var World = {
             this.tracker.state = AR.InstantTrackerState.TRACKING;
         } else {
             document.getElementById("tracking-start-stop-button").src = "assets/buttons/start.png";
+            if(World.currentModelShown != null ){
+                this.instantTrackable.drawables.removeCamDrawable(World.currentModelShown);
+            }
             this.tracker.state = AR.InstantTrackerState.INITIALIZING;
         }
     },
@@ -131,6 +136,22 @@ var World = {
                    x: World.viewport.posX,
                    y: World.viewport.posY,
                    z: 0
+               },
+               onScaleChanged: function(scale) {
+                   var scaleValue = World.scale * scale;
+                   this.scale = {x: scaleValue, y: scaleValue, z: scaleValue};
+               },
+                onScaleEnded: function(scale) {
+                    World.scale = this.scale.x;
+               },
+               onRotationChanged: function(angleInDegrees) {
+                   this.rotate.z = World.rotate - angleInDegrees;
+               },
+               onRotationEnded: function(angleInDegrees) {
+                  World.rotate = this.rotate.z
+               },
+               onClick: function(arObject,modelPart) {
+                  alert("Rot: "+World.rotate + "\nScale: "+World.scale)
                }
             });
             World.modelList.push(model);
@@ -155,6 +176,8 @@ var World = {
     },
     setModel: function setModelFn(index){
         if (World.isTracking()) {
+            World.scale = 1;
+            World.rotate = 0;
             if(World.currentModelShown != null){
                 this.instantTrackable.drawables.removeCamDrawable(World.currentModelShown);
             }
