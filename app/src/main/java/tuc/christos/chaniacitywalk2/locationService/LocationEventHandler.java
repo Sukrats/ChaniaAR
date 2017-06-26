@@ -15,7 +15,7 @@ class LocationEventHandler implements LocationCallback {
     private Location lastKnownLocation = new Location("");
     private ArrayList<LocationEventsListener> iLocationEventListener = new ArrayList<>();
 
-    static int MIN_RADIUS = 20;
+    static int MIN_RADIUS = 30;
     private static long COVER_RADIUS = 80;
 
     private HashMap<Long, Scene> scenes = new HashMap<>();
@@ -88,7 +88,7 @@ class LocationEventHandler implements LocationCallback {
                     triggerUserEnteredArea(activeFenceID);
                 }
             }
-        } else if (location.distanceTo(activeFenceLocation) >= MIN_RADIUS) {
+        } else if (location.distanceTo(activeFenceLocation) >= MIN_RADIUS + 5) {
             fenceTriggered = false;
             triggerUserLeftArea(activeFenceID);
         }
@@ -175,7 +175,7 @@ class LocationEventHandler implements LocationCallback {
      */
     private void triggerDrawGeoFences(long[] ids) {
         for (LocationEventsListener temp : iLocationEventListener)
-            temp.drawGeoFences(ids);
+            temp.drawGeoFences(ids, MIN_RADIUS);
     }
 
     public void requestFences(){

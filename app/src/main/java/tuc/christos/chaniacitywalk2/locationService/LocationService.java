@@ -247,7 +247,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             showServiceNotification();
         }
         //TODO:SET TO BACKGROUND ACCURACY
-        mLocationProvider.setMode(LocationProvider.MODE_HIGH_ACCURACY);
+        mLocationProvider.setMode(LocationProvider.MODE_BACKGROUND);
         return true;
     }
 
@@ -335,10 +335,11 @@ public class LocationService extends Service implements LocationCallback, Locati
 
         if (lastLocationChecked == null)
             lastLocationChecked = location;
-        if(scheduledRegionUpdate && System.currentTimeMillis() - updated >= 60*1000) {
+
+        if(scheduledRegionUpdate && System.currentTimeMillis() - updated >= 60*1000 && !mDataManager.getActivePlayer().getUsername().contains("Guest")) {
             updated = System.currentTimeMillis();
             checkForRegionChange(location);
-        }else if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 60*60*1000) {
+        }else if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 60*60*1000 && !mDataManager.getActivePlayer().getUsername().contains("Guest")) {
             updated = System.currentTimeMillis();
             checkForRegionChange(location);
         }
@@ -465,11 +466,11 @@ public class LocationService extends Service implements LocationCallback, Locati
         mEventHandler.requestFences();
     }
 
-    public void drawGeoFences(long[] area_ids) {
+    public void drawGeoFences(long[] area_ids, int radius) {
         Log.i("FENCES", "DRAW GEOFENCES SERVICE");
         if (!listeners.isEmpty()) {
             for (IServiceListener l : listeners) {
-                l.drawGeoFences(area_ids);
+                l.drawGeoFences(area_ids, radius);
             }
         }
     }
@@ -506,12 +507,16 @@ public class LocationService extends Service implements LocationCallback, Locati
             @Override
             protected void onPostExecute(Level level) {
                 Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
-                if (mDataManager.checkExistingLocality(level)) {
+                if ( mDataManager.checkExistingLocality(level) == 1) {
+                    Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
                     mDataManager.setLevelLocality(level);
                     triggerRegionChange(level);
-                }else scheduledRegionUpdate = false;
-                //TODO TEMPORARY
-                mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
+                }else if(mDataManager.checkExistingLocality(level) == 0)
+                    scheduledRegionUpdate = false;
+                else{
+                    Toast.makeText(LocationService.this, "Could not Locate you!Scheduled to check again in 1 min", Toast.LENGTH_SHORT).show();
+                    scheduledRegionUpdate = true;
+                }
             }
         };
 

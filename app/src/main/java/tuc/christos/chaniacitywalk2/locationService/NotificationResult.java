@@ -195,6 +195,7 @@ public class NotificationResult extends AppCompatActivity {
 
                 Intent intent = new Intent(getActivity(),LocationService.class);
                 intent.putExtra("mode", sharedPreferences.getString(key,""));
+                Log.i("LocationMode",sharedPreferences.getString(key,""));
                 if(!LocationService.isServiceRunning()) {
                     intent.putExtra("toggle", "stop");
                 }

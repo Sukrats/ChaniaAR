@@ -299,6 +299,13 @@ final class mDBHelper extends SQLiteOpenHelper {
         return count != -1;
     }
 
+    void clearLocality() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        /*String deleteQ = "DELETE FROM " + SceneEntry.TABLE_NAME;
+        db.rawQuery(deleteQ, null);*/
+        Log.i("DB_CLEAR", "DELETE QUERY EXECUTED");
+        db.delete(LocalityEntry.TABLE_NAME, null, null);
+    }
     /**************************************************************************************PLAYERS****************************************************************************************/
 
 

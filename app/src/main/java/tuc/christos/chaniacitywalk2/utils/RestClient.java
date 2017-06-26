@@ -432,6 +432,7 @@ public class RestClient implements ContentListener {
 
     public void downloadScenesForLocation(String country, String area, final ContentListener contentListener) {
         mDataManager.clearScenes();
+        //mDataManager.clearLocality();
         Log.i(TAG, "Downloading Scenes For Location");
         AsyncHttpClient client = new AsyncHttpClient();
         client.setMaxRetriesAndTimeout(4, 20000);

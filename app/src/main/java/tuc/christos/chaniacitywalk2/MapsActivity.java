@@ -272,6 +272,14 @@ public class MapsActivity extends AppCompatActivity implements
 
                 // Since we return true, we have to show the info window manually
                 //marker.showInfoWindow();
+                if (markerToViewport.containsKey(marker)) {
+                    Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
+                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "InstantExamples/index.html");
+                    intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
+                    intent.putExtra(Constants.ARCHITECT_ORIGIN, markerToViewport.get(marker).getId());
+                    startActivity(intent);
+                    return true;
+                }
                 if (!marker.equals(mLocationMarker)) {
                     if (marker.equals(mSelectedMarker)) {
                         mSelectedMarker = null;
@@ -364,6 +372,7 @@ public class MapsActivity extends AppCompatActivity implements
         }
     }
 
+    Location updated = new Location("");
     public void moveMyLocationMarker(Location location) {
         if (mLocationMarker == null || !mLocationMarker.isVisible()) {
 
@@ -401,8 +410,9 @@ public class MapsActivity extends AppCompatActivity implements
                 }
             });*/
             mLocationMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
-            if (loc.distanceTo(location) >= 5 && camFollow) {
+            if (updated.distanceTo(location) > 10 && camFollow) {
                 setCameraPosition(location.getLatitude(), location.getLongitude(), mMap.getCameraPosition().zoom);
+                updated = location;
             }
         }
     }
@@ -507,7 +517,7 @@ public class MapsActivity extends AppCompatActivity implements
                 intent = new Intent(this, CollectionActivity.class);
                 break;
             case R.id.pending_activity:
-                if (isFenceTriggered) {
+               /* if (isFenceTriggered) {
                     for (Viewport v : viewports.values()) {
                         if (v.getDistanceFromLocation(mCurrentLocation) < v.getRadius()) {
                             intent = new Intent(this, ArNavigationActivity.class);
@@ -516,7 +526,7 @@ public class MapsActivity extends AppCompatActivity implements
                             intent.putExtra(Constants.ARCHITECT_ORIGIN, v.getId());
                         }
                     }
-                }
+                }*/
                 break;
         }
         if (intent != null) {
@@ -570,7 +580,7 @@ public class MapsActivity extends AppCompatActivity implements
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
 
-    public void drawGeoFences(long[] areaIds) {
+    public void drawGeoFences(long[] areaIds, int radius) {
         for (Long key : circleMap.keySet()) {
             circleMap.get(key).remove();
         }
@@ -580,7 +590,7 @@ public class MapsActivity extends AppCompatActivity implements
             Log.i("FENCES", "DRAW GEOFENCE MAP+" + scene.getId());
             Circle circle = mMap.addCircle(new CircleOptions()
                     .center(new LatLng(scene.getLatitude(), scene.getLongitude()))
-                    .radius(20)
+                    .radius(radius)
                     .strokeWidth(2)
                     .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
                     .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
@@ -654,6 +664,8 @@ public class MapsActivity extends AppCompatActivity implements
 
     private HashMap<String, Viewport> viewports = new HashMap<>();
     private HashMap<Viewport, Circle> circles = new HashMap<>();
+    private HashMap<Marker, Viewport> markerToViewport = new HashMap<>();
+    private HashMap<Viewport, Marker> viewportToMarker = new HashMap<>();
 
     public void userEnteredArea(long areaID) {
         if (isFenceTriggered) {
@@ -666,6 +678,10 @@ public class MapsActivity extends AppCompatActivity implements
         Scene scene = scenesShown.get(String.valueOf(areaID));
         if (scene.hasAR() && !scene.getViewports().isEmpty()) {
             for (Viewport view : scene.getViewports()) {
+                Marker marker = mMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(view.getLatitude(), view.getLongitude()))
+                        .title(scene.getName())
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.camera_video)));
                 Circle circle = mMap.addCircle(new CircleOptions()
                         .center(new LatLng(view.getLatitude(), view.getLongitude()))
                         .radius(view.getRadius())
@@ -675,6 +691,9 @@ public class MapsActivity extends AppCompatActivity implements
 
                 viewports.put(view.getId(), view);
                 circles.put(view, circle);
+
+                markerToViewport.put(marker, view);
+                viewportToMarker.put(view, marker);
             }
         }
     }
@@ -689,7 +708,16 @@ public class MapsActivity extends AppCompatActivity implements
             }
             circles.clear();
             viewports.clear();
-        }//if (circleMap.containsKey(areaID)){
+        }
+        if (!viewportToMarker.isEmpty()) {
+            for (Viewport key : viewportToMarker.keySet()) {
+                viewportToMarker.get(key).remove();
+            }
+            viewportToMarker.clear();
+            markerToViewport.clear();
+            viewports.clear();
+        }
+        //if (circleMap.containsKey(areaID)){
         //Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
         //Circle circle = circleMap.get(areaID);
         //circle.remove();

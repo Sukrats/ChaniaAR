@@ -409,6 +409,9 @@ public class DataManager {
     }
 
     public Scene getScene(long id) {
+        if(getActivePlayer().getUsername().contains("Guest"))
+            return Route.get(String.valueOf(id));
+
         if (!scenesLoaded) {
             Cursor c = mDBh.getScene(id);
             Scene s = new Scene();
@@ -667,6 +670,7 @@ public class DataManager {
     private void initRoute() {
         ArrayList<Scene> mRoute = new ArrayList<>();
         //KIDONIA PENDING
+        Scene minoiki = new Scene(35.5171461, 24.019581, 38, 1, "Minoiki Kidonia", "");
         mRoute.add(new Scene(35.5171461, 24.019581, 38, 1, "Minoiki Kidonia", ""));
 
         //BYZANTINE WALL PENDING
@@ -677,13 +681,12 @@ public class DataManager {
 
         //GLASS MOSQUE ASSETS INITIALIZATION
         Scene mosque = new Scene(35.517398, 24.01779, 36, 4, "Glass Mosque", "");
-        mosque.addViewport(new Viewport("1", 35.517327, 24.017647, 0, 0.0f, 0.0f));//west 35.517327, 24.017647
-        mosque.addViewport(new Viewport("2", 35.517239, 24.017891, -90, 0.0f, 0.0f));//south 35.517239, 24.017891
-        mosque.addViewport(new Viewport("3", 35.517458, 24.018026, -180, 0.0f, 0.0f));//east 35.517458, 24.018026
-        mosque.addViewport(new Viewport("4", 35.517548, 24.017727, -270, 0.0f, 0.0f));//north 35.517548, 24.017727
-        mosque.addSlamScene(new ArScene("assets/mosque/Giali_Geo_4096_jpeg.wt3",35.517394 , 24.017851));
-        mosque.addSlamScene(new ArScene("assets/mosque/minaret_Geo_png.wt3",35.517394 , 24.017851));
-        mosque.addSlamScene(new ArScene("assets/mosque/minaret_Geo_no_base.wt3",35.517394 , 24.017851));
+        mosque.addViewport(new Viewport("1", 35.517327, 24.017647, -90, 0.0f, 0.0f));//west 35.517327, 24.017647
+        mosque.addViewport(new Viewport("2", 35.517239, 24.017891, -180, 0.0f, 0.0f));//south 35.517239, 24.017891
+        mosque.addViewport(new Viewport("3", 35.517458, 24.018026, -270, 0.0f, 0.0f));//east 35.517458, 24.018026
+        mosque.addViewport(new Viewport("4", 35.517548, 24.017727, 0, 0.0f, 0.0f));//north 35.517548, 24.017727
+        mosque.addSlamScene(new ArScene("assets/mosque/Giali_Slam.wt3",35.517394 , 24.017851));
+        mosque.addSlamScene(new ArScene("assets/mosque/minaret_Slam.wt3",35.517394 , 24.017851));
         mosque.addArScene(new ArScene("assets/mosque/Giali_Geo_4096_jpeg.wt3",35.517394 , 24.017851));
         mosque.addArScene(new ArScene("assets/mosque/minaret_Geo_png.wt3",35.517394 , 24.017851));
         mosque.addArScene(new ArScene("assets/mosque/minaret_Geo_no_base.wt3",35.517394 , 24.017851));
@@ -694,11 +697,8 @@ public class DataManager {
         rocco.addViewport(new Viewport("1", 35.516459, 24.021050, 0, 0.0f, 0.0f));
         rocco.addViewport(new Viewport("2", 35.516419, 24.021270, -90,(float) -5.3, 8.0f));
         rocco.addSlamScene(new ArScene("assets/rocco/rocco_1024_slam_skt.wt3",35.516551, 24.021191));
-        rocco.addSlamScene(new ArScene("assets/rocco/rocco_1024_slam.wt3",35.516551, 24.021191));
         rocco.addSlamScene(new ArScene("assets/rocco/rocco_2048_slam.wt3",35.516551, 24.021191));
 
-        rocco.addArScene(new ArScene("assets/rocco/rocco_ar_part_no_tex.wt3",35.516551, 24.021191));
-        rocco.addArScene(new ArScene("assets/rocco/rocco_complete_no_tex_scale.wt3",35.516551, 24.021191));
         rocco.addArScene(new ArScene("assets/rocco/rocco_1024_geo.wt3",35.516551, 24.021191));
         rocco.addArScene(new ArScene("assets/rocco/rocco_2048_geo.wt3",35.516551, 24.021191));
         mRoute.add(rocco);
@@ -718,14 +718,17 @@ public class DataManager {
         this.currentLevel = level;
     }
 
-    public boolean checkExistingLocality(Level level) {
+    public int checkExistingLocality(Level level) {
         Cursor c = mDBh.getLocality();
-        if (!c.moveToNext())
-            return true;
-        else if (level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA))))
-            return false;
-
-        return true;
+        if( level != null ) {
+            if (!c.moveToNext())
+                return 1;
+            else if (level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA))))
+                return 0;
+            return 1;
+        }else {
+            return 3;
+        }
     }
 
     public Level getCurrentLevel() {
@@ -762,6 +765,9 @@ public class DataManager {
         mDBh.clearScenes();
         scenesLoaded = false;
     }
+    /*public void clearLocality(){
+        mDBh.clearLocality();
+    }*/
 
     public void clearPeriods() {
         mDBh.clearPeriods();

@@ -158,18 +158,23 @@ var World = {
         }
     },
     initSlider: function initSlider(){
-        $("#model-slider").prop({
-            min: 1,
-            max: World.sceneList.length
-        }).slider("refresh");
+        if(World.modelList.length > 1){
+            $("#model-slider-container").css("display", "inline-block");
+            $("#model-slider").prop({
+                min: 1,
+                max: World.sceneList.length
+            }).slider("refresh");
 
-        $("#model-slider").on( "slidestop", function( event, ui ) {
+            $("#model-slider").on( "slidestop", function( event, ui ) {
+                var val = $("#model-slider").val();
+                World.setModel(val);
+            } );
+
             var val = $("#model-slider").val();
             World.setModel(val);
-        } );
-
-        var val = $("#model-slider").val();
-        World.setModel(val);
+        }else{
+            World.setModel(1);
+        }
     },
     isTracking: function isTrackingFn() {
         return (this.tracker.state === AR.InstantTrackerState.TRACKING);

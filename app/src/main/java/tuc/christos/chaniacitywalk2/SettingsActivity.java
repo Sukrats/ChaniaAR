@@ -23,6 +23,7 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -244,6 +245,10 @@ public class SettingsActivity extends PreferenceActivity {
 
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
             Preference preference = findPreference(pref_key_location_update_interval);
+            Log.i("LocationMode",sharedPreferences.getString(pref_key_location_update_interval,""));
+            Intent intent = new Intent(getActivity(),LocationService.class);
+            intent.putExtra("mode", sharedPreferences.getString(pref_key_location_update_interval,""));
+            getActivity().startService(intent);
             preference.setSummary(sharedPreferences.getString(pref_key_location_update_interval, ""));
             bindPreferenceSummaryToValue(preference);
 

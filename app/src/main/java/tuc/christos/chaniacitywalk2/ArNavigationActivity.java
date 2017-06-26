@@ -113,7 +113,7 @@ public class ArNavigationActivity extends Activity {
     };
     final IServiceListener mLocationServiceListener = new IServiceListener() {
         @Override
-        public void drawGeoFences(long[] areas) {
+        public void drawGeoFences(long[] areas, int radius) {
 
         }
 

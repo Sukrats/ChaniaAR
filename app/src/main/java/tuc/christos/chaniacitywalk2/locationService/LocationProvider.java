@@ -5,6 +5,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -22,6 +23,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.util.ArrayList;
 
+import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.mInterfaces.LocationCallback;
 
 
@@ -34,9 +36,9 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
     private LocationRequest mLocationRequest = new LocationRequest();
 
     static final String MODE_HIGH_ACCURACY = "High Accuracy";
-    private static final String MODE_BALANCED_POWER_ACCURACY = "Balanced Power Accuracy";
-    private static final String MODE_BATTERY_SAVER = "Battery Saver";
-    private static final String MODE_BACKGROUND = "background";
+    static final String MODE_BALANCED_POWER_ACCURACY = "Balanced Power Accuracy";
+    static final String MODE_BATTERY_SAVER = "Battery Saver";
+    static final String MODE_BACKGROUND = "Background";
     //public static final String MODE_GPS_ONLY = "gps_only";
     /**
      * public constructor
@@ -75,18 +77,23 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
         Log.i("requestmode",mode);
         switch(mode){
             case MODE_HIGH_ACCURACY:
-                createLocationRequest(1000, 1000/2, LocationRequest.PRIORITY_HIGH_ACCURACY);
+                Log.i("LocationMode",MODE_HIGH_ACCURACY);
+                createLocationRequest(5000, 5000/2, LocationRequest.PRIORITY_HIGH_ACCURACY);
                 break;
             case MODE_BALANCED_POWER_ACCURACY:
+                Log.i("LocationMode",MODE_BALANCED_POWER_ACCURACY);
                 createLocationRequest(5000, 5000/2, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
                 break;
             case MODE_BATTERY_SAVER:
-                createLocationRequest(10000, 10000/2, LocationRequest.PRIORITY_LOW_POWER);
+                Log.i("LocationMode",MODE_BATTERY_SAVER);
+                createLocationRequest(5000, 5000/2, LocationRequest.PRIORITY_LOW_POWER);
                 break;
             case MODE_BACKGROUND:
-                createLocationRequest(30000, 30000, LocationRequest.PRIORITY_NO_POWER);
+                Log.i("LocationMode",MODE_BACKGROUND);
+                createLocationRequest(60000, 60000, LocationRequest.PRIORITY_NO_POWER);
                 break;
             default:
+                Log.i("LocationMode","DEFAULT");
                 createLocationRequest(1000, 1000/2, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         }
     }
@@ -164,6 +171,8 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
      */
     @Override
     public void onLocationChanged(Location location){
+        Toast.makeText(MyApp.getAppContext(),"Accuracy: "+ location.getAccuracy()+
+                                             "\nLocation Mode: "+ mLocationRequest.getPriority(),Toast.LENGTH_SHORT).show();
         for(LocationCallback temp: mLocationCallback) {
             temp.handleNewLocation(location);
         }

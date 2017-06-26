@@ -9,7 +9,7 @@ import android.location.Location;
 
 public interface LocationEventsListener {
 
-    void drawGeoFences(long[] fences);
+    void drawGeoFences(long[] fences, int radius);
 
     void userEnteredArea(long areaID);
 

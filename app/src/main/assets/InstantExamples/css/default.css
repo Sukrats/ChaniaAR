@@ -18,7 +18,7 @@ body {
     text-align: center;
 }
 #model-slider-container {
-    display: inline-block;
+    display: none;
     text-align: center;
     width: 75%;
     max-width: 350px;

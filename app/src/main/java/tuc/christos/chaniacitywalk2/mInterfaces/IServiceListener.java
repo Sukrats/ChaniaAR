@@ -9,7 +9,7 @@ import android.location.Location;
 
 public interface IServiceListener {
 
-    void drawGeoFences(long[] areaIDs);
+    void drawGeoFences(long[] areaIDs, int radius);
 
     void regionChanged(String region_name,String country);
 
