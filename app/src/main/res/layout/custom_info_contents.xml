@@ -22,6 +22,7 @@
             android:layout_width="56dp"
             android:layout_height="40dp"
             android:padding="1dp"
+            android:scaleType="centerCrop"
             android:layout_gravity="center_vertical"
             android:contentDescription="@string/app_name"
             android:cropToPadding="true" />

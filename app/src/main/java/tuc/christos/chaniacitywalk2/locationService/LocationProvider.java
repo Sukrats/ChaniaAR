@@ -174,7 +174,7 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
     private long updated = System.currentTimeMillis();
     @Override
     public void onLocationChanged(Location location){
-        if(System.currentTimeMillis() - updated >= 5000) {
+        if(System.currentTimeMillis() - updated >= 50000) {
             Toast.makeText(MyApp.getAppContext(), "Accuracy: " + location.getAccuracy() +
                     "\nLocation Mode: " + mLocationRequest.getPriority(), Toast.LENGTH_SHORT).show();
             updated = System.currentTimeMillis();

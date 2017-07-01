@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingTop="16dp"
+    android:paddingEnd="16dp"
+    android:paddingStart="16dp">
+
+<!--    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/name"
+        style="@style/TextAppearance.AppCompat.Title.Inverse"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="16dp"
+        android:textColor="?android:attr/textColorTertiary"
+        android:textIsSelectable="true"
+        tools:context="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment" />-->
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="16dp">
+
+        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/description"
+            style="@style/TextAppearance.AppCompat.Body1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textIsSelectable="true"
+            tools:context="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment" />
+
+        <ImageView
+            android:id="@+id/locked"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:contentDescription="@string/action_guest"
+            android:src="@drawable/lock"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="16dp">
+
+        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/visits"
+            style="?android:attr/panelTextAppearance"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textColor="?android:attr/textColorTertiary"
+            android:textIsSelectable="true"
+            tools:context="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment" />
+
+        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/saves"
+            style="?android:attr/panelTextAppearance"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textAlignment="viewEnd"
+            android:textColor="?android:attr/textColorTertiary"
+            android:textIsSelectable="true"
+            tools:context="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment" />
+    </LinearLayout>
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        style="?android:attr/textAppearanceListItemSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="16dp"
+        android:text="Gallery:"
+        android:textColor="?android:attr/textColorTertiary"
+        android:textIsSelectable="true"
+        tools:context="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment" />
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/images"
+        style="?android:attr/textAppearanceListItemSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="16dp"
+        android:textColor="?android:attr/textColorTertiary"
+        android:textIsSelectable="true"
+        tools:context="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment" />
+
+
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/lite_map"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:padding="@dimen/activity_horizontal_margin"
+        map:liteMode="true"
+        map:mapType="none" />
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        style="?android:attr/textAppearanceListItemSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Directions"
+        android:textAlignment="center"
+        android:textColor="?android:attr/textColorTertiary"
+        android:textIsSelectable="true"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        tools:context="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment" />
+
+</LinearLayout>

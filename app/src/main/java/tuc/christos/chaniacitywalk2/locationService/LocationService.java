@@ -89,7 +89,7 @@ public class LocationService extends Service implements LocationCallback, Locati
         @Override
         public void onLocationChanged(final Location location) {
             if (location != null) {
-                if (System.currentTimeMillis() - locApitest > 5000) {
+                if (System.currentTimeMillis() - locApitest > 50000) {
                     locApitest = System.currentTimeMillis();
                     Toast.makeText(LocationService.this, "Accuracy: " + location.getAccuracy(), Toast.LENGTH_SHORT).show();
                 }
@@ -106,7 +106,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     private long updated = 0;
     private long activeFence;
     private Location lastLocationChecked = null;
-    private Location mLastKnownLocation;
+    private static Location mLastKnownLocation;
     private int retryCount = 0;
 
     /**
@@ -418,7 +418,7 @@ public class LocationService extends Service implements LocationCallback, Locati
         listeners.remove(listener);
     }
 
-    public Location getLastKnownLocation() {
+    public static Location getLastKnownLocation() {
         return mLastKnownLocation;
     }
 
@@ -582,6 +582,9 @@ public class LocationService extends Service implements LocationCallback, Locati
                     try {
                         Geocoder coder = new Geocoder(getApplicationContext());
                         List<Address> addresses = coder.getFromLocation(location1[0].getLatitude(), location1[0].getLongitude(), 20);
+                        if(addresses.isEmpty())
+                            return null;
+
                         level.setCountry(addresses.get(0).getCountryName());
                         level.setCountry_code(addresses.get(0).getCountryCode());
                         level.setCity(addresses.get(0).getLocality());

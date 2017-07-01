@@ -442,11 +442,14 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(SceneEntry.SCENES_COLUMN_PERIOD_ID, scene.getPeriod_id());
         values.put(SceneEntry.SCENES_COLUMN_NAME, scene.getName());
         values.put(SceneEntry.SCENES_COLUMN_DESCRIPTION, scene.getDescription());
+        values.put(SceneEntry.SCENES_COLUMN_PLACED, scene.getNumOfSaves());
+        values.put(SceneEntry.SCENES_COLUMN_VISITED, scene.getNumOfVisits());
         values.put(SceneEntry.SCENES_COLUMN_LATITUDE, scene.getLatitude());
         values.put(SceneEntry.SCENES_COLUMN_LONGITUDE, scene.getLongitude());
         values.put(SceneEntry.SCENES_COLUMN_REGION, scene.getRegion());
         values.put(SceneEntry.SCENES_COLUMN_IMAGES_URL, scene.getUriImages().toString());
         values.put(SceneEntry.SCENES_COLUMN_THUMBNAIL_URL, scene.getUriThumb().toString());
+
 
         long count = db.insertWithOnConflict(SceneEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
         return count != -1;

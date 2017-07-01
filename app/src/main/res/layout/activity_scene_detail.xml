@@ -23,6 +23,13 @@
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:toolbarId="@+id/toolbar">
 
+            <ImageView
+                android:id="@+id/scene_thumb"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/title_scene_detail"
+                android:scaleType="centerCrop" />
+
             <android.support.v7.widget.Toolbar
                 android:id="@+id/detail_toolbar"
                 android:layout_width="match_parent"
@@ -40,14 +47,41 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+    <LinearLayout
+        android:id="@+id/textLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/Accent"
+        android:elevation="2dp"
+        android:orientation="vertical"
+        android:paddingBottom="16dp"
+        android:paddingEnd="72dp"
+        android:paddingStart="72dp"
+        android:paddingTop="16dp"
+        android:layout_marginTop="32dp"
+        app:layout_anchor="@+id/scene_detail_container"
+        app:layout_anchorGravity="top|start">
+
+        <TextView
+            android:id="@+id/nameTextView"
+            style="@style/TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textIsSelectable="true" />
+
+    </LinearLayout>
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:elevation="4dp"
         android:layout_gravity="center_vertical|start"
         android:layout_margin="@dimen/fab_margin"
         app:layout_anchor="@+id/scene_detail_container"
         app:layout_anchorGravity="top|end"
-        app:srcCompat="@android:drawable/stat_notify_chat" />
+        app:srcCompat="@android:drawable/ic_dialog_map" />
 
 </android.support.design.widget.CoordinatorLayout>

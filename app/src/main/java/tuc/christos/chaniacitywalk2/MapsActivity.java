@@ -297,7 +297,7 @@ public class MapsActivity extends AppCompatActivity implements
                         .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
                         .bearing(0).tilt(50).build();
             }
-            if(mLocationAccuracyCircle != null)
+            if (mLocationAccuracyCircle != null)
                 mLocationAccuracyCircle.remove();
             if (camToStart) {
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
@@ -349,6 +349,7 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     Location updated = new Location("");
+
     public void moveMyLocationMarker(Location location) {
         if (mLocationMarker == null || !mLocationMarker.isVisible()) {
 
@@ -464,7 +465,7 @@ public class MapsActivity extends AppCompatActivity implements
                 intent = new Intent(this, CollectionActivity.class);
                 break;
             case R.id.pending_activity:
-               intent = new Intent(this, LeaderBoardActivity.class);
+                intent = new Intent(this, LeaderBoardActivity.class);
                 break;
         }
         if (intent != null) {
@@ -730,25 +731,13 @@ public class MapsActivity extends AppCompatActivity implements
                 ar_button.setOnTouchListener(InfoButtonListener);
 
 
-                /*OnInfoWindowElemTouchListener infoTouchListener = new OnInfoWindowElemTouchListener(det_button,
-                        ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
-                        ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {
-                    @Override
-                    protected void onClickConfirmed(View v, Marker marker) {
-                        Intent intent = new Intent(mContents.getContext(), SceneDetailActivity.class);
-                        Log.i("window", String.valueOf(scene.getId()));
-                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(scene.getId()));
-                        startActivity(intent);
-                    }
-                };
-                det_button.setOnTouchListener(infoTouchListener);*/
-
                 mContents.findViewById(R.id.controls_panel).setVisibility(View.VISIBLE);
-                // } else {
-                //    mContents.findViewById(R.id.controls_panel).setVisibility(View.GONE);
-                // }
-
                 mapWrapperLayout.setMarkerWithInfoWindow(marker, mContents);
+
+                if (!reshowFlag)
+                    scheduleHideAndShow(marker);
+                else
+                    reshowFlag = false;
                 return mContents;
             } else {
                 mContents.findViewById(R.id.thumb).setVisibility(View.GONE);
@@ -784,6 +773,25 @@ public class MapsActivity extends AppCompatActivity implements
     public static int getPixelsFromDp(Context context, float dp) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dp * scale + 0.5f);
+    }
+
+    public boolean reshowFlag = false;
+
+    public void scheduleHideAndShow(final Marker marker) {
+        final Handler handler = new Handler();
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (reshowFlag) {
+                    marker.showInfoWindow();
+                } else {
+                    marker.hideInfoWindow();
+                    reshowFlag = true;
+                    handler.postDelayed(this, 100);
+                }
+
+            }
+        });
     }
 
     @Override

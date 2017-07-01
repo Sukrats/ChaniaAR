@@ -4,9 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
+import android.location.Location;
 import android.os.AsyncTask;
-import android.provider.ContactsContract;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.content.ContextCompat;
@@ -31,7 +30,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -40,24 +38,19 @@ import android.widget.ToggleButton;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.util.ExceptionCatchingInputStream;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.concurrent.ExecutionException;
 
 import tuc.christos.chaniacitywalk2.MyApp;
+import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.R;
-import tuc.christos.chaniacitywalk2.utils.ImageHelper;
 import tuc.christos.chaniacitywalk2.utils.RestClient;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -81,6 +74,7 @@ public class CollectionActivity extends AppCompatActivity {
     static int mImageSize;
     static int numOfFragments;
     static Player activePlayer;
+    static Location location = LocationService.getLastKnownLocation();
 
     public static List<Period> periods;
 
@@ -390,6 +384,18 @@ public class CollectionActivity extends AppCompatActivity {
                     .placeholder(R.drawable.empty_photo)
                     .into(holder.logo);
 
+            Location loc = new Location("");
+            loc.setLatitude(item.getLatitude());
+            loc.setLongitude(item.getLongitude());
+            holder.distance.setText(""+String.valueOf((long)location.distanceTo(loc))+"m");
+
+            if(activePlayer.hasVisited(item.getId())) {
+                holder.locked.setVisibility(View.GONE);
+                holder.desc.setText(item.getDescription());
+            }else {
+                holder.desc.setVisibility(View.GONE);
+                holder.locked.setVisibility(View.VISIBLE);
+            }
             if (activePlayer.hasPlaced(item.getId()))
                 holder.save.setChecked(true);
             else
@@ -401,8 +407,7 @@ public class CollectionActivity extends AppCompatActivity {
                     Context context = v.getContext();
                     Intent intent = new Intent(context, SceneDetailActivity.class);
                     intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
-                    if (activePlayer.hasVisited(item.getId()))
-                        context.startActivity(intent);
+                    context.startActivity(intent);
 
                 }
             });
@@ -437,18 +442,21 @@ public class CollectionActivity extends AppCompatActivity {
         class ViewHolder extends RecyclerView.ViewHolder {
             final TextView mView;
             final ImageView logo;
-            final TextView mIdView;
+            final ImageView locked;
+            final TextView distance;
+            final TextView desc;
             final CardView cardView;
             final LinearLayout ln;
             final ToggleButton save;
 
             ViewHolder(View view) {
                 super(view);
-                mIdView = (TextView) view.findViewById(R.id.id);
-                mIdView.setVisibility(View.GONE);
+                distance = (TextView) view.findViewById(R.id.overlaytext);
 
                 mView = (TextView) view.findViewById(R.id.content);
+                desc = (TextView) view.findViewById(R.id.desc);
                 logo = (ImageView) view.findViewById(R.id.img);
+                locked = (ImageView) view.findViewById(R.id.lock);
                 cardView = (CardView) view.findViewById(R.id.card_view);
                 ln = (LinearLayout) view.findViewById(R.id.btn_holder);
                 save = (ToggleButton) view.findViewById(R.id.save_btn);

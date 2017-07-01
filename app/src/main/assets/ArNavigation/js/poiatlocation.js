@@ -61,7 +61,6 @@ var World = {
         		"saved":poiData[currentPlaceNr].saved,
         		"hasAR":poiData[currentPlaceNr].hasAR,
         	};
-        	singlePoi.description = "Lorem ipsum dolor sit amet, ei justo commune vim, cu legere euripidis vulputate vim";
         	/*
         		To be able to deselect a marker while the user taps on the empty screen,
         		the World object holds an array that contains each marker.

@@ -39,12 +39,6 @@ public class RestClient implements ContentListener {
     private boolean isLoading = false;
     private ClientListener currentListener;
 
-
-    /*************************************VOLLEY ATTEMPT CHECK*************************************************************/
-
-
-
-
     private RestClient() {
     }
 

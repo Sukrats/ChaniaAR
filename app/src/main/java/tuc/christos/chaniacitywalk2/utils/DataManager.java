@@ -423,6 +423,8 @@ public class DataManager {
                 s.setLatitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LATITUDE)));
                 s.setLongitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE)));
                 s.setPeriod_id(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID)));
+                s.setNumOfSaves(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PLACED)));
+                s.setNumOfVisits(c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_VISITED)));
                 s.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL)));
                 s.setUriThumb(c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL)));
                 //s.setVisited(hasVisited(s.getId()));
@@ -450,6 +452,8 @@ public class DataManager {
                     double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_LONGITUDE));
                     int id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_ID));
                     int period_id = c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PERIOD_ID));
+                    int saved = (c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_PLACED)));
+                    int visited = (c.getInt(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_VISITED)));
                     String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_DESCRIPTION));
                     String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_IMAGES_URL));
                     String thumbnail = c.getString(c.getColumnIndexOrThrow(mDBHelper.SceneEntry.SCENES_COLUMN_THUMBNAIL_URL));
@@ -457,13 +461,21 @@ public class DataManager {
                     Scene temp = new Scene(lat, lon, id, period_id, name, description);
                     temp.setUriImages(images);
                     temp.setUriThumb(thumbnail);
+                    temp.setNumOfVisits(visited);
+                    temp.setNumOfSaves(saved);
                     if (!Route.containsKey(String.valueOf(temp.getId())))
                         temp.setHasAR(false);
                     else {
                         temp.setHasAR(true);
                         Route.get(String.valueOf(temp.getId())).setUriImages(temp.getUriImages().toString());
                         Route.get(String.valueOf(temp.getId())).setUriThumb(temp.getUriThumb().toString());
+                        Route.get(String.valueOf(temp.getId())).setDescription(description);
+                        Route.get(String.valueOf(temp.getId())).setNumOfSaves(saved);
+                        Route.get(String.valueOf(temp.getId())).setNumOfVisits(visited);
                         temp = Route.get(String.valueOf(temp.getId()));
+                    }
+                    if(temp.getId() == 37){
+                        Log.i("Scene","Byzantine Wall: "+ temp.getName()+ "\nDescription: "+temp.getDescription());
                     }
                     scenes.add(temp);
                     ScenesMap.put(temp.getId(), temp);

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/transparent"
@@ -8,7 +9,7 @@
     <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
         android:id="@+id/card_view"
         android:layout_width="match_parent"
-        android:layout_height="66dp"
+        android:layout_height="100dp"
         android:layout_gravity="center"
         android:clickable="true"
         card_view:cardCornerRadius="3dp"
@@ -21,23 +22,30 @@
             android:background="?android:selectableItemBackground"
             android:padding="2dp">
 
-
-            <ImageView
-                android:id="@+id/img"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_gravity="center_vertical"
-                android:scaleType="centerCrop"
-                android:contentDescription="@android:string/ok"
-                android:textAppearance="?attr/textAppearanceListItem" />
-
-            <TextView
-                android:id="@+id/id"
+            <RelativeLayout
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_vertical"
-                android:layout_margin="@dimen/text_margin"
-                android:textAppearance="?attr/textAppearanceListItem" />
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/img"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center_vertical"
+                    android:contentDescription="@android:string/ok"
+                    android:scaleType="centerCrop"
+                    android:textAppearance="?attr/textAppearanceListItem"
+                    android:transitionName="image" />
+
+                <TextView
+                    android:id="@+id/overlaytext"
+                    style="?android:textAppearanceSmallInverse"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBottom="@id/img"
+                    android:background="@color/bottomBarBlack"
+                    android:gravity="center"
+                    tools:text="Overlay" />
+            </RelativeLayout>
 
             <View
                 android:layout_width="1dp"
@@ -45,15 +53,48 @@
                 android:layout_gravity="center_vertical"
                 android:background="?android:attr/listDivider" />
 
-            <TextView
-                android:id="@+id/content"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_vertical"
-                android:layout_margin="@dimen/text_margin"
+
+            <FrameLayout
+                android:id="@+id/cont"
                 android:layout_weight="1"
-                android:maxLength="25"
-                android:textAppearance="?attr/textAppearanceListItem" />
+                android:layout_width="0dp"
+                android:layout_marginBottom="8dp"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:layout_marginStart="@dimen/text_margin"
+                    android:maxLength="25"
+                    android:maxLines="1"
+                    android:textAppearance="?attr/textAppearanceListItem" />
+
+
+                <ImageView
+                    android:id="@+id/lock"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_gravity="center_horizontal|center_vertical"
+                    android:contentDescription="@string/action_guest"
+                    android:layout_marginTop="14dp"
+                    android:src="@drawable/lock"
+                    android:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/desc"
+                    style="?android:textAppearanceSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:maxLength="80" />
+
+
+            </FrameLayout>
+
 
             <View
                 android:layout_width="1dp"
@@ -72,7 +113,7 @@
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:layout_gravity="end|center_vertical"
-                    android:background="@android:drawable/btn_star"
+                    android:background="@drawable/star"
                     android:textOff=""
                     android:textOn="" />
             </LinearLayout>

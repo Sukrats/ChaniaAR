@@ -8,8 +8,15 @@ import android.view.View;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import tuc.christos.chaniacitywalk2.R;
+import tuc.christos.chaniacitywalk2.model.Scene;
+import tuc.christos.chaniacitywalk2.utils.DataManager;
 
 /**
  * An activity representing a single Scene detail screen. This
@@ -25,7 +32,7 @@ public class SceneDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_scene_detail);
         Toolbar toolbar = (Toolbar) findViewById(R.id.detail_toolbar);
         setSupportActionBar(toolbar);
-
+        setTitle("");
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -34,11 +41,24 @@ public class SceneDetailActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
-
         // Show the Up button in the action bar.
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+        String scene_id = getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID);
+        Scene scene = DataManager.getInstance().getScene(Long.valueOf(scene_id));
+
+        TextView txName = (TextView) findViewById(R.id.nameTextView);
+        txName.setText(scene.getName());
+
+        if(scene.getUriThumb() != null ) {
+            ImageView img = (ImageView) findViewById(R.id.scene_thumb);
+            Glide.with(this)
+                    .load(scene.getUriThumb())
+                    .placeholder(R.drawable.empty_photo)
+                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                    .into(img);
         }
 
         // savedInstanceState is non-null when there is fragment state
