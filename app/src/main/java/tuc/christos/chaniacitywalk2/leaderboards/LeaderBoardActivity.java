@@ -197,7 +197,7 @@ public class LeaderBoardActivity extends AppCompatActivity {
                         .into(holder.logo);
 
                 holder.name.setText(item.getName());
-                String num = "Visited: "+item.getNumOfVisits()+" times!";
+                String num = "Visits: "+item.getNumOfVisits()+"!";
                 holder.num.setText(num);
                 return;
 
