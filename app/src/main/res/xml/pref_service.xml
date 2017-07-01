@@ -14,10 +14,11 @@
         android:defaultValue="High Accuracy"
         android:entryValues="@array/pref_location_mode_values"/>
 
-    <SeekBarPreference
-        android:key="pref_key_user_draw_radius"
-        android:summary="@string/pref_geo_fence_culling_distance_summary"
-        android:title="@string/pref_geo_fence_culling_distance"/>
+    <CheckBoxPreference
+        android:key="pref_key_google_api_client"
+        android:summary="@string/use_google_api_client"
+        android:title="@string/google_api_client"
+        android:defaultValue="true"/>
 
 
 </PreferenceScreen>

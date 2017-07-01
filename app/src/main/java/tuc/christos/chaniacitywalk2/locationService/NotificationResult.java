@@ -213,6 +213,15 @@ public class NotificationResult extends AppCompatActivity {
                     mNotificationManager.cancel(Constants.PERMA_NOTIFICATION_ID);
                 }
             }
+            if (key.equals(SettingsActivity.pref_key_google_api_client)) {
+                // Set summary to be the user-description for the selected value
+                Intent intent = new Intent(getActivity(),LocationService.class);
+                intent.putExtra("swap", sharedPreferences.getBoolean(key,false));
+                if(!LocationService.isServiceRunning()) {
+                    intent.putExtra("toggle", "stop");
+                }
+                getActivity().startService(intent);
+            }
         }
 
     }

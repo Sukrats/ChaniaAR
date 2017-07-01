@@ -99,10 +99,6 @@ var World = {
 		    var val = $("#slider").val();
 		    World.showModel(val);
 		} );
-
-		var val = $("#slider").val();
-		World.showModel(val);
-
 		$("#overflow").click(function(){
 		    World.controlsShown = World.controlsShown ? false : true ;
 		    var iconToUse = World.controlsShown ? "arrow-d" : "arrow-u" ;
@@ -117,6 +113,13 @@ var World = {
                 icon: iconToUse
             });
 		});
+        if(World.sceneList.length > 1){
+            var val = $("#slider").val();
+            World.showModel(val);
+        }else{
+            $("#overflow").css("display", "none");
+            World.showModel(1);
+        }
 	},
 	userEnteredArea: function userEnteredAreaFn(){},
 	userLeftArea: function userLeftAreaFn(){},

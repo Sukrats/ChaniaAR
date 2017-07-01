@@ -15,7 +15,7 @@ class LocationEventHandler implements LocationCallback {
     private Location lastKnownLocation = new Location("");
     private ArrayList<LocationEventsListener> iLocationEventListener = new ArrayList<>();
 
-    static int MIN_RADIUS = 30;
+    static int MIN_RADIUS = 25;
     private static long COVER_RADIUS = 80;
 
     private HashMap<Long, Scene> scenes = new HashMap<>();
@@ -125,7 +125,7 @@ class LocationEventHandler implements LocationCallback {
                 }
             }
 
-    /*
+        /*
          * If no fence is active we show the corresponding message
          */
         if (!GeoFences.isEmpty()) {

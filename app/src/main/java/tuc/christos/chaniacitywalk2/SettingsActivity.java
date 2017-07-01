@@ -48,6 +48,8 @@ public class SettingsActivity extends PreferenceActivity {
 
     public static final String pref_key_user_draw_radius = "pref_key_user_draw_radius";
 
+    public static final String pref_key_google_api_client = "pref_key_google_api_client";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

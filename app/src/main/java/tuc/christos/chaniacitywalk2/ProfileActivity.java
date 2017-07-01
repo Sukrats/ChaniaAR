@@ -16,10 +16,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.ToggleButton;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,13 +97,23 @@ public class ProfileActivity extends AppCompatActivity {
 
         @Override
         public CharSequence getPageTitle(int position) {
-        String page ;
-            switch (position){
-                case 0: page ="INFO"; break;
-                case 1: page ="PROGRESS"; break;
-                case 2: page ="SAVED PLACES"; break;
-                case 3: page ="VISITED"; break;
-                default: page = "unknown"; break;
+            String page;
+            switch (position) {
+                case 0:
+                    page = "INFO";
+                    break;
+                case 1:
+                    page = "LOCAL PROGRESS";
+                    break;
+                case 2:
+                    page = "SAVED PLACES";
+                    break;
+                case 3:
+                    page = "VISITED";
+                    break;
+                default:
+                    page = "unknown";
+                    break;
             }
             return page;
         }
@@ -139,33 +148,37 @@ public class ProfileActivity extends AppCompatActivity {
                                  Bundle savedInstanceState) {
             int index = getArguments().getInt(ARG_SECTION_NUMBER);
             View rootView;
-            if(index == 2){
+            if (index == 2) {
                 ArrayList<Scene> items = new ArrayList<>();
-                for(Place p: mPlayer.getPlaces().values()) {
+                for (Place p : mPlayer.getPlaces().values()) {
                     Scene temp = new Scene(p.getScene_id(), p.getScene_name(), p.getThumb());
                     temp.setComment(p.getComment());
                     temp.setCreated(p.getCreated());
                     temp.setCountry(p.getCountry());
                     temp.setRegion(p.getRegion());
+                    temp.setNumOfVisits(p.getScene_visits());
+                    temp.setNumOfSaves(p.getScene_saves());
                     items.add(temp);
                 }
                 rootView = inflater.inflate(R.layout.fragment_profile_siblings, container, false);
                 RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
-                recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(items));
+                recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(items, 1));
 
-            }else if(index == 3){
+            } else if (index == 3) {
                 ArrayList<Scene> items = new ArrayList<>();
-                for(Visit v: mPlayer.getVisited().values()) {
+                for (Visit v : mPlayer.getVisited().values()) {
                     Scene temp = new Scene(v.getScene_id(), v.getScene_name(), v.getThumb());
                     temp.setCreated(v.getCreated());
                     temp.setCountry(v.getCountry());
                     temp.setRegion(v.getRegion());
+                    temp.setNumOfVisits(v.getScene_visits());
+                    temp.setNumOfSaves(v.getScene_saves());
                     items.add(temp);
                 }
                 rootView = inflater.inflate(R.layout.fragment_profile_siblings, container, false);
                 RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.scene_list);
                 recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(items));
-            }else if(index == 0){
+            } else if (index == 0) {
                 rootView = inflater.inflate(R.layout.profile_details, container, false);
 
                 TextView fName = (TextView) rootView.findViewById(R.id.tx1);
@@ -183,13 +196,13 @@ public class ProfileActivity extends AppCompatActivity {
                 recentActivity.setText(activeTime);
                 score.setText(String.valueOf(mPlayer.getScore()));
 
-            }else{
+            } else {
                 rootView = inflater.inflate(R.layout.progress_details, container, false);
 
-                ProgressBar overall =(ProgressBar) rootView.findViewById(R.id.overall);
-                ProgressBar venetian =(ProgressBar) rootView.findViewById(R.id.venetian);
-                ProgressBar ottoman =(ProgressBar) rootView.findViewById(R.id.ottoman);
-                ProgressBar modern =(ProgressBar) rootView.findViewById(R.id.modern);
+                ProgressBar overall = (ProgressBar) rootView.findViewById(R.id.overall);
+                ProgressBar venetian = (ProgressBar) rootView.findViewById(R.id.venetian);
+                ProgressBar ottoman = (ProgressBar) rootView.findViewById(R.id.ottoman);
+                ProgressBar modern = (ProgressBar) rootView.findViewById(R.id.modern);
 
                 TextView overall_tx = (TextView) rootView.findViewById(R.id.overall_tx);
                 TextView venetian_tx = (TextView) rootView.findViewById(R.id.venetian_tx);
@@ -197,40 +210,40 @@ public class ProfileActivity extends AppCompatActivity {
                 TextView modern_tx = (TextView) rootView.findViewById(R.id.modern_tx);
 
 
-                int overProg ;
+                int overProg;
                 float overControl = 0;
                 List<Scene> o = DataManager.getInstance().getScenes();
-                for(Scene scene: o){
-                    if(mPlayer.hasVisited(scene.getId()))
+                for (Scene scene : o) {
+                    if (mPlayer.hasVisited(scene.getId()))
                         overControl++;
                 }
-                overall_tx.setText((int)overControl+"/"+o.size());
-                Log.i("PROGRESS","overall: "+overControl);
-                Log.i("PROGRESS","overall: "+o.size());
+                overall_tx.setText((int) overControl + "/" + o.size());
+                Log.i("PROGRESS", "overall: " + overControl);
+                Log.i("PROGRESS", "overall: " + o.size());
 
 
-                float t = overControl/o.size();
-                overProg = Math.round(t*100);
+                float t = overControl / o.size();
+                overProg = Math.round(t * 100);
 
                 int ottoProg = 0;
                 int modernProg = 0;
                 int venProg = 0;
 
-                for(int i =3; i<=5;i++){
-                    List<Scene> scenes =DataManager.getInstance().getPeriodScenes(i);
+                for (int i = 3; i <= 5; i++) {
+                    List<Scene> scenes = DataManager.getInstance().getPeriodScenes(i);
                     float control = 0;
-                    for(Scene temp: scenes){
-                        if(mPlayer.hasVisited(temp.getId())){
-                            control ++;
-                            if(temp.getPeriod_id()==3) {
+                    for (Scene temp : scenes) {
+                        if (mPlayer.hasVisited(temp.getId())) {
+                            control++;
+                            if (temp.getPeriod_id() == 3) {
                                 venProg = Math.round(control / scenes.size() * 100);
-                                venetian_tx.setText((int)control+"/"+scenes.size());
-                            }else if(temp.getPeriod_id() == 4) {
+                                venetian_tx.setText((int) control + "/" + scenes.size());
+                            } else if (temp.getPeriod_id() == 4) {
                                 ottoProg = Math.round(control / scenes.size() * 100);
-                                ottoman_tx.setText((int)control+"/"+scenes.size());
-                            }else if(temp.getPeriod_id() == 5) {
+                                ottoman_tx.setText((int) control + "/" + scenes.size());
+                            } else if (temp.getPeriod_id() == 5) {
                                 modernProg = Math.round(control / scenes.size() * 100);
-                                modern_tx.setText((int)control+"/"+scenes.size());
+                                modern_tx.setText((int) control + "/" + scenes.size());
                             }
                         }
                     }
@@ -253,61 +266,101 @@ public class ProfileActivity extends AppCompatActivity {
 
         static class SimpleItemRecyclerViewAdapter extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
 
-            private final List<Scene> mValues;
+            private final List<Scene> mVisits;
+            private final List<Scene> mPlaces;
 
             SimpleItemRecyclerViewAdapter(List<Scene> items) {
-                mValues = items;
+                mVisits = items;
+                mPlaces = null;
+            }
+
+            SimpleItemRecyclerViewAdapter(List<Scene> items, int dummy) {
+                mVisits = null;
+                mPlaces = items;
             }
 
             @Override
             public SimpleItemRecyclerViewAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
                 View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.scene_list_content, parent, false);
+                        .inflate(R.layout.profile_list_content, parent, false);
 
                 return new SimpleItemRecyclerViewAdapter.ViewHolder(view);
             }
 
             @Override
             public void onBindViewHolder(final SimpleItemRecyclerViewAdapter.ViewHolder holder, int position) {
-                final Scene item = mValues.get(position);
-                holder.save.setVisibility(View.GONE);
-
-                holder.mView.setText(item.getName());
-                holder.mIdView.setText(String.valueOf(position + 1));
-                holder.cardView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Context context = v.getContext();
-                        Intent intent = new Intent(context, SceneDetailActivity.class);
-                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
-
-                        context.startActivity(intent);
-
-                    }
-                });
-
+                if (mVisits != null) {
+                    holder.created.setVisibility(View.VISIBLE);
+                    final Scene item = mVisits.get(position);
+                    holder.mView.setText(item.getName());
+                    //holder.marks.setText(String.valueOf(item.getNumOfSaves()));
+                    //holder.visits.setText(String.valueOf(item.getNumOfVisits()));
+                    holder.region.setText(item.getRegion());
+                    holder.created.setText("Visited " + computeTimeDiff(item.getCreated()) + " ago");
+                    holder.cardView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Context context = v.getContext();
+                            Intent intent = new Intent(context, SceneDetailActivity.class);
+                            intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
+                            if (DataManager.getInstance().getScene(item.getId()) != null)
+                                context.startActivity(intent);
+                            else
+                                Toast.makeText(context, "Scene Data Not Loaded :(", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return;
+                }
+                if (mPlaces != null) {
+                    holder.created.setVisibility(View.GONE);
+                    final Scene item = mPlaces.get(position);
+                    holder.mView.setText(item.getName());
+                    //holder.marks.setText(String.valueOf(item.getNumOfSaves()));
+                    //holder.visits.setText(String.valueOf(item.getNumOfVisits()));
+                    holder.region.setText(item.getRegion());
+                    holder.cardView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Context context = v.getContext();
+                            Intent intent = new Intent(context, SceneDetailActivity.class);
+                            intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, Long.toString(item.getId()));
+                            if (DataManager.getInstance().getScene(item.getId()) != null)
+                                context.startActivity(intent);
+                            else
+                                Toast.makeText(context, "Scene Data Not Loaded :(", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
             }
 
             @Override
             public int getItemCount() {
-                return mValues.size();
+                if (mVisits != null)
+                    return mVisits.size();
+                else if (mPlaces != null)
+                    return mPlaces.size();
+                else
+                    return 0;
             }
 
 
             class ViewHolder extends RecyclerView.ViewHolder {
                 final TextView mView;
-                final TextView mIdView;
+                final TextView region;
+                //final TextView marks;
+                //final TextView visits;
+                final TextView created;
                 final CardView cardView;
-                final LinearLayout ln;
-                final ToggleButton save;
+
 
                 ViewHolder(View view) {
                     super(view);
-                    mIdView = (TextView) view.findViewById(R.id.id);
                     mView = (TextView) view.findViewById(R.id.content);
+                    region = (TextView) view.findViewById(R.id.region);
+                    //marks = (TextView) view.findViewById(R.id.marked);
+                    created = (TextView) view.findViewById(R.id.created);
+                    //visits = (TextView) view.findViewById(R.id.num);
                     cardView = (CardView) view.findViewById(R.id.card_view);
-                    ln = (LinearLayout) view.findViewById(R.id.btn_holder);
-                    save = (ToggleButton) view.findViewById(R.id.save_btn);
                 }
 
                 @Override
@@ -318,5 +371,34 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
 
+    }
+
+    static String computeTimeDiff(java.sql.Date created) {
+        String toShow = "...";
+        Long time = created.getTime();
+        java.util.Date curr = new java.util.Date();
+
+        Long current = curr.getTime() - time;
+        Long currentInSeconds = current / 1000;
+        Long currentInMinutes = currentInSeconds / 60;
+        Long currentInHours = currentInMinutes / 60;
+        Long currentInDays = currentInHours / 24;
+        Long currentInMonths = currentInDays / 30;
+        Long currentInYears = currentInMonths / 12;
+
+        if (currentInYears >= 1) {
+            return currentInYears + " years";
+        } else if (currentInMonths >= 1) {
+            return currentInMonths + " months";
+        } else if (currentInDays >= 1) {
+            return currentInDays + " days";
+        } else if (currentInHours >= 1) {
+            return currentInHours + " hours";
+        } else if (currentInMinutes >= 1) {
+            return currentInMinutes + " min";
+        } else if (currentInSeconds >= 1) {
+            return currentInSeconds + " sec";
+        }
+        return toShow;
     }
 }

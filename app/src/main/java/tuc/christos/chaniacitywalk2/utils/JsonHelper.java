@@ -8,6 +8,7 @@ import org.json.JSONObject;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 
 import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Period;
@@ -61,6 +62,21 @@ public class JsonHelper {
         return player;
     }
 
+    public static ArrayList<Player> parsePlayersFromJson(String jsonObject){
+        ArrayList<Player> players = new ArrayList<>();
+        try{
+            JSONArray array = new JSONArray(jsonObject);
+            for(int i = 0; i < array.length() ; i++ ){
+                JSONObject json = array.getJSONObject(i);
+                players.add(parsePlayerFromJson(json));
+            }
+            Log.i("JSON","parsed: "+players.size()+" players");
+        }catch(JSONException e){
+            Log.i("JSON",e.getMessage());
+        }
+        return players;
+    }
+
     public static Scene parseSceneFromJson(JSONObject json){
         Scene scene = new Scene();
         try {
@@ -70,6 +86,8 @@ public class JsonHelper {
             scene.setDescription(json.getString("description"));
             scene.setLatitude(json.getDouble("latitude"));
             scene.setLongitude(json.getDouble("longitude"));
+            scene.setNumOfSaves(json.getInt("numOfPlaces"));
+            scene.setNumOfVisits(json.getInt("numOfVisits"));
 
             JSONArray links = json.getJSONArray("links");
             for (int j = 0; j < links.length(); j++) {
@@ -91,6 +109,20 @@ public class JsonHelper {
             Log.i("JSON EXCEPTION", e.getMessage());
         }
         return scene;
+    }
+    public static ArrayList<Scene> parseScenesFromJson(String jsonObject){
+        ArrayList<Scene> scenes = new ArrayList<>();
+        try{
+            JSONArray array = new JSONArray(jsonObject);
+            for(int i = 0; i < array.length() ; i++ ){
+                JSONObject json = array.getJSONObject(i);
+                scenes.add(parseSceneFromJson(json));
+            }
+            Log.i("JSON","parsed: "+scenes.size()+" scenes");
+        }catch(JSONException e){
+            Log.i("JSON",e.getMessage());
+        }
+        return scenes;
     }
 
     public static Period parsePeriodFromJson(JSONObject json) {

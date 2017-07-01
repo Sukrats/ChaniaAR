@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.LocalDBWriteListener;
 import tuc.christos.chaniacitywalk2.model.ArScene;
@@ -675,7 +676,7 @@ public class DataManager {
 
         //BYZANTINE WALL PENDING
         Scene wall = new Scene(35.51711, 24.020557, 37, 2, "The Byzantine Wall", "");//35.516954, 24.020359
-        wall.addArScene(new ArScene("assets/rocco/rocco_1024_geo.wt3",35.516954 , 24.020359));
+        wall.addArScene(new ArScene("assets/wall/wall.wt3",35.516934 , 24.020343));
         mRoute.add(wall);
 
 
@@ -714,8 +715,12 @@ public class DataManager {
     }
 
     public void setLevelLocality(Level level) {
-        mDBh.insertLocality(level);
-        this.currentLevel = level;
+        if(mDBh.insertLocality(level)){
+            Toast.makeText(MyApp.getAppContext(), "Updated Level", Toast.LENGTH_SHORT).show();
+            this.currentLevel = level;
+            return;
+        }
+        Toast.makeText(MyApp.getAppContext(), "Can't find Locality", Toast.LENGTH_SHORT).show();
     }
 
     public int checkExistingLocality(Level level) {
@@ -728,6 +733,15 @@ public class DataManager {
             return 1;
         }else {
             return 3;
+        }
+    }
+    public void printExistingLocality(){
+        Cursor c = mDBh.getLocality();
+        while (c.moveToNext()){
+            Log.i("Geocoder","\nCountry: "+c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY))+
+                    "\nCode: "+c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY_CODE))+
+                    "\nAdmin Area: "+c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA))+
+                    "\nLocality: "+c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_LOCALITY)));
         }
     }
 
@@ -832,7 +846,10 @@ public class DataManager {
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
                             Visit visit = new Visit();
                             visit.setScene_id(obj.getLong("scene_id"));
-                            visit.setScene_name("To Do In Service");
+                            visit.setScene_name(obj.getString("scene_name"));
+                            visit.setRegion(obj.getString("admin_area_name"));
+                            visit.setScene_saves(obj.getInt("scene_saves"));
+                            visit.setScene_visits(obj.getInt("scene_visits"));
                             visit.setCreated(Date.valueOf(obj.getString("created")));
                             activePlayer.addVisit(visit);
                             Log.i("Visit", "inserted: " + activePlayer.getVisit(visit.getScene_id()).getScene_name());
@@ -850,8 +867,10 @@ public class DataManager {
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
                             Place place = new Place();
                             place.setScene_id(obj.getLong("scene_id"));
-                            place.setScene_name("To Do In Service");
-                            place.setCreated(Date.valueOf(obj.getString("created")));
+                            place.setScene_name(obj.getString("scene_name"));
+                            place.setRegion(obj.getString("admin_area_name"));
+                            place.setScene_saves(obj.getInt("scene_saves"));
+                            place.setScene_visits(obj.getInt("scene_visits"));
                             place.setComment(obj.getString("comment"));
                             activePlayer.addPlace(place);
                             Log.i("Place", "inserted: " + activePlayer.getPlace(place.getScene_id()).getScene_name());
@@ -863,7 +882,6 @@ public class DataManager {
                         break;
                 }
             } catch (JSONException e) {
-                Log.i(TAG, e.getMessage());
                 Log.i(TAG, e.getMessage());
                 return false;
             }

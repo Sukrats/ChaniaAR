@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
+import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.LocalDBWriteListener;
@@ -38,6 +39,12 @@ public class RestClient implements ContentListener {
     private boolean isLoading = false;
     private ClientListener currentListener;
 
+
+    /*************************************VOLLEY ATTEMPT CHECK*************************************************************/
+
+
+
+
     private RestClient() {
     }
 
@@ -46,6 +53,39 @@ public class RestClient implements ContentListener {
         if (INSTANCE == null)
             INSTANCE = new RestClient();
         return INSTANCE;
+    }
+
+    @Override
+    public void downloadComplete(boolean success, int httpCode, String tag, String msg) {
+        if (success) {
+            switch (tag) {
+                case mDBHelper.PeriodEntry.TABLE_NAME:
+                    //currentListener.onUpdate(50, "Downloading Scenes...");
+                    currentListener.onCompleted(true, httpCode, msg);
+                    //downloadScenes(this);
+                    break;
+                case mDBHelper.SceneEntry.TABLE_NAME:
+                    currentListener.onCompleted(true, httpCode, msg);
+                    isLoading = false;
+                    break;
+                case mDBHelper.PlayerEntry.TABLE_NAME:
+                    currentListener.onCompleted(true, httpCode, msg);
+                    isLoading = false;
+                    break;
+                case mDBHelper.VisitsEntry.TABLE_NAME:
+                    currentListener.onUpdate(50, "Downloading Places...");
+                    downloadData(mDataManager.getActivePlayer().getLinks().get("places"), this, mDBHelper.PlacesEntry.TABLE_NAME);
+                    break;
+                case mDBHelper.PlacesEntry.TABLE_NAME:
+                    currentListener.onCompleted(true, httpCode, msg);
+                    isLoading = false;
+                    break;
+            }
+
+        } else {
+            currentListener.onCompleted(false, httpCode, msg);
+            isLoading = false;
+        }
     }
 
     public void getInitialContent(ClientListener clientListener) {
@@ -93,39 +133,10 @@ public class RestClient implements ContentListener {
         //}
     }
 
-    @Override
-    public void downloadComplete(boolean success, int httpCode, String tag, String msg) {
-        if (success) {
 
-            switch (tag) {
-                case mDBHelper.PeriodEntry.TABLE_NAME:
-                    //currentListener.onUpdate(50, "Downloading Scenes...");
-                    currentListener.onCompleted(true, httpCode, msg);
-                    //downloadScenes(this);
-                    break;
-                case mDBHelper.SceneEntry.TABLE_NAME:
-                    currentListener.onCompleted(true, httpCode, msg);
-                    isLoading = false;
-                    break;
-                case mDBHelper.PlayerEntry.TABLE_NAME:
-                    currentListener.onCompleted(true, httpCode, msg);
-                    isLoading = false;
-                    break;
-                case mDBHelper.VisitsEntry.TABLE_NAME:
-                    currentListener.onUpdate(50, "Downloading Places...");
-                    downloadData(mDataManager.getActivePlayer().getLinks().get("places"), this, mDBHelper.PlacesEntry.TABLE_NAME);
-                    break;
-                case mDBHelper.PlacesEntry.TABLE_NAME:
-                    currentListener.onCompleted(true, httpCode, msg);
-                    isLoading = false;
-                    break;
-            }
 
-        } else {
-            currentListener.onCompleted(false, httpCode, msg);
-            isLoading = false;
-        }
-    }
+
+
 
     /**********************************************************GET PERIODS***********************************************************************/
 
@@ -189,6 +200,37 @@ public class RestClient implements ContentListener {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                String code = "";
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                String result = "Error on Download";
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    result = errorMessage.getString("message");
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                }
+                cl.downloadComplete(false, i, mDBHelper.SceneEntry.TABLE_NAME, result);
+            }
+        });
+        mClient = client;
+    }
+
+    public void downloadScenesView(final ContentListener cl) {
+        Log.i(TAG, "Downloading Scenes");
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get(Constants.URL_SCENES, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
+                cl.downloadComplete(true,i,"scenes",new String(bytes, StandardCharsets.UTF_8));
             }
 
             @Override
@@ -311,11 +353,62 @@ public class RestClient implements ContentListener {
         mClient = client;
 
     }
-    //GET PLAYER VISITS
 
+    public void downloadPlayers(final ContentListener contentListener){
+        //mClient.cancelAllRequests(true);
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.setMaxRetriesAndTimeout(4, 20000);
+        client.get(Constants.URL_USERS, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                String code = "";
+                Log.i("Success Response code: ", " code: " + i);
+                for (Header head : headers) {
+                    Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
+                }
+                for (byte b : bytes) {
+                    code = code + ((char) b);
+                }
+                Log.i("Response Body: ", code);
+                contentListener.downloadComplete(true, i, mDBHelper.PlayerEntry.TABLE_NAME, code);
 
-    //GET PLAYER PLACES
+            }
 
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {String code = "";
+                isLoading = false;
+                Log.i("Failure Response code: ", " code: " + i);
+                if (i == 0) {
+                    final String result = throwable.getMessage();
+                    contentListener.downloadComplete(false, i, mDBHelper.PlayerEntry.TABLE_NAME, result);
+                    return;
+                }
+
+                if (headers != null)
+                    for (Header head : headers) {
+                        Log.i("Response Headers: ", head.getName() + "->" + head.getValue() + "\n");
+                    }
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                String result = "404 NOT FOUND! Service unreachable. :(";
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    result = errorMessage.getString("message");
+                    contentListener.downloadComplete(false, i, mDBHelper.PlayerEntry.TABLE_NAME, result);
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                    contentListener.downloadComplete(false, 505, mDBHelper.PlayerEntry.TABLE_NAME, result);
+                }
+
+            }
+        });
+        //mClient = client;
+
+    }
 
     /*********************************************REGISTER/POST PLAYER***********************************************************************/
 
@@ -537,7 +630,7 @@ public class RestClient implements ContentListener {
             client.post(context, Constants.URL_USER + player.getUsername() + "/places", entity, "application/json", new AsyncHttpResponseHandler() {
                 @Override
                 public void onSuccess(int i, Header[] headers, byte[] bytes) {
-                    Toast.makeText(context, "updated visits", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "updated places", Toast.LENGTH_SHORT).show();
                 }
 
                 @Override

@@ -23,6 +23,8 @@ public class Scene {
     private Date created;
     private double latitude;
     private double longitude;
+    private int numOfVisits;
+    private int numOfSaves;
     private boolean hasAR;
 
     private Map<String,String> links = new HashMap<>();
@@ -251,5 +253,21 @@ public class Scene {
                 return v;
         }
         return null;
+    }
+
+    public int getNumOfVisits() {
+        return numOfVisits;
+    }
+
+    public void setNumOfVisits(int numOfVisits) {
+        this.numOfVisits = numOfVisits;
+    }
+
+    public int getNumOfSaves() {
+        return numOfSaves;
+    }
+
+    public void setNumOfSaves(int numOfSaves) {
+        this.numOfSaves = numOfSaves;
     }
 }

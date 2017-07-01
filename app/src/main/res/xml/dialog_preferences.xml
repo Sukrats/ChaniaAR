@@ -11,6 +11,11 @@
             android:defaultValue="Background"
             android:entryValues="@array/pref_location_mode_values_dialog"/>
 
+        <CheckBoxPreference
+            android:key="pref_key_google_api_client"
+            android:summary="@string/use_google_api_client"
+            android:title="@string/google_api_client"
+            android:defaultValue="true"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

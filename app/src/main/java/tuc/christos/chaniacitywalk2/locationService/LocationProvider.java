@@ -42,16 +42,16 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
     //public static final String MODE_GPS_ONLY = "gps_only";
     /**
      * public constructor
-     * @param context
+     * @param callback
      * context of calling activity
      */
-    LocationProvider (Context context,String mode){
-        this.mGoogleApiClient = new GoogleApiClient.Builder(context)
+    LocationProvider (LocationCallback callback,String mode){
+        this.mGoogleApiClient = new GoogleApiClient.Builder(MyApp.getAppContext())
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
-
+        setLocationCallbackListener(callback);
         setLocationMode(mode);
 
     }
@@ -62,6 +62,7 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
     void connect(){
         //Change Location Provider Settings and then connect to the client
         mGoogleApiClient.connect();
+
     }
     void disconnect(){
         stopLocationUpdates();
@@ -78,15 +79,15 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
         switch(mode){
             case MODE_HIGH_ACCURACY:
                 Log.i("LocationMode",MODE_HIGH_ACCURACY);
-                createLocationRequest(5000, 5000/2, LocationRequest.PRIORITY_HIGH_ACCURACY);
+                createLocationRequest(1000, 1000, LocationRequest.PRIORITY_HIGH_ACCURACY);
                 break;
             case MODE_BALANCED_POWER_ACCURACY:
                 Log.i("LocationMode",MODE_BALANCED_POWER_ACCURACY);
-                createLocationRequest(5000, 5000/2, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                createLocationRequest(1000, 1000, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
                 break;
             case MODE_BATTERY_SAVER:
                 Log.i("LocationMode",MODE_BATTERY_SAVER);
-                createLocationRequest(5000, 5000/2, LocationRequest.PRIORITY_LOW_POWER);
+                createLocationRequest(5000, 5000, LocationRequest.PRIORITY_LOW_POWER);
                 break;
             case MODE_BACKGROUND:
                 Log.i("LocationMode",MODE_BACKGROUND);
@@ -94,7 +95,7 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
                 break;
             default:
                 Log.i("LocationMode","DEFAULT");
-                createLocationRequest(1000, 1000/2, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                createLocationRequest(1000, 1000, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         }
     }
 
@@ -144,6 +145,7 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
                 }
             }
         });
+
         if(mGoogleApiClient.isConnected())
             mGoogleApiClient.reconnect();
     }
@@ -169,10 +171,14 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
      * @param location
      * new location to be fed to the listeners
      */
+    private long updated = System.currentTimeMillis();
     @Override
     public void onLocationChanged(Location location){
-        Toast.makeText(MyApp.getAppContext(),"Accuracy: "+ location.getAccuracy()+
-                                             "\nLocation Mode: "+ mLocationRequest.getPriority(),Toast.LENGTH_SHORT).show();
+        if(System.currentTimeMillis() - updated >= 5000) {
+            Toast.makeText(MyApp.getAppContext(), "Accuracy: " + location.getAccuracy() +
+                    "\nLocation Mode: " + mLocationRequest.getPriority(), Toast.LENGTH_SHORT).show();
+            updated = System.currentTimeMillis();
+        }
         for(LocationCallback temp: mLocationCallback) {
             temp.handleNewLocation(location);
         }
@@ -229,7 +235,7 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
     }
 
-    LocationRequest getDefaultLocationSettingsRequest(){
+    static LocationRequest getDefaultLocationSettingsRequest(){
         LocationRequest dr =  new LocationRequest();
         dr.setInterval(1000);
         dr.setFastestInterval(1000/2);
@@ -237,8 +243,10 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
         return dr;
     }
 
-    GoogleApiClient getmGoogleApiClient(){
-        return mGoogleApiClient;
+    static GoogleApiClient getmGoogleApiClient(){
+            return new GoogleApiClient.Builder(MyApp.getAppContext())
+                    .addApi(LocationServices.API)
+                    .build();
     }
 
 }

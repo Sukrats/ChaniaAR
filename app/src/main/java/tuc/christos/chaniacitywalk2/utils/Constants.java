@@ -22,6 +22,7 @@ public class Constants {
     public static final String URL_USER = URL_APP + "users/secure/";
     public static final String URL_REGISTER_USER = URL_APP + "users/";
     public static final String URL_LOGIN_USER = URL_APP + "users/secure/login";
+    public static final String URL_USERS = URL_APP + "users/admin";
 
     public static final String PLAYERS_TABLE = "Player";
     public static final String SCENES_TABLE = "Scenes";

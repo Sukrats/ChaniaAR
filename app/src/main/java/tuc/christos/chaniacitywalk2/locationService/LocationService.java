@@ -13,9 +13,11 @@ import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationListener;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -24,7 +26,6 @@ import android.os.Message;
 import android.os.Process;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.app.TaskStackBuilder;
@@ -37,18 +38,18 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.location.SettingsClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import tuc.christos.chaniacitywalk2.LoginActivity;
 import tuc.christos.chaniacitywalk2.MapsActivity;
+import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.R;
 import tuc.christos.chaniacitywalk2.SettingsActivity;
+import tuc.christos.chaniacitywalk2.WikiduteUtils.ILocationProvider;
+import tuc.christos.chaniacitywalk2.WikiduteUtils.WikitudeLocationProvider;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
@@ -68,6 +69,34 @@ public class LocationService extends Service implements LocationCallback, Locati
     private ServiceHandler mServiceHandler;
     private LocationProvider mLocationProvider;
     private LocationEventHandler mEventHandler;
+
+    private ILocationProvider mWikiProvider;
+    private long locApitest = 0;
+    protected LocationListener mLocationListener = new LocationListener() {
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+        }
+
+        @Override
+        public void onLocationChanged(final Location location) {
+            if (location != null) {
+                if (System.currentTimeMillis() - locApitest > 5000) {
+                    locApitest = System.currentTimeMillis();
+                    Toast.makeText(LocationService.this, "Accuracy: " + location.getAccuracy(), Toast.LENGTH_SHORT).show();
+                }
+                LocationService.this.handleNewLocation(location);
+            }
+        }
+    };
 
     private ArrayList<IServiceListener> listeners = new ArrayList<>();
 
@@ -89,6 +118,10 @@ public class LocationService extends Service implements LocationCallback, Locati
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
         // background priority so CPU-intensive work will not disrupt our UI.
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, false);
+
         if (!isRunning) {
             HandlerThread thread = new HandlerThread("LocationProviderThread",
                     Process.THREAD_PRIORITY_BACKGROUND);
@@ -98,8 +131,11 @@ public class LocationService extends Service implements LocationCallback, Locati
             mServiceHandler = new ServiceHandler(mThreadLooper);
 
             Toast.makeText(LocationService.this, "Service Started", Toast.LENGTH_LONG).show();
-            mLocationProvider.connect();
-            mLocationProvider.setLocationCallbackListener(this);
+            if (locApi) {
+                mLocationProvider.connect();
+            } else {
+                mWikiProvider.onResume();
+            }
             mEventHandler.setLocationEventListener(this);
             isRunning = true;
         }
@@ -122,9 +158,15 @@ public class LocationService extends Service implements LocationCallback, Locati
             isRunning = true;
         }
         if (intent.getExtras() != null) {
-
-            if (intent.getStringExtra("mode") != null)
-                mLocationProvider.setMode(intent.getStringExtra("mode"));
+            if (intent.hasExtra("swap")) {
+                swapLocationProviders(intent.getBooleanExtra("swap", false));
+            }
+            if (intent.getStringExtra("mode") != null) {
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, false);
+                if (locApi)
+                    mLocationProvider.setMode(intent.getStringExtra("mode"));
+            }
             if (intent.getStringExtra("toggle") != null)
                 switch (intent.getStringExtra("toggle")) {
                     case "start":
@@ -144,6 +186,26 @@ public class LocationService extends Service implements LocationCallback, Locati
         return isRunning;
     }
 
+    private void swapLocationProviders(boolean flag) {
+        if (!flag) {
+            Toast.makeText(LocationService.this, "Android.Location API", Toast.LENGTH_SHORT).show();
+            mWikiProvider.onResume();
+            if (mLocationProvider != null) {
+                //mLocationProvider.removeLocationCallbackListener(this);
+                mLocationProvider.disconnect();
+            }
+        } else {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval, "");
+            if (mWikiProvider != null) {
+                mWikiProvider.onPause();
+            }
+            Toast.makeText(LocationService.this, "Google Api Client", Toast.LENGTH_SHORT).show();
+            mLocationProvider.setMode(mode);
+            mLocationProvider.connect();
+        }
+    }
+
     /**
      * Called when The service is no longer used and is being destroyed
      */
@@ -155,8 +217,13 @@ public class LocationService extends Service implements LocationCallback, Locati
 
         mNotificationManager.cancelAll();*/
         Toast.makeText(this, "Service Destroyed", Toast.LENGTH_LONG).show();
-        mLocationProvider.removeLocationCallbackListener(this);
-        mLocationProvider.disconnect();
+
+        if (mWikiProvider != null) {
+            mWikiProvider.onPause();
+        }
+        if (mLocationProvider != null) {
+            mLocationProvider.disconnect();
+        }
         mEventHandler.removeLocationEventListener(this);
         isRunning = false;
     }
@@ -176,6 +243,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                 mDataManager.init(LocationService.this);
             }
             mLocationProvider = new LocationProvider(LocationService.this, mode);
+            mWikiProvider = new WikitudeLocationProvider(LocationService.this, mLocationListener);
             mEventHandler = new LocationEventHandler(mDataManager.getActiveMapContent());
 
         }
@@ -196,6 +264,7 @@ public class LocationService extends Service implements LocationCallback, Locati
      */
     mIBinder mBinder = new mIBinder();
     Activity resultActivity;
+
     /**
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
@@ -205,7 +274,8 @@ public class LocationService extends Service implements LocationCallback, Locati
             // Return this instance of LocalService so clients can call public methods
             return LocationService.this;
         }
-        public void setResultActivity(Activity activity){
+
+        public void setResultActivity(Activity activity) {
             resultActivity = activity;
         }
     }
@@ -219,7 +289,23 @@ public class LocationService extends Service implements LocationCallback, Locati
         Log.i("Binder", "onBind called");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval, "");
+        boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, false);
+        if (!locApi) {
+            Toast.makeText(LocationService.this, "Android.Location API", Toast.LENGTH_SHORT).show();
+            mWikiProvider.onResume();
+            if (mLocationProvider != null) {
+                //mLocationProvider.removeLocationCallbackListener(this);
+                mLocationProvider.disconnect();
+            }
+            return mBinder;
+        }
+
+        if (mWikiProvider != null) {
+            mWikiProvider.onPause();
+        }
+        Toast.makeText(LocationService.this, "Google Api Client", Toast.LENGTH_SHORT).show();
         mLocationProvider.setMode(mode);
+        mLocationProvider.connect();
         return mBinder;
     }
 
@@ -246,8 +332,8 @@ public class LocationService extends Service implements LocationCallback, Locati
         if (!IsApplicationInForeground()) {
             showServiceNotification();
         }
-        //TODO:SET TO BACKGROUND ACCURACY
-        mLocationProvider.setMode(LocationProvider.MODE_BACKGROUND);
+        if (mLocationProvider != null)
+            mLocationProvider.setMode(LocationProvider.MODE_BACKGROUND);
         return true;
     }
 
@@ -260,9 +346,19 @@ public class LocationService extends Service implements LocationCallback, Locati
         Log.i("Binder", "OnRebind called");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval, "");
+        boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, false);
         Log.i("Binder", mode);
-
-        mLocationProvider.setMode(mode);
+        if (!locApi) {
+            Toast.makeText(LocationService.this, "Android.Location API", Toast.LENGTH_SHORT).show();
+            mLocationProvider.disconnect();
+            //mLocationProvider.removeLocationCallbackListener(this);
+            mWikiProvider.onResume();
+        } else {
+            Toast.makeText(LocationService.this, "Google Api Client", Toast.LENGTH_SHORT).show();
+            mWikiProvider.onPause();
+            mLocationProvider.setMode(mode);
+            mLocationProvider.connect();
+        }
     }
 
     public void showServiceNotification() {
@@ -336,10 +432,10 @@ public class LocationService extends Service implements LocationCallback, Locati
         if (lastLocationChecked == null)
             lastLocationChecked = location;
 
-        if(scheduledRegionUpdate && System.currentTimeMillis() - updated >= 60*1000 && !mDataManager.getActivePlayer().getUsername().contains("Guest")) {
+        if (scheduledRegionUpdate && System.currentTimeMillis() - updated >= 60 * 1000 && !mDataManager.getActivePlayer().getUsername().contains("Guest")) {
             updated = System.currentTimeMillis();
             checkForRegionChange(location);
-        }else if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 60*60*1000 && !mDataManager.getActivePlayer().getUsername().contains("Guest")) {
+        } else if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 60 * 60 * 1000 && !mDataManager.getActivePlayer().getUsername().contains("Guest")) {
             updated = System.currentTimeMillis();
             checkForRegionChange(location);
         }
@@ -347,10 +443,10 @@ public class LocationService extends Service implements LocationCallback, Locati
 
     public void checkLocationSettings() {
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
-        builder.addLocationRequest(mLocationProvider.getDefaultLocationSettingsRequest());
+        builder.addLocationRequest(LocationProvider.getDefaultLocationSettingsRequest());
 
         //SettingsClient client = LocationServices.getSettingsClient(this);
-        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mLocationProvider.getmGoogleApiClient(), builder.build());
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(LocationProvider.getmGoogleApiClient(), builder.build());
 
         result.setResultCallback(new ResultCallback<LocationSettingsResult>()
 
@@ -363,8 +459,8 @@ public class LocationService extends Service implements LocationCallback, Locati
                         try {
                             status.startResolutionForResult(resultActivity, 1);
 
-                        }catch (IntentSender.SendIntentException e){
-                            Log.i(TAG,e.getMessage());
+                        } catch (IntentSender.SendIntentException e) {
+                            Log.i(TAG, e.getMessage());
                         }
                         break;
                 }
@@ -452,7 +548,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                             break;
                     }
                 } else {
-                    Toast.makeText(getApplicationContext(),"Scenes For Region Downloaded", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Scenes For Region Downloaded", Toast.LENGTH_SHORT).show();
                     mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
                     for (IServiceListener i : listeners)
                         i.regionChanged(level.getAdminArea(), level.getCountry());
@@ -474,9 +570,9 @@ public class LocationService extends Service implements LocationCallback, Locati
             }
         }
     }
-
+    private int count = 0;
     private void checkForRegionChange(Location location) {
-        Toast.makeText(this,"checking region for scenes", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "checking region for scenes", Toast.LENGTH_SHORT).show();
         //TODO: CHANGE FOR REGION CHANGES setting to a normal number
         AsyncTask<Location, Void, Level> geoCoderTask = new AsyncTask<Location, Void, Level>() {
             @Override
@@ -498,7 +594,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                         }
 
                     } catch (IOException e) {
-                        Log.i("Geocoder", e.getMessage());
+                        level = null;
                     }
                 }
                 return level;
@@ -506,15 +602,27 @@ public class LocationService extends Service implements LocationCallback, Locati
 
             @Override
             protected void onPostExecute(Level level) {
-                Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
-                if ( mDataManager.checkExistingLocality(level) == 1) {
-                    Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
-                    mDataManager.setLevelLocality(level);
-                    triggerRegionChange(level);
-                }else if(mDataManager.checkExistingLocality(level) == 0)
-                    scheduledRegionUpdate = false;
-                else{
-                    Toast.makeText(LocationService.this, "Could not Locate you!Scheduled to check again in 1 min", Toast.LENGTH_SHORT).show();
+                mDataManager.printExistingLocality();
+                if (level == null && count < 2 ) {
+                    Toast.makeText(MyApp.getAppContext(), "retrying...", Toast.LENGTH_SHORT).show();
+                    scheduledRegionUpdate = true;
+                    count++;
+                    return;
+                }
+                count = 0;
+                if(level != null) {
+                    if (mDataManager.checkExistingLocality(level) == 1) {
+                        Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
+                        mDataManager.setLevelLocality(level);
+                        triggerRegionChange(level);
+                    } else if (mDataManager.checkExistingLocality(level) == 0)
+                        scheduledRegionUpdate = false;
+                    else {
+                        Toast.makeText(LocationService.this, "Could not Locate you!Scheduled to check again in 1 min", Toast.LENGTH_SHORT).show();
+                        scheduledRegionUpdate = true;
+                    }
+                }else{
+                    Toast.makeText(LocationService.this, "GeoCoder service is offline!Scheduled to check again in 1 min", Toast.LENGTH_SHORT).show();
                     scheduledRegionUpdate = true;
                 }
             }

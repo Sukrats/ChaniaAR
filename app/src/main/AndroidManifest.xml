@@ -33,7 +33,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:name="tuc.christos.chaniacitywalk2.MyApp"
+        android:name=".MyApp"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -46,16 +46,17 @@
         <activity
             android:name=".LoginActivity"
             android:noHistory="false"
-            android:theme="@style/AppTheme.Dark"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.Dark">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MapsActivity"
-            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".MapsActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".collectionActivity.CollectionActivity"
             android:label="@string/title_activity_collection_siblings"
@@ -89,8 +90,8 @@
         <activity
             android:name=".ProfileActivity"
             android:label="@string/title_profile"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".MapsActivity">
+            android:parentActivityName=".MapsActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
@@ -107,9 +108,13 @@
             android:name=".locationService.LocationService"
             android:exported="false" />
 
-        <activity android:name=".locationService.NotificationResult"
-            android:theme="@style/PreferenceThemeDialog"
-            android:excludeFromRecents="true"/>
+        <activity
+            android:name=".locationService.NotificationResult"
+            android:excludeFromRecents="true"
+            android:theme="@style/PreferenceThemeDialog" />
+        <activity
+            android:name=".leaderboards.LeaderBoardActivity"
+            android:label="@string/title_activity_leader_board"/>
     </application>
 
 </manifest>

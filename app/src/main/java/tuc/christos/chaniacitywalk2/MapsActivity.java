@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -12,52 +11,31 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Camera;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
-import android.media.Image;
-import android.net.Uri;
-import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
-import android.support.v4.util.LongSparseArray;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.animation.Interpolator;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -73,19 +51,15 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
-import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
+import tuc.christos.chaniacitywalk2.leaderboards.LeaderBoardActivity;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Viewport;
-import tuc.christos.chaniacitywalk2.utils.RestClient;
-import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
 import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.MapWrapperLayout;
@@ -101,7 +75,6 @@ import tuc.christos.chaniacitywalk2.utils.DataManager;
 public class MapsActivity extends AppCompatActivity implements
         IServiceListener,
         GoogleMap.OnMapClickListener,
-        GoogleMap.OnCameraIdleListener,
         OnMapReadyCallback {
 
     protected static final String TAG = "MAPS ACTIVITY";
@@ -118,6 +91,7 @@ public class MapsActivity extends AppCompatActivity implements
     protected Location mCurrentLocation;
     protected String mLastUpdateTime;
     private Marker mLocationMarker = null;
+    private Circle mLocationAccuracyCircle = null;
 
     private HashMap<Long, Circle> circleMap = new HashMap<>();
 
@@ -161,7 +135,7 @@ public class MapsActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         Log.i("ACTIVITY", "CREATED MAPS ACTIVITY");
         //setContentView(R.layout.activity_maps_custom);
-        setContentView(R.layout.custom_map_layout_test);
+        setContentView(R.layout.activity_maps);
         //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
@@ -323,6 +297,8 @@ public class MapsActivity extends AppCompatActivity implements
                         .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
                         .bearing(0).tilt(50).build();
             }
+            if(mLocationAccuracyCircle != null)
+                mLocationAccuracyCircle.remove();
             if (camToStart) {
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
                 camToStart = false;
@@ -381,6 +357,12 @@ public class MapsActivity extends AppCompatActivity implements
                     .position(new LatLng(location.getLatitude(), location.getLongitude()))
                     .title("mLocationMarker")
                     .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bm, 64, 64, false))));
+            mLocationAccuracyCircle = mMap.addCircle(new CircleOptions()
+                    .center(new LatLng(location.getLatitude(), location.getLongitude()))
+                    .radius(location.getAccuracy())
+                    .strokeWidth(2)
+                    .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
+                    .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
             setCameraPosition(location.getLatitude(), location.getLongitude(), DEFAULT_ZOOM_LEVEL);
         } else {
             Location loc = latLngToLoc(mLocationMarker.getPosition());
@@ -410,6 +392,9 @@ public class MapsActivity extends AppCompatActivity implements
                 }
             });*/
             mLocationMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+            mLocationAccuracyCircle.setCenter(new LatLng(location.getLatitude(), location.getLongitude()));
+            mLocationAccuracyCircle.setRadius(location.getAccuracy());
+
             if (updated.distanceTo(location) > 10 && camFollow) {
                 setCameraPosition(location.getLatitude(), location.getLongitude(), mMap.getCameraPosition().zoom);
                 updated = location;
@@ -417,44 +402,6 @@ public class MapsActivity extends AppCompatActivity implements
         }
     }
 
-    @Override
-    public void onCameraIdle() {
-       /* if (mDataManager.getCurrentLevel() != null) {
-            LatLng pos = mMap.getCameraPosition().target;
-            Location targetRegion = new Location("");
-            targetRegion.setLatitude(pos.latitude);
-            targetRegion.setLongitude(pos.longitude);
-            Level level = new Level();
-            try {
-                Geocoder coder = new Geocoder(getApplicationContext());
-                List<Address> addresses = coder.getFromLocation(targetRegion.getLatitude(), targetRegion.getLongitude(), 20);
-                level.setCountry(addresses.get(0).getCountryName());
-                level.setCountry_code(addresses.get(0).getCountryCode());
-                level.setCity(addresses.get(0).getLocality());
-                level.setAdminArea("");
-                for (Address temp : addresses) {
-                    if (temp.getAdminArea() != null)
-                        level.setAdminArea(temp.getAdminArea());
-                    if (temp.getSubAdminArea() != null)
-                        level.setSubAdminArea(temp.getSubAdminArea());
-                }
-
-            } catch (IOException e) {
-                Log.i("Geocoder", e.getMessage());
-            }
-            Toast.makeText(this,"Region: "+level.getAdminArea(),Toast.LENGTH_SHORT).show();
-            if (level.getAdminArea().equals(mDataManager.getCurrentLevel().getAdminArea())) {
-              /*  RestClient client = RestClient.getInstance();
-                client.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
-                    @Override
-                    public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
-                        if (success) {
-                        }
-                    }
-                });*/
-        //          }
-//        }
-    }
 
     public Location latLngToLoc(LatLng latLng) {
         Location location = new Location("");
@@ -517,16 +464,7 @@ public class MapsActivity extends AppCompatActivity implements
                 intent = new Intent(this, CollectionActivity.class);
                 break;
             case R.id.pending_activity:
-               /* if (isFenceTriggered) {
-                    for (Viewport v : viewports.values()) {
-                        if (v.getDistanceFromLocation(mCurrentLocation) < v.getRadius()) {
-                            intent = new Intent(this, ArNavigationActivity.class);
-                            intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "InstantExamples/index.html");
-                            intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
-                            intent.putExtra(Constants.ARCHITECT_ORIGIN, v.getId());
-                        }
-                    }
-                }*/
+               intent = new Intent(this, LeaderBoardActivity.class);
                 break;
         }
         if (intent != null) {
@@ -534,34 +472,6 @@ public class MapsActivity extends AppCompatActivity implements
         }
     }
 
-
-   /*
-   public float[] packViewPortValues(Viewport viewport) {
-        return new float[]{viewport.getTranslateX(), viewport.getTranslateY(), viewport.getRadius()};
-    }
-
-    public float[] calculateDistanceInXY() {
-        Scene t = mDataManager.getArScene(String.valueOf(fenceTriggered));
-        Location targetX = new Location("");
-        Location targetY = new Location("");
-
-        targetX.setLatitude(t.getLatitude());
-        targetX.setLongitude(0);
-        targetY.setLatitude(0);
-        targetY.setLongitude(t.getLongitude());
-
-        Location originX = new Location("");
-        Location originY = new Location("");
-
-        originX.setLatitude(mCurrentLocation.getLatitude());
-        originX.setLongitude(0);
-        originY.setLatitude(0);
-        originY.setLongitude(mCurrentLocation.getLongitude());
-        float distanceX = targetX.distanceTo(originX);
-        float distanceY = targetY.distanceTo(originY);
-        return new float[]{distanceX, distanceY};
-    }
-    */
 
     public void aSyncActivity(final Intent intent) {
         Handler mHandler = new Handler();

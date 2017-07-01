@@ -120,6 +120,9 @@
     <string name="pref_geo_fence_culling_distance">Draw Distance</string>
     <string name="pref_geo_fence_culling_distance_summary">Set Max Drawing Distance</string>
 
+    <string name="use_google_api_client">if enabled the app uses the google api client for location updates.Otherwise it uses the android.location api</string>
+    <string name="google_api_client">Google Api Client</string>
+
     <string name="notification_toggle_start">START</string>
     <string name="notification_toggle_pause">PAUSE</string>
     <string name="notification_toggle_stop">STOP</string>
@@ -136,5 +139,10 @@
     <string name="title_activity_splash">SplashActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">Fetching Content</string>
+
+    <string name="title_activity_leader_board">leaderBoardActivity</string>
+    <string name="title_leaderboard">Leaderboard</string>
+    <string name="title_landmarks">Most Visited</string>
+    <string name="title_local_activity">Local Activity</string>
 
 </resources>

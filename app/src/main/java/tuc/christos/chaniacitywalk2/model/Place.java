@@ -15,6 +15,9 @@ public class Place {
     private String comment;
     private Date created;
 
+    private int scene_saves;
+    private int scene_visits;
+
     public Place() {
     }
 
@@ -72,5 +75,21 @@ public class Place {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    public int getScene_saves() {
+        return scene_saves;
+    }
+
+    public void setScene_saves(int scene_saves) {
+        this.scene_saves = scene_saves;
+    }
+
+    public int getScene_visits() {
+        return scene_visits;
+    }
+
+    public void setScene_visits(int scene_visits) {
+        this.scene_visits = scene_visits;
     }
 }

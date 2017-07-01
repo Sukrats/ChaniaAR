@@ -109,14 +109,6 @@ public class CollectionActivity extends AppCompatActivity {
         // primary sections of the activity.
         // Set up the ViewPager with the sections adapter.
 
-        /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
         final ProgressBar progressbar = (ProgressBar) findViewById(R.id.progress);
 
         final SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -175,42 +167,6 @@ public class CollectionActivity extends AppCompatActivity {
                     started.setText("");
                     ended.setText("");
                 }
-                /*
-                if (position == 0) {
-                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_1);
-                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
-                    bm.setCircular(true);
-                    imgView.setImageDrawable(bm);
-                } else if (position == 1) {
-                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_2);
-                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
-                    bm.setCircular(true);
-                    imgView.setImageDrawable(bm);
-                } else if (position == 2) {
-                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_3);
-                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
-                    bm.setCircular(true);
-                    imgView.setImageDrawable(bm);
-                } else if (position == 3) {
-                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_4);
-                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
-                    bm.setCircular(true);
-                    imgView.setImageDrawable(bm);
-                } else if (position == 4) {
-                    Bitmap temp = BitmapFactory.decodeResource(getResources(), R.drawable.period_bg_5);
-                    RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(getResources(), temp);
-                    bm.setCircular(true);
-                    imgView.setImageDrawable(bm);
-                } else if (position == 5)
-                    findViewById(R.id.logocont).setVisibility(View.GONE);
-               /* if (position != numOfFragments - 1)
-                    Glide.with(getApplicationContext())
-                            .load(periods.get(position).getUriLogo())
-                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                            .placeholder(R.drawable.empty_photo)
-                            .override(mImageSize, mImageSize)
-                            .into(imgView);*/
-
             }
 
             private void setImageDrawable(final Bitmap bitmap) {

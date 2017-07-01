@@ -48,15 +48,16 @@
         android:icon="@android:drawable/ic_menu_compass"
         android:title="@string/pref_geo_fence">
 
-        <SeekBarPreference
-            android:key="pref_key_user_draw_radius"
-            android:summary="@string/pref_geo_fence_culling_distance_summary"
-            android:title="@string/pref_geo_fence_culling_distance"/>
-
         <CheckBoxPreference
             android:key="pref_key_allow_background_locations"
             android:summary="@string/allow_background_locations"
             android:title="@string/allow_background_locations_title"
+            android:defaultValue="false"/>
+
+        <CheckBoxPreference
+            android:key="pref_key_google_api_client"
+            android:summary="@string/use_google_api_client"
+            android:title="@string/google_api_client"
             android:defaultValue="false"/>
 
     </PreferenceScreen>
