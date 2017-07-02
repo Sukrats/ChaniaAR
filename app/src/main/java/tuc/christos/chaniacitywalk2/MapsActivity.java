@@ -182,7 +182,6 @@ public class MapsActivity extends AppCompatActivity implements
             defaultCameraPosition = new CameraPosition.Builder()
                     .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
                     .bearing(0).tilt(50).build();
-            camToStart = true;
         }
 
         String camToItem = getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID);

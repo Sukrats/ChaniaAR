@@ -25,6 +25,7 @@ import java.util.List;
 
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Place;
 import tuc.christos.chaniacitywalk2.model.Visit;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
@@ -208,8 +209,6 @@ public class ProfileActivity extends AppCompatActivity {
                 TextView venetian_tx = (TextView) rootView.findViewById(R.id.venetian_tx);
                 TextView ottoman_tx = (TextView) rootView.findViewById(R.id.ottoman_tx);
                 TextView modern_tx = (TextView) rootView.findViewById(R.id.modern_tx);
-
-
                 int overProg;
                 float overControl = 0;
                 List<Scene> o = DataManager.getInstance().getScenes();
@@ -371,6 +370,44 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
 
+    }
+
+    static class SimpleProgressRecyclerViewAdapter extends RecyclerView.Adapter<SimpleProgressRecyclerViewAdapter.ViewHolder> {
+
+        private static ArrayList<Period> periods;
+
+        SimpleProgressRecyclerViewAdapter(ArrayList<Period> items) {
+            periods = items;
+        }
+
+
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            return null;
+        }
+
+        @Override
+        public void onBindViewHolder(final SimpleProgressRecyclerViewAdapter.ViewHolder holder, int position) {
+        }
+
+        @Override
+        public int getItemCount() {
+            return periods.size();
+        }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+
+            ViewHolder(View view) {
+                super(view);
+            }
+
+            @Override
+            public String toString() {
+                return super.toString();// + " '" + mContentView.getText() + "'";
+
+            }
+
+        }
     }
 
     static String computeTimeDiff(java.sql.Date created) {
