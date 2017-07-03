@@ -6,84 +6,110 @@
     android:layout_height="match_parent"
     tools:ignore="MergeRootFrame">
 
-    <android.support.v4.widget.NestedScrollView
-        xmlns:android="http://schemas.android.com/apk/res/android"
+    <android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-   <!--         <TextView
-                android:id="@+id/title"
-                android:gravity="center_horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingLeft="6dp"
-                android:paddingRight="6dp"
-                android:textAppearance="@style/TextAppearance.AppCompat.Title" />-->
-
+            <!--         <TextView
+                         android:id="@+id/title"
+                         android:gravity="center_horizontal"
+                         android:layout_width="match_parent"
+                         android:layout_height="wrap_content"
+                         android:paddingLeft="6dp"
+                         android:paddingRight="6dp"
+                         android:textAppearance="@style/TextAppearance.AppCompat.Title" />-->
 
 
             <android.support.v7.widget.AppCompatTextView
                 android:id="@+id/history"
-                android:text="Brief History: "
-                android:textColor="@android:color/tertiary_text_dark"
-                android:textAppearance="@style/TextAppearance.AppCompat.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingBottom="6dp"
                 android:paddingLeft="6dp"
                 android:paddingRight="6dp"
                 android:paddingTop="6dp"
-                android:paddingBottom="6dp"/>
+                android:text="Brief History: "
+                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                android:textColor="@android:color/tertiary_text_dark" />
 
             <android.support.v7.widget.AppCompatTextView
                 android:id="@+id/body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingBottom="6dp"
                 android:paddingLeft="6dp"
-                android:paddingRight="6dp"
-                android:paddingBottom="6dp"/>
+                android:paddingRight="6dp" />
 
 
             <View
                 android:id="@+id/section_div"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/listDivider"/>
+                android:background="?android:attr/listDivider" />
 
             <android.support.v7.widget.AppCompatTextView
-                android:id="@+id/monuments"
-                android:text="Monuments: "
-                android:textColor="@android:color/tertiary_text_dark"
-                android:textAppearance="?android:attr/textAppearanceMedium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingBottom="6dp"
                 android:paddingLeft="6dp"
                 android:paddingRight="6dp"
                 android:paddingTop="6dp"
-                android:paddingBottom="6dp"/>
+                android:text="overview "
+                android:textAlignment="center"
+                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                android:textColor="@android:color/tertiary_text_dark" />
 
-            <android.support.v7.widget.RecyclerView
-                xmlns:android="http://schemas.android.com/apk/res/android"
+            <ImageView
+                android:id="@+id/map_pic"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/action_or"
+                android:scaleType="centerCrop" />
+
+            <View
+                android:id="@+id/sectiond"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/listDivider" />
+
+            <android.support.v7.widget.AppCompatTextView
+                android:id="@+id/monuments"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="6dp"
+                android:paddingLeft="6dp"
+                android:paddingRight="6dp"
+                android:paddingTop="6dp"
+                android:text="Monuments: "
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="@android:color/tertiary_text_dark" />
+
+            <android.support.v7.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:app="http://schemas.android.com/apk/res-auto"
                 xmlns:tools="http://schemas.android.com/tools"
                 android:id="@+id/scene_list"
                 android:name="tuc.christos.chaniacitywalk2.Collection.SceneListFragment"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:layoutManager="LinearLayoutManager"
                 android:paddingLeft="6dp"
                 android:paddingRight="6dp"
+                app:layoutManager="LinearLayoutManager"
                 tools:listitem="@layout/scene_list_content" />
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>
+
     <View
         android:layout_width="match_parent"
         android:layout_height="6dp"
         android:layout_gravity="center_horizontal|top"
-        android:background="@drawable/shadow"/>
+        android:background="@drawable/shadow" />
 </android.support.design.widget.CoordinatorLayout>

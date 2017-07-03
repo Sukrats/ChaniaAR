@@ -20,6 +20,7 @@ public class Period {
 
     private String ended;
     private Uri uriLogo;
+    private Uri uriMap;
     private Uri uriImages;
 
     private Map<String, String> links = new HashMap<>();
@@ -80,7 +81,13 @@ public class Period {
     public void setUriLogo(String uriLogo) {
         this.uriLogo = Uri.parse(uriLogo);
     }
+    public Uri getUriMap() {
+        return uriMap;
+    }
 
+    public void setUriMap(String uriMap) {
+        this.uriMap = Uri.parse(uriMap);
+    }
 
     public Uri getUriImages() {
         return uriImages;

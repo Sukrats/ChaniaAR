@@ -65,6 +65,7 @@ final class mDBHelper extends SQLiteOpenHelper {
                 PeriodEntry.PERIODS_COLUMN_STARTED + " TEXT, " +
                 PeriodEntry.PERIODS_COLUMN_ENDED + " TEXT, " +
                 PeriodEntry.PERIODS_COLUMN_LOGO_URL + " TEXT," +
+                PeriodEntry.PERIODS_COLUMN_MAP_URL + " TEXT," +
                 PeriodEntry.PERIODS_COLUMN_IMAGES_URL + " TEXT " +
                 ")";
         db.execSQL(SQL_CREATE_PERIODS);
@@ -490,6 +491,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(PeriodEntry.PERIODS_COLUMN_ENDED, period.getEnded());
         values.put(PeriodEntry.PERIODS_COLUMN_IMAGES_URL, period.getUriImages().toString());
         values.put(PeriodEntry.PERIODS_COLUMN_LOGO_URL, period.getUriLogo().toString());
+        values.put(PeriodEntry.PERIODS_COLUMN_MAP_URL, period.getUriMap().toString());
 
         long count = db.insertWithOnConflict(PeriodEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
         return count != -1;
@@ -610,6 +612,7 @@ final class mDBHelper extends SQLiteOpenHelper {
         static final String PERIODS_COLUMN_STARTED = "started";
         static final String PERIODS_COLUMN_ENDED = "ended";
         static final String PERIODS_COLUMN_LOGO_URL = "logourl";
+        static final String PERIODS_COLUMN_MAP_URL = "mapurl";
         static final String PERIODS_COLUMN_IMAGES_URL = "imagesurl";
     }
 

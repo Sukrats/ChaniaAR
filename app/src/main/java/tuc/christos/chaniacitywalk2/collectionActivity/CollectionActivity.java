@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -314,12 +315,24 @@ public class CollectionActivity extends AppCompatActivity {
             int index = getArguments().getInt(ARG_SECTION_NUMBER);
             Log.i("PERIODS", "index: " + index + " Frag:" + (numOfFragments - 1));
             if (index < numOfFragments - 1) {
-                Period period = periods.get(index);
+                final Period period = periods.get(index);
                 TextView tx = (TextView) rootView.findViewById(R.id.monuments);
 
                 TextView body = (AppCompatTextView) rootView.findViewById(R.id.body);
                 body.setText(period.getDescription());
-
+                ImageView mappic = (ImageView) rootView.findViewById(R.id.map_pic);
+                Glide.with(MyApp.getAppContext())
+                        .load(period.getUriMap())
+                        .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                        .placeholder(R.drawable.empty_photo)
+                        .into(mappic);
+                mappic.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Context context = v.getContext();
+                        startFullscreenActivity(period.getUriMap(), context);
+                    }
+                });
                 ArrayList<Scene> content = new ArrayList<>();
                 for (Scene scene : period.getScenesAsList()) {
                     if (activePlayer.hasVisited(scene.getId()))
@@ -469,5 +482,11 @@ public class CollectionActivity extends AppCompatActivity {
         }
     }
 
+    public static void startFullscreenActivity(Uri uri, Context context){
+        ArrayList<Uri> images = new ArrayList<>();
+        images.add(uri);
+        DataManager.getInstance().setImages(images);
+        context.startActivity(new Intent(MyApp.getAppContext(),FullscreenActivity.class));
+    }
 
 }

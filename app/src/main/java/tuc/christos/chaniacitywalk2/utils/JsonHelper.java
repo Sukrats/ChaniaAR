@@ -1,5 +1,6 @@
 package tuc.christos.chaniacitywalk2.utils;
 
+import android.net.Uri;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -18,13 +19,11 @@ import tuc.christos.chaniacitywalk2.model.Viewport;
 
 /**
  * Created by Christos on 22-May-17.
- *
- *
  */
 
 public class JsonHelper {
 
-    public static Player parsePlayerFromJson(JSONObject json){
+    public static Player parsePlayerFromJson(JSONObject json) {
         Player player = new Player();
         Log.i("JSON PARSING COMMENCE: ", json.toString());
         try {
@@ -62,22 +61,22 @@ public class JsonHelper {
         return player;
     }
 
-    public static ArrayList<Player> parsePlayersFromJson(String jsonObject){
+    public static ArrayList<Player> parsePlayersFromJson(String jsonObject) {
         ArrayList<Player> players = new ArrayList<>();
-        try{
+        try {
             JSONArray array = new JSONArray(jsonObject);
-            for(int i = 0; i < array.length() ; i++ ){
+            for (int i = 0; i < array.length(); i++) {
                 JSONObject json = array.getJSONObject(i);
                 players.add(parsePlayerFromJson(json));
             }
-            Log.i("JSON","parsed: "+players.size()+" players");
-        }catch(JSONException e){
-            Log.i("JSON",e.getMessage());
+            Log.i("JSON", "parsed: " + players.size() + " players");
+        } catch (JSONException e) {
+            Log.i("JSON", e.getMessage());
         }
         return players;
     }
 
-    public static Scene parseSceneFromJson(JSONObject json){
+    public static Scene parseSceneFromJson(JSONObject json) {
         Scene scene = new Scene();
         try {
             scene.setId(json.getLong("id"));
@@ -94,60 +93,77 @@ public class JsonHelper {
                 JSONObject obj = new JSONObject(links.get(j).toString());
                 scene.addLink(obj.getString("rel"), obj.getString("url"));
             }
-            if(scene.getLinks().containsKey("images"))
+            if (scene.getLinks().containsKey("images"))
                 scene.setUriImages(scene.getLinks().get("images"));
             else
                 scene.setUriImages("");
 
-            if(scene.getLinks().containsKey("thumbnail"))
+            if (scene.getLinks().containsKey("thumbnail"))
                 scene.setUriThumb(scene.getLinks().get("thumbnail"));
             else
                 scene.setUriThumb("");
 
-            Log.i("JSONHELPER","Scene Parsed: "+scene.getUriThumb());
+            Log.i("JSONHELPER", "Scene Parsed: " + scene.getUriThumb());
         } catch (JSONException e) {
             Log.i("JSON EXCEPTION", e.getMessage());
         }
         return scene;
     }
-    public static ArrayList<Scene> parseScenesFromJson(String jsonObject){
+
+    public static ArrayList<Scene> parseScenesFromJson(String jsonObject) {
         ArrayList<Scene> scenes = new ArrayList<>();
-        try{
+        try {
             JSONArray array = new JSONArray(jsonObject);
-            for(int i = 0; i < array.length() ; i++ ){
+            for (int i = 0; i < array.length(); i++) {
                 JSONObject json = array.getJSONObject(i);
                 scenes.add(parseSceneFromJson(json));
             }
-            Log.i("JSON","parsed: "+scenes.size()+" scenes");
-        }catch(JSONException e){
-            Log.i("JSON",e.getMessage());
+            Log.i("JSON", "parsed: " + scenes.size() + " scenes");
+        } catch (JSONException e) {
+            Log.i("JSON", e.getMessage());
         }
         return scenes;
     }
 
     public static Period parsePeriodFromJson(JSONObject json) {
         Period period = new Period();
-        try{
-        period.setId(json.getLong("id"));
-        period.setName(json.getString("name"));
-        period.setDescription(json.getString("description"));
-        period.setStarted(json.getString("started"));
-        period.setEnded(json.getString("ended"));
+        try {
+            period.setId(json.getLong("id"));
+            period.setName(json.getString("name"));
+            period.setDescription(json.getString("description"));
+            period.setStarted(json.getString("started"));
+            period.setEnded(json.getString("ended"));
 
-        JSONArray links = json.getJSONArray("links");
-        for (int j = 0; j < links.length(); j++) {
-            JSONObject obj = new JSONObject(links.get(j).toString());
-            period.addLink(obj.getString("rel"), obj.getString("url"));
-        }
-        period.setUriImages(period.getLinks().get("images"));
-        period.setUriLogo(period.getLinks().get("logo"));
-        }catch(JSONException e){
+            JSONArray links = json.getJSONArray("links");
+            for (int j = 0; j < links.length(); j++) {
+                JSONObject obj = new JSONObject(links.get(j).toString());
+                period.addLink(obj.getString("rel"), obj.getString("url"));
+            }
+            period.setUriImages(period.getLinks().get("images"));
+            period.setUriLogo(period.getLinks().get("logo"));
+            period.setUriMap(period.getLinks().get("map"));
+        } catch (JSONException e) {
             Log.i("JSON EXCEPTION", e.getMessage());
         }
         return period;
     }
 
-    public static JSONObject playerToJson(Player player){
+    public static ArrayList<Uri> parseImagesJsonArray(String JSONarray) {
+        ArrayList<Uri> images = new ArrayList<>();
+        try{
+            JSONArray array = new JSONArray(JSONarray);
+            for(int i = 0; i< array.length(); i++){
+                JSONObject json = new JSONObject(array.get(i).toString());
+                images.add(Uri.parse(json.getString("url")));
+            }
+        }catch (JSONException e){
+            Log.i("JSON",e.getMessage());
+        }
+        return images;
+    }
+
+
+    public static JSONObject playerToJson(Player player) {
         JSONObject json = new JSONObject();
         try {
             json.put("username", player.getUsername());
@@ -156,14 +172,14 @@ public class JsonHelper {
             json.put("firstname", player.getFirstname());
             json.put("lastname", player.getLastname());
             json.put("score", player.getScore());
-        }catch(JSONException e){
+        } catch (JSONException e) {
             Log.i("JSON EXCEPTION", e.getMessage());
         }
         Log.i("Player Parsed:", json.toString());
         return json;
     }
 
-    public static JSONObject sceneToJson(Scene scene){
+    public static JSONObject sceneToJson(Scene scene) {
         JSONObject json = new JSONObject();
         try {
             json.put("id", scene.getId());
@@ -174,14 +190,14 @@ public class JsonHelper {
             json.put("period_id", scene.getPeriod_id());
             json.put("thumb_uri", scene.getUriThumb());
             json.put("images_uri", scene.getUriImages());
-        }catch(JSONException e){
+        } catch (JSONException e) {
             Log.i("JSON EXCEPTION", e.getMessage());
         }
         Log.i("Scene parsed:", json.toString());
         return json;
     }
 
-    public static JSONObject arSceneToJson(Scene scene){
+    public static JSONObject arSceneToJson(Scene scene) {
         JSONObject json = new JSONObject();
         try {
             json.put("id", scene.getId());
@@ -192,25 +208,25 @@ public class JsonHelper {
             json.put("period_id", scene.getPeriod_id());
             json.put("thumb_uri", scene.getUriThumb());
             json.put("images_uri", scene.getUriImages());
-            json.put("num",scene.getNumOfGeoScenes());
-            JSONArray array= new JSONArray();
-            for(ArScene s : scene.getArScene()){
+            json.put("num", scene.getNumOfGeoScenes());
+            JSONArray array = new JSONArray();
+            for (ArScene s : scene.getArScene()) {
                 JSONObject object = new JSONObject();
-                object.put("path",s.getPath());
-                object.put("latitude",s.getLatitude());
-                object.put("longitude",s.getLongitude());
+                object.put("path", s.getPath());
+                object.put("latitude", s.getLatitude());
+                object.put("longitude", s.getLongitude());
                 array.put(object);
             }
-            json.put("ar_scenes",array);
+            json.put("ar_scenes", array);
 
-        }catch(JSONException e){
+        } catch (JSONException e) {
             Log.i("JSON EXCEPTION", e.getMessage());
         }
         Log.i("ARScene parsed:", json.toString());
         return json;
     }
 
-    public static JSONObject slamSceneToJson(Scene scene){
+    public static JSONObject slamSceneToJson(Scene scene) {
         JSONObject json = new JSONObject();
         try {
             json.put("id", scene.getId());
@@ -221,48 +237,48 @@ public class JsonHelper {
             json.put("period_id", scene.getPeriod_id());
             json.put("thumb_uri", scene.getUriThumb());
             json.put("images_uri", scene.getUriImages());
-            json.put("num",scene.getNumOfSlamScenes());
-            JSONArray array= new JSONArray();
-            for(ArScene s : scene.getSlamScene()){
+            json.put("num", scene.getNumOfSlamScenes());
+            JSONArray array = new JSONArray();
+            for (ArScene s : scene.getSlamScene()) {
                 JSONObject object = new JSONObject();
-                object.put("path",s.getPath());
-                object.put("latitude",s.getLatitude());
-                object.put("longitude",s.getLongitude());
+                object.put("path", s.getPath());
+                object.put("latitude", s.getLatitude());
+                object.put("longitude", s.getLongitude());
                 array.put(object);
             }
-            json.put("ar_scenes",array);
+            json.put("ar_scenes", array);
 
-        }catch(JSONException e){
+        } catch (JSONException e) {
             Log.i("JSON EXCEPTION", e.getMessage());
         }
         Log.i("ARScene parsed:", json.toString());
         return json;
     }
 
-    private static JSONObject viewportToJSON(Viewport viewport){
+    private static JSONObject viewportToJSON(Viewport viewport) {
         JSONObject json = new JSONObject();
-        try{
-            json.put("latitude",viewport.getLatitude());
-            json.put("longitude",viewport.getLongitude());
-            json.put("rotation",viewport.getRotation());
-            json.put("radius",viewport.getRadius());
-            json.put("translateX",viewport.getTranslateX());
-            json.put("translateY",viewport.getTranslateY());
-        }catch (JSONException e){
-            Log.i("JSON",e.getMessage());
+        try {
+            json.put("latitude", viewport.getLatitude());
+            json.put("longitude", viewport.getLongitude());
+            json.put("rotation", viewport.getRotation());
+            json.put("radius", viewport.getRadius());
+            json.put("translateX", viewport.getTranslateX());
+            json.put("translateY", viewport.getTranslateY());
+        } catch (JSONException e) {
+            Log.i("JSON", e.getMessage());
         }
-        Log.i("JSON",json.toString());
+        Log.i("JSON", json.toString());
         return json;
     }
 
-    public static JSONObject sceneWithViewportToJSON(Scene scene,Viewport viewport){
+    public static JSONObject sceneWithViewportToJSON(Scene scene, Viewport viewport) {
         JSONObject json = slamSceneToJson(scene);
         try {
             json.put("viewport", viewportToJSON(viewport));
-        }catch(JSONException e){
-            Log.i("JSON",e.getMessage());
+        } catch (JSONException e) {
+            Log.i("JSON", e.getMessage());
         }
-        Log.i("JSON",json.toString());
+        Log.i("JSON", json.toString());
         return json;
     }
 

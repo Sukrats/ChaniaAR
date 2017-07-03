@@ -1,6 +1,7 @@
 package tuc.christos.chaniacitywalk2.utils;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -13,6 +14,7 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
@@ -683,6 +685,41 @@ public class RestClient implements ContentListener {
             }
         });
         mClient = client;
+    }
+    public void getImagesUris(Uri uri, final ContentListener contentListener){
+        //mDataManager.clearLocality();
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.setMaxRetriesAndTimeout(4, 20000);
+        client.get(uri.toString(), null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
+                try {
+                    JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
+                    contentListener.downloadComplete(true,i,"Images",json.toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                String code = "";
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                String result = "Error on Download";
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    result = errorMessage.getString("message");
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                }
+                contentListener.downloadComplete(false, i, "Images", result);
+            }
+        });
     }
 
     public void cancel() {

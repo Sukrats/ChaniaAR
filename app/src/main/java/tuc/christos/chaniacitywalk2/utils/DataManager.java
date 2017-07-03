@@ -14,6 +14,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.Array;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -333,11 +334,13 @@ public class DataManager {
             String description = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_DESCRIPTION));
             String images = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_IMAGES_URL));
             String logo = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_LOGO_URL));
+            String map = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_MAP_URL));
             String started = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_STARTED));
             String ended = c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ENDED));
 
             Period temp = new Period(id, name, description);
             temp.setUriLogo(logo);
+            temp.setUriMap(map);
             temp.setUriImages(images);
             temp.setStarted(started);
             temp.setEnded(ended);
@@ -358,6 +361,7 @@ public class DataManager {
             p.setDescription(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_DESCRIPTION)));
             p.setUriImages(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_IMAGES_URL)));
             p.setUriLogo(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_LOGO_URL)));
+            p.setUriMap(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_MAP_URL)));
             p.setStarted(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_STARTED)));
             p.setEnded(c.getString(c.getColumnIndexOrThrow(mDBHelper.PeriodEntry.PERIODS_COLUMN_ENDED)));
 
@@ -683,8 +687,8 @@ public class DataManager {
     private void initRoute() {
         ArrayList<Scene> mRoute = new ArrayList<>();
         //KIDONIA PENDING
-        Scene minoiki = new Scene(35.5171461, 24.019581, 38, 1, "Minoiki Kidonia", "");
-        mRoute.add(new Scene(35.5171461, 24.019581, 38, 1, "Minoiki Kidonia", ""));
+        Scene minoiki = new Scene(35.5171461, 24.019581, 38, 1, "Minoan Kydonia", "");
+        mRoute.add(new Scene(35.5171461, 24.019581, 38, 1, "Minoan Kydonia", ""));
 
         //BYZANTINE WALL PENDING
         Scene wall = new Scene(35.51711, 24.020557, 37, 2, "The Byzantine Wall", "");//35.516954, 24.020359
@@ -784,7 +788,15 @@ public class DataManager {
         route.add(getScene(39));
         return route;
     }
+/****************************************** Images for Fullscreen gallery view*****************************************************/
+    private ArrayList<Uri> imgs = new ArrayList<>();
 
+    public void setImages(ArrayList<Uri> images){
+        imgs = images;
+    }
+    public ArrayList<Uri> getImages(){
+        return imgs;
+    }
     /**********************************************************POPULATE DB TASK*************************************************************************/
 
     public void clearScenes() {

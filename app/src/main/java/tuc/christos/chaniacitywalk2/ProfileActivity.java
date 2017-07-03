@@ -2,9 +2,17 @@ package tuc.christos.chaniacitywalk2;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.Image;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -16,15 +24,24 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Place;
 import tuc.christos.chaniacitywalk2.model.Visit;
@@ -153,6 +170,7 @@ public class ProfileActivity extends AppCompatActivity {
                 ArrayList<Scene> items = new ArrayList<>();
                 for (Place p : mPlayer.getPlaces().values()) {
                     Scene temp = new Scene(p.getScene_id(), p.getScene_name(), p.getThumb());
+                    temp.setUriThumb(DataManager.getInstance().getScene(p.getScene_id()).getUriThumb().toString());
                     temp.setComment(p.getComment());
                     temp.setCreated(p.getCreated());
                     temp.setCountry(p.getCountry());
@@ -169,6 +187,7 @@ public class ProfileActivity extends AppCompatActivity {
                 ArrayList<Scene> items = new ArrayList<>();
                 for (Visit v : mPlayer.getVisited().values()) {
                     Scene temp = new Scene(v.getScene_id(), v.getScene_name(), v.getThumb());
+                    temp.setUriThumb(DataManager.getInstance().getScene(v.getScene_id()).getUriThumb().toString());
                     temp.setCreated(v.getCreated());
                     temp.setCountry(v.getCountry());
                     temp.setRegion(v.getRegion());
@@ -181,7 +200,6 @@ public class ProfileActivity extends AppCompatActivity {
                 recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(items));
             } else if (index == 0) {
                 rootView = inflater.inflate(R.layout.profile_details, container, false);
-
                 TextView fName = (TextView) rootView.findViewById(R.id.tx1);
                 TextView lName = (TextView) rootView.findViewById(R.id.tx2);
                 TextView created = (TextView) rootView.findViewById(R.id.tx3);
@@ -189,7 +207,6 @@ public class ProfileActivity extends AppCompatActivity {
                 TextView score = (TextView) rootView.findViewById(R.id.tx5);
 
                 Player mPlayer = DataManager.getInstance().getActivePlayer();
-
                 fName.setText(mPlayer.getFirstname());
                 lName.setText(mPlayer.getLastname());
                 created.setText(mPlayer.getCreated().toString());
@@ -198,66 +215,15 @@ public class ProfileActivity extends AppCompatActivity {
                 score.setText(String.valueOf(mPlayer.getScore()));
 
             } else {
-                rootView = inflater.inflate(R.layout.progress_details, container, false);
+                rootView = inflater.inflate(R.layout.progress_details_test, container, false);
+                Level level = DataManager.getInstance().getCurrentLevel();
+                ((TextView) rootView.findViewById(R.id.country)).setText(level.getCountry() + " (" + level.getCountry_code() + ")");
+                ((TextView) rootView.findViewById(R.id.admin_area)).setText(level.getAdminArea());
+                ((TextView) rootView.findViewById(R.id.locality)).setText("Currently playing at " + level.getCity() + "");
 
-                ProgressBar overall = (ProgressBar) rootView.findViewById(R.id.overall);
-                ProgressBar venetian = (ProgressBar) rootView.findViewById(R.id.venetian);
-                ProgressBar ottoman = (ProgressBar) rootView.findViewById(R.id.ottoman);
-                ProgressBar modern = (ProgressBar) rootView.findViewById(R.id.modern);
+                RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.progress_container);
+                recyclerView.setAdapter(new SimpleProgressRecyclerViewAdapter(new ArrayList<>(DataManager.getInstance().getPeriods())));
 
-                TextView overall_tx = (TextView) rootView.findViewById(R.id.overall_tx);
-                TextView venetian_tx = (TextView) rootView.findViewById(R.id.venetian_tx);
-                TextView ottoman_tx = (TextView) rootView.findViewById(R.id.ottoman_tx);
-                TextView modern_tx = (TextView) rootView.findViewById(R.id.modern_tx);
-                int overProg;
-                float overControl = 0;
-                List<Scene> o = DataManager.getInstance().getScenes();
-                for (Scene scene : o) {
-                    if (mPlayer.hasVisited(scene.getId()))
-                        overControl++;
-                }
-                overall_tx.setText((int) overControl + "/" + o.size());
-                Log.i("PROGRESS", "overall: " + overControl);
-                Log.i("PROGRESS", "overall: " + o.size());
-
-
-                float t = overControl / o.size();
-                overProg = Math.round(t * 100);
-
-                int ottoProg = 0;
-                int modernProg = 0;
-                int venProg = 0;
-
-                for (int i = 3; i <= 5; i++) {
-                    List<Scene> scenes = DataManager.getInstance().getPeriodScenes(i);
-                    float control = 0;
-                    for (Scene temp : scenes) {
-                        if (mPlayer.hasVisited(temp.getId())) {
-                            control++;
-                            if (temp.getPeriod_id() == 3) {
-                                venProg = Math.round(control / scenes.size() * 100);
-                                venetian_tx.setText((int) control + "/" + scenes.size());
-                            } else if (temp.getPeriod_id() == 4) {
-                                ottoProg = Math.round(control / scenes.size() * 100);
-                                ottoman_tx.setText((int) control + "/" + scenes.size());
-                            } else if (temp.getPeriod_id() == 5) {
-                                modernProg = Math.round(control / scenes.size() * 100);
-                                modern_tx.setText((int) control + "/" + scenes.size());
-                            }
-                        }
-                    }
-                }
-                overall.setMax(100);
-                overall.setProgress(overProg);
-
-                venetian.setMax(100);
-                venetian.setProgress(venProg);
-
-                ottoman.setMax(100);
-                ottoman.setProgress(ottoProg);
-
-                modern.setMax(100);
-                modern.setProgress(modernProg);
             }
 
             return rootView;
@@ -280,9 +246,7 @@ public class ProfileActivity extends AppCompatActivity {
 
             @Override
             public SimpleItemRecyclerViewAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.profile_list_content, parent, false);
-
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.profile_list_content, parent, false);
                 return new SimpleItemRecyclerViewAdapter.ViewHolder(view);
             }
 
@@ -292,8 +256,11 @@ public class ProfileActivity extends AppCompatActivity {
                     holder.created.setVisibility(View.VISIBLE);
                     final Scene item = mVisits.get(position);
                     holder.mView.setText(item.getName());
-                    //holder.marks.setText(String.valueOf(item.getNumOfSaves()));
-                    //holder.visits.setText(String.valueOf(item.getNumOfVisits()));
+                    Glide.with(MyApp.getAppContext())
+                            .load(item.getUriThumb())
+                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                            .placeholder(R.drawable.empty_photo)
+                            .into(holder.imageView);
                     holder.region.setText(item.getRegion());
                     holder.created.setText("Visited " + computeTimeDiff(item.getCreated()) + " ago");
                     holder.cardView.setOnClickListener(new View.OnClickListener() {
@@ -314,8 +281,13 @@ public class ProfileActivity extends AppCompatActivity {
                     holder.created.setVisibility(View.GONE);
                     final Scene item = mPlaces.get(position);
                     holder.mView.setText(item.getName());
-                    //holder.marks.setText(String.valueOf(item.getNumOfSaves()));
-                    //holder.visits.setText(String.valueOf(item.getNumOfVisits()));
+
+                    Glide.with(MyApp.getAppContext())
+                            .load(item.getUriThumb())
+                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                            .placeholder(R.drawable.empty_photo)
+                            .into(holder.imageView);
+
                     holder.region.setText(item.getRegion());
                     holder.cardView.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -346,20 +318,17 @@ public class ProfileActivity extends AppCompatActivity {
             class ViewHolder extends RecyclerView.ViewHolder {
                 final TextView mView;
                 final TextView region;
-                //final TextView marks;
-                //final TextView visits;
                 final TextView created;
                 final CardView cardView;
-
+                final ImageView imageView;
 
                 ViewHolder(View view) {
                     super(view);
                     mView = (TextView) view.findViewById(R.id.content);
                     region = (TextView) view.findViewById(R.id.region);
-                    //marks = (TextView) view.findViewById(R.id.marked);
                     created = (TextView) view.findViewById(R.id.created);
-                    //visits = (TextView) view.findViewById(R.id.num);
                     cardView = (CardView) view.findViewById(R.id.card_view);
+                    imageView = (ImageView) view.findViewById(R.id.img);
                 }
 
                 @Override
@@ -374,20 +343,64 @@ public class ProfileActivity extends AppCompatActivity {
 
     static class SimpleProgressRecyclerViewAdapter extends RecyclerView.Adapter<SimpleProgressRecyclerViewAdapter.ViewHolder> {
 
-        private static ArrayList<Period> periods;
+        private final ArrayList<Period> periods;
 
         SimpleProgressRecyclerViewAdapter(ArrayList<Period> items) {
             periods = items;
         }
 
-
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return null;
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.progress_details_row, parent, false);
+            return new SimpleProgressRecyclerViewAdapter.ViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(final SimpleProgressRecyclerViewAdapter.ViewHolder holder, int position) {
+            if (periods.isEmpty()) {
+                return;
+            }
+            holder.title.setText(periods.get(position).getName());
+
+            AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+                    Bitmap temp;
+                    try {
+                        temp = Glide.with(MyApp.getAppContext())
+                                .load(periods.get(holder.getAdapterPosition()).getUriLogo())
+                                .asBitmap()
+                                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                                .into(100, 100)
+                                .get();
+                    } catch (ExecutionException | InterruptedException e) {
+                        Log.i("bitmap", e.getMessage());
+                        temp = BitmapFactory.decodeResource(MyApp.getAppContext().getResources(), R.drawable.period_bg_1);
+                    }
+
+                    setImageDrawable(temp, holder.logo);
+                    return null;
+                }
+            };
+            task.execute();
+            int prog = 0;
+            List<Scene> scenes = DataManager.getInstance().getPeriodScenes(periods.get(position).getId());
+            float control = 0;
+            for (Scene temp : scenes) {
+                if (mPlayer.hasVisited(temp.getId())) {
+                    control++;
+                    prog = Math.round(control / scenes.size() * 100);
+                    holder.ratio.setText((int) control + "/" + scenes.size());
+                }
+            }
+
+            if (prog == 100) {
+                holder.progressBar.setVisibility(View.GONE);
+                holder.completed.setVisibility(View.VISIBLE);
+            } else {
+                holder.progressBar.setMax(100);
+                holder.progressBar.setProgress(prog);
+            }
         }
 
         @Override
@@ -396,9 +409,19 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
+            final TextView title;
+            final TextView ratio;
+            final ProgressBar progressBar;
+            final ImageView logo;
+            final FrameLayout completed;
 
             ViewHolder(View view) {
                 super(view);
+                title = (TextView) view.findViewById(R.id.title);
+                ratio = (TextView) view.findViewById(R.id.ratio);
+                progressBar = (ProgressBar) view.findViewById(R.id.progress_bar);
+                logo = (ImageView) view.findViewById(R.id.logo);
+                completed = (FrameLayout) view.findViewById(R.id.completed_container);
             }
 
             @Override
@@ -408,6 +431,18 @@ public class ProfileActivity extends AppCompatActivity {
             }
 
         }
+    }
+
+    private static void setImageDrawable(final Bitmap bitmap, final ImageView imgView) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                RoundedBitmapDrawable bm = RoundedBitmapDrawableFactory.create(MyApp.getAppContext().getResources(), bitmap);
+                bm.setCircular(true);
+                imgView.setImageDrawable(bm);
+            }
+        });
     }
 
     static String computeTimeDiff(java.sql.Date created) {

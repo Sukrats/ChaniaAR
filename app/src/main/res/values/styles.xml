@@ -7,12 +7,14 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
+
     <style name="AppTheme.Actionbar" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
+
     <style name="AppTheme.Dark" parent="Theme.AppCompat.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -51,9 +53,12 @@
         <item name="preferenceStyle">@style/Preference.Material</item>
         <item name="preferenceInformationStyle">@style/Preference.Information.Material</item>
         <item name="checkBoxPreferenceStyle">@style/Preference.CheckBoxPreference.Material</item>
-        <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.Material</item>
+        <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.Material
+        </item>
         <item name="dialogPreferenceStyle">@style/Preference.DialogPreference.Material</item>
-        <item name="editTextPreferenceStyle">@style/Preference.DialogPreference.EditTextPreference.Material</item>
+        <item name="editTextPreferenceStyle">
+            @style/Preference.DialogPreference.EditTextPreference.Material
+        </item>
         <item name="preferenceFragmentListStyle">@style/PreferenceFragmentList.Material</item>
         <item name="seekBarPreferenceStyle">@style/Preference.SeekBarPreference</item>
         <item name="dropdownPreferenceStyle">@style/Preference.DropDown.Material</item>
@@ -62,11 +67,11 @@
     <!--    <style name="preferenceCategoryCustom" parent="@style/Preference.Category.Material">
             <!-      <item name="android:layout">@layout/custom_preference_category</item>
         -->
-<!--</style>
+    <!--</style>
 
     <style name="CustomPreferenceCategoryText" parent="@android:style/Widget.TextView">
         <!- Style your PreferenceCategory here. -->
- <!--       <item name="android:textStyle">bold</item>
+    <!--       <item name="android:textStyle">bold</item>
         <item name="android:textSize">12dp</item>
     </style>
     -->

@@ -114,7 +114,17 @@
             android:theme="@style/PreferenceThemeDialog" />
         <activity
             android:name=".leaderboards.LeaderBoardActivity"
-            android:label="@string/title_activity_leader_board"/>
+            android:label="@string/title_activity_leader_board" />
+        <activity
+            android:name=".collectionActivity.FullscreenActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/title_activity_fullscreen"
+            android:parentActivityName=".collectionActivity.SceneDetailActivity"
+            android:theme="@style/FullscreenTheme">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity" />
+        </activity>
     </application>
 
 </manifest>

@@ -145,4 +145,8 @@
     <string name="title_landmarks">Most Visited</string>
     <string name="title_local_activity">Local Activity</string>
 
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+
+
+    <string name="completed">Completed</string>
 </resources>
