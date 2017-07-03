@@ -99,6 +99,9 @@ final class mDBHelper extends SQLiteOpenHelper {
                 LocalityEntry.COLUMN_COUNTRY_CODE + " TEXT NOT NULL, " +
                 LocalityEntry.COLUMN_ADMIN_AREA + " TEXT NOT NULL, " +
                 LocalityEntry.COLUMN_LOCALITY + " TEXT NOT NULL, " +
+                LocalityEntry.COLUMN_UPDATED_LATITUDE + " REAL," +
+                LocalityEntry.COLUMN_UPDATED_LONGITUDE + " REAL," +
+                LocalityEntry.COLUMN_UPDATED + " TEXT DEFAULT CURRENT_DATE, " +
                 " PRIMARY KEY ( " + LocalityEntry.COLUMN_COUNTRY + " , " + LocalityEntry.COLUMN_ADMIN_AREA + " )" +
                 ");";
         db.execSQL(SQL_CREATE_LOCALITY);
@@ -294,6 +297,8 @@ final class mDBHelper extends SQLiteOpenHelper {
         values.put(LocalityEntry.COLUMN_COUNTRY, level.getCountry());
         values.put(LocalityEntry.COLUMN_COUNTRY_CODE, level.getCountry_code());
         values.put(LocalityEntry.COLUMN_ADMIN_AREA, level.getAdminArea());
+        values.put(LocalityEntry.COLUMN_UPDATED_LATITUDE, level.getLatitude());
+        values.put(LocalityEntry.COLUMN_UPDATED_LONGITUDE, level.getLongitude());
         values.put(LocalityEntry.COLUMN_LOCALITY, level.getCity());
 
         long count = db.insertWithOnConflict(LocalityEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
@@ -669,6 +674,9 @@ final class mDBHelper extends SQLiteOpenHelper {
         static final String COLUMN_ADMIN_AREA = "admin";
         static final String COLUMN_COUNTRY = "country";
         static final String COLUMN_COUNTRY_CODE = "code";
+        static final String COLUMN_UPDATED = "updated";
+        static final String COLUMN_UPDATED_LATITUDE = "latitude";
+        static final String COLUMN_UPDATED_LONGITUDE = "longitude";
     }
 
 }

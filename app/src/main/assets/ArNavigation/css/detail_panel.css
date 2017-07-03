@@ -12,17 +12,11 @@ body
 #panel-poidetail
 {
     position: absolute;
-    bottom: 10%;
+    bottom: 0%;
     width: 100%;
     display: none;
     align-self: baseline|center;
 }
-/*#ar-panel
-{
-    text-align: center;
-    display: none;
-    align-self: baseline|center;
-}*/
 .radarContainer_left {
 	position:absolute;
 	top:0px;
@@ -36,15 +30,4 @@ body
     top: 0px;
     left: 0px;
     display: none;
-}
-#overMenu
-{
-    position: fixed;
-    bottom: 0px;
-    padding-bottom: 4px;
-    text-align: center;
-    align-self: baseline|center;
-    background: linear-gradient(white, silver);
-    height: 10%;
-    width: 100%;
 }

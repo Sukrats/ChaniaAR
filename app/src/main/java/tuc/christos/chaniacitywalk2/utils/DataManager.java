@@ -2,6 +2,7 @@ package tuc.christos.chaniacitywalk2.utils;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -228,7 +229,7 @@ public class DataManager {
         return mDBh.isPlayersEmpty();
     }
 
-    public void updatePlayer(long scene_id,boolean success, Context context) {
+    public void updatePlayer(boolean success, Context context) {
         if(activePlayer.getUsername().contains("Guest"))
             return;
 
@@ -240,8 +241,7 @@ public class DataManager {
             mDBh.updatePlayer(getActivePlayer());
             RestClient rs = RestClient.getInstance();
             rs.putPlayer(getActivePlayer(), context);
-            rs.postVisit(scene_id,context);
-            addVisit(scene_id);
+            return;
         }
         Toast.makeText(context, "No Internet Connection cannot update your Progress :(", Toast.LENGTH_SHORT).show();
     }
@@ -514,6 +514,7 @@ public class DataManager {
     public void clearPlace(long id, Context context) {
         mDBh.deletePlace(id);
         activePlayer.removePlace(id);
+
         RestClient rs = RestClient.getInstance();
         rs.deletePlace(id,context);
     }
@@ -576,16 +577,26 @@ public class DataManager {
 
     /*****************************************************VISITS METHODS************************************************************************/
 
-    public void addVisit(long id) {
+    public void addVisit(long scene_id ,Context context) {
         Visit v = new Visit();
-        Scene temp = getScene(id);
-        v.setScene_id(id);
+        Scene temp = getScene(scene_id);
+        v.setScene_id(scene_id);
         v.setThumb(temp.getUriThumb());
         v.setRegion(getCurrentLevel().getAdminArea());
         v.setScene_name(temp.getName());
         v.setCountry(getCurrentLevel().getCountry());
         mDBh.insertVisit(v);
         activePlayer.addVisit(v);
+
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+
+        if( activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
+            RestClient rs = RestClient.getInstance();
+            rs.postVisit(scene_id, context);
+            return;
+        }
+        Toast.makeText(MyApp.getAppContext(),"No intenret Connection",Toast.LENGTH_SHORT).show();
     }
 
    /*
@@ -730,6 +741,7 @@ public class DataManager {
         return Route.get(scene_id);
     }
 
+
     public void setLevelLocality(Level level) {
         if(mDBh.insertLocality(level)){
             Toast.makeText(MyApp.getAppContext(), "Updated Level", Toast.LENGTH_SHORT).show();
@@ -739,16 +751,48 @@ public class DataManager {
         Toast.makeText(MyApp.getAppContext(), "Can't find Locality", Toast.LENGTH_SHORT).show();
     }
 
-    public int checkExistingLocality(Level level) {
+    public boolean hasLocality(){
+        return mDBh.getLocality().moveToNext();
+    }
+
+    public Date getLastLocalityUpdate(){
+        Cursor c = mDBh.getLocality();
+        if (!c.moveToNext())
+            return null;
+        String adminArea = c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA));
+        Date updated = Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED)));
+        double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED_LATITUDE));
+        double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED_LONGITUDE));
+        Log.i("Geocoder","SQLite Locality: "+adminArea+" \nLocation: "+lat+","+lon+" \nUpdated:"+updated.toString());
+        return Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED)));
+    }
+
+    public Location getLastLocalityLocationUpdate(){
+        Cursor c = mDBh.getLocality();
+        if (!c.moveToNext())
+            return null;
+
+        Location loc = new Location("");
+        loc.setLatitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED_LATITUDE)));
+        loc.setLongitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED_LONGITUDE)));
+        return loc;
+    }
+
+    public boolean compareExistingLocality(Level level) {
         Cursor c = mDBh.getLocality();
         if( level != null ) {
             if (!c.moveToNext())
-                return 1;
+                return true;
             else if (level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA))))
-                return 0;
-            return 1;
+                return false;
+            String adminArea = c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA));
+            String country = c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY));
+            String city = c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_LOCALITY));
+            Date updated = Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED)));
+            Log.i("Geocoder","SQLite Locality: "+country+" "+adminArea+" "+city+" \nUpdated:"+updated.toString());
+            return true;
         }else {
-            return 3;
+            return false;
         }
     }
     public void printExistingLocality(){

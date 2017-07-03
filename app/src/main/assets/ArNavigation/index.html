@@ -48,29 +48,26 @@
        data-mini="true"
        data-theme="d"
        data-icon="home">
-        <i class="fa fa-align-justify fa-2x" aria-hidden="true" ></i>
+        <i class="fa fa-align-justify fa-2x" aria-hidden="true"></i>
     </a>
 
-    <div id="overMenu" class="list-group" data-theme="b">
-        <!-- "back" button -->
+    <!--<div id="overMenu" class="list-group" data-theme="b">
         <a id="backBtn" data-shadow="false" data-role="button"
            data-theme="d"
            data-inline="true">
             <i class="fa fa-home fa-2x" aria-hidden="true"></i>
         </a>
-        <!-- "show-hide" button -->
         <a id="toggleView" data-shadow="false" data-role="button"
            data-theme="d"
            data-inline="true">
             <i class="fa fa-bullseye fa-2x" aria-hidden="true" style="color:#A9A9A9;"></i>
         </a>
-        <!-- "AR" button -->
         <a id="ar-btn" data-shadow="false" data-role="button"
            data-theme="d"
            data-inline="true">
             <i class="fa fa-play fa-2x" aria-hidden="true" style="color:#A9A9A9;"></i>&nbsp;
         </a>
-    </div>
+    </div>-->
 
     <!-- transparent footer-->
     <div id="info-footer" data-role="footer" class="ui-bar" data-theme="f" data-position="fixed"
@@ -100,7 +97,8 @@
         <!-- content of POI detail page, you may also add thumbnails etc. here if you like -->
         <div data-role="content" style="background-color:#F0F0F0;">
             <!-- title button -->
-            <div class="ui-grid-a" style="align-self:stretch">
+            <div class="ui-grid-solo" style="align-self:stretch">
+
                 <div class="ui-block-a" style="width:80%;">
                     <!-- description -->
                     <h4 id="poi-detail-description"></h4>
@@ -108,8 +106,10 @@
                     <h4>Distance: <a id="poi-detail-distance"></a></h4>
                 </div>
 
-                <div class="ui-block-b" data-role="controlgroup" data-type="vertical"
-                     style="width:20%;align-self:stretch;">
+            </div>
+            <div class="ui-grid-solo" style="align-self:stretch;text-align:center;">
+                <div class="ui-block-a" style="align-self:center;text-align:center;" data-role="controlgroup"
+                     data-type="horizontal">
                     <a id="open-details-activity"
                        data-icon="info" data-role="button" data-iconpos="notext" data-theme="d">Details</a>
                     <a id="open-map"
@@ -121,13 +121,6 @@
                 </div>
             </div>
 
-         <!--   <div id="ar-panel" class="ui-grid-solo">
-                <div class="ui-block-a">
-                    <button id="ar-button" data-iconpos="bottom" data-icon="camera-white" type="button"
-                            data-inline="true" data-theme="d">AR
-                    </button>
-                </div>
-            </div> -->
         </div>
     </div>
 

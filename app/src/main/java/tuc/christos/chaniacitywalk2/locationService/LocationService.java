@@ -29,6 +29,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.app.TaskStackBuilder;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -42,6 +43,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import tuc.christos.chaniacitywalk2.MapsActivity;
@@ -101,7 +103,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     private ArrayList<IServiceListener> listeners = new ArrayList<>();
 
     private boolean fenceTriggered = false;
-    private boolean scheduledRegionUpdate = true;
+    private boolean scheduledRegionUpdate = false;
     private static boolean isRunning = false;
     private long updated = 0;
     private long activeFence;
@@ -123,6 +125,16 @@ public class LocationService extends Service implements LocationCallback, Locati
         boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, false);
 
         if (!isRunning) {
+
+            if (mDataManager.hasLocality()) {
+                java.sql.Date updated = mDataManager.getLastLocalityUpdate();
+                scheduledRegionUpdate = !DateUtils.isToday(updated.getTime());
+                lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
+                Log.i("Geocoder",lastLocationChecked.getLatitude()+","+ lastLocationChecked.getLongitude());
+            } else {
+                scheduledRegionUpdate = true;
+            }
+
             HandlerThread thread = new HandlerThread("LocationProviderThread",
                     Process.THREAD_PRIORITY_BACKGROUND);
             thread.start();
@@ -138,6 +150,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             }
             mEventHandler.setLocationEventListener(this);
             isRunning = true;
+
         }
     }
 
@@ -285,6 +298,13 @@ public class LocationService extends Service implements LocationCallback, Locati
      */
     @Override
     public IBinder onBind(Intent intent) {
+
+        if (mDataManager.hasLocality()) {
+            java.sql.Date updated = mDataManager.getLastLocalityUpdate();
+            scheduledRegionUpdate = !DateUtils.isToday(updated.getTime());//current.after(updated);
+            lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
+        }
+
         hideServiceNotification();
         Log.i("Binder", "onBind called");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -306,6 +326,9 @@ public class LocationService extends Service implements LocationCallback, Locati
         Toast.makeText(LocationService.this, "Google Api Client", Toast.LENGTH_SHORT).show();
         mLocationProvider.setMode(mode);
         mLocationProvider.connect();
+
+
+
         return mBinder;
     }
 
@@ -342,6 +365,11 @@ public class LocationService extends Service implements LocationCallback, Locati
      */
     @Override
     public void onRebind(Intent intent) {
+        if (mDataManager.hasLocality()) {
+            java.sql.Date updated = mDataManager.getLastLocalityUpdate();
+            scheduledRegionUpdate = !DateUtils.isToday(updated.getTime());//current.after(updated);
+            lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
+        }
         hideServiceNotification();
         Log.i("Binder", "OnRebind called");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -429,16 +457,17 @@ public class LocationService extends Service implements LocationCallback, Locati
         for (IServiceListener l : listeners)
             l.handleNewLocation(location);
 
-        if (lastLocationChecked == null)
-            lastLocationChecked = location;
+        if (!mDataManager.getActivePlayer().getUsername().contains("Guest"))
 
-        if (scheduledRegionUpdate && System.currentTimeMillis() - updated >= 60 * 1000 && !mDataManager.getActivePlayer().getUsername().contains("Guest")) {
-            updated = System.currentTimeMillis();
-            checkForRegionChange(location);
-        } else if (lastLocationChecked.distanceTo(location) >= 50000 || System.currentTimeMillis() - updated >= 60 * 60 * 1000 && !mDataManager.getActivePlayer().getUsername().contains("Guest")) {
-            updated = System.currentTimeMillis();
-            checkForRegionChange(location);
-        }
+            if (scheduledRegionUpdate && System.currentTimeMillis() - updated >= 10 * 1000) {
+                Log.i("Geocoder","schedule pnigetai!");
+                updated = System.currentTimeMillis();
+                checkForRegionChange(location);
+            } else if (lastLocationChecked.distanceTo(location) >= 50000) {
+                Log.i("Geocoder","to last location pnigetai!");
+                updated = System.currentTimeMillis();
+                checkForRegionChange(location);
+            }
     }
 
     public void checkLocationSettings() {
@@ -521,6 +550,10 @@ public class LocationService extends Service implements LocationCallback, Locati
 
     public void triggerRegionChange(final Level level) {
         //Toast.makeText(this, "Downloading Scenes For Region:\n" + level.getAdminArea(), Toast.LENGTH_LONG).show();
+        mDataManager.clearScenes();
+        for (IServiceListener i : listeners)
+            i.regionChanged(level.getAdminArea(), level.getCountry());
+
         final RestClient mRestClient = RestClient.getInstance();
         mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
             @Override
@@ -550,8 +583,10 @@ public class LocationService extends Service implements LocationCallback, Locati
                 } else {
                     Toast.makeText(getApplicationContext(), "Scenes For Region Downloaded", Toast.LENGTH_SHORT).show();
                     mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
-                    for (IServiceListener i : listeners)
+                    for (IServiceListener i : listeners) {
                         i.regionChanged(level.getAdminArea(), level.getCountry());
+                        i.drawGeoFences(mEventHandler.getActiveFences(), LocationEventHandler.MIN_RADIUS);
+                    }
                 }
             }
         });
@@ -570,19 +605,20 @@ public class LocationService extends Service implements LocationCallback, Locati
             }
         }
     }
+
     private int count = 0;
+
     private void checkForRegionChange(Location location) {
         Toast.makeText(this, "checking region for scenes", Toast.LENGTH_SHORT).show();
-        //TODO: CHANGE FOR REGION CHANGES setting to a normal number
         AsyncTask<Location, Void, Level> geoCoderTask = new AsyncTask<Location, Void, Level>() {
             @Override
             protected Level doInBackground(Location... location1) {
-                Level level = new Level();
                 if (Geocoder.isPresent()) {
+                    Level level = new Level();
                     try {
                         Geocoder coder = new Geocoder(getApplicationContext());
                         List<Address> addresses = coder.getFromLocation(location1[0].getLatitude(), location1[0].getLongitude(), 20);
-                        if(addresses.isEmpty())
+                        if (addresses.isEmpty())
                             return null;
 
                         level.setCountry(addresses.get(0).getCountryName());
@@ -595,42 +631,38 @@ public class LocationService extends Service implements LocationCallback, Locati
                             if (temp.getSubAdminArea() != null)
                                 level.setSubAdminArea(temp.getSubAdminArea());
                         }
-
+                        level.setLatitude(location1[0].getLatitude());
+                        level.setLongitude(location1[0].getLongitude());
+                        return level;
                     } catch (IOException e) {
-                        level = null;
+                        return null;
                     }
                 }
-                return level;
+                return null;
             }
 
             @Override
             protected void onPostExecute(Level level) {
                 mDataManager.printExistingLocality();
-                if (level == null && count < 2 ) {
+                if (level == null && count < 2) {
                     Toast.makeText(MyApp.getAppContext(), "retrying...", Toast.LENGTH_SHORT).show();
                     scheduledRegionUpdate = true;
                     count++;
                     return;
                 }
-                count = 0;
-                if(level != null) {
-                    if (mDataManager.checkExistingLocality(level) == 1) {
-                        Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
-                        mDataManager.setLevelLocality(level);
-                        triggerRegionChange(level);
-                    } else if (mDataManager.checkExistingLocality(level) == 0)
-                        scheduledRegionUpdate = false;
-                    else {
-                        Toast.makeText(LocationService.this, "Could not Locate you!Scheduled to check again in 1 min", Toast.LENGTH_SHORT).show();
-                        scheduledRegionUpdate = true;
-                    }
-                }else{
-                    Toast.makeText(LocationService.this, "GeoCoder service is offline!Scheduled to check again in 1 min", Toast.LENGTH_SHORT).show();
+                if (level == null) {
+                    Toast.makeText(LocationService.this, "Could not locate you!Geocoder Seems to be offline! Check yur internet connection and restart the app", Toast.LENGTH_SHORT).show();
                     scheduledRegionUpdate = true;
+                    count = 0;
+                    return;
                 }
+
+                Log.i("Geocoder", "Got Level: " + level.getCountry() + ", " + level.getCity());
+                mDataManager.setLevelLocality(level);
+                triggerRegionChange(level);
+                scheduledRegionUpdate = false;
             }
         };
-
         geoCoderTask.execute(location);
         lastLocationChecked = location;
     }

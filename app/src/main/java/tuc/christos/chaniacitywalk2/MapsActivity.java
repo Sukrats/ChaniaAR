@@ -154,11 +154,11 @@ public class MapsActivity extends AppCompatActivity implements
             public void onClick(View v) {
                 //TODO TEMPORARY
                 Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                if (isFenceTriggered && mDataManager.getArScene(String.valueOf(fenceTriggered)).hasAR()) {
+                if (isFenceTriggered && mDataManager.getScene(fenceTriggered).hasAR()) {
                     intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
                     intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
                 } else if (isFenceTriggered && !activePlayer.hasVisited(fenceTriggered)) {
-                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
+                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");//focus Marker
                     intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
                 } else {
                     intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
@@ -637,13 +637,14 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     public void regionChanged(String region, String Country) {
-        Toast.makeText(this, "Redraw Map", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Redraw Map Called", Toast.LENGTH_SHORT).show();
+        scenesShown.clear();
         if (!mDataManager.getActiveMapContent().isEmpty()) {
             for (Scene scene : mDataManager.getActiveMapContent()) {
                 scenesShown.put(String.valueOf(scene.getId()), scene);
             }
-            drawMap();
         }
+        drawMap();
     }
 
     private Bitmap getMarkerBitmapFromView(@DrawableRes int resId) {

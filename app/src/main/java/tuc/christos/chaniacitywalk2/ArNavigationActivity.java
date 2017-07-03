@@ -157,15 +157,9 @@ public class ArNavigationActivity extends Activity {
         scene_id = getIntent().getLongExtra(Constants.ARCHITECT_AR_SCENE_KEY, 0);
         if (getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY) != null)
             question_id = getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY);
-        /*final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
-        config.setFeatures(1);
-        config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
-        config.setCameraResolution(CameraSettings.CameraResolution.AUTO);
-        config.setCameraPosition(CameraSettings.CameraPosition.DEFAULT);*/
         final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
         config.setFeatures(1);
-        //config.setFeatures(4);
         config.setCameraPosition(CameraSettings.CameraPosition.DEFAULT);
         config.setCameraResolution(CameraSettings.CameraResolution.AUTO);
         config.setCamera2Enabled(false);
@@ -186,57 +180,6 @@ public class ArNavigationActivity extends Activity {
         if (worldLoadedListener != null && architectView != null) {
             architectView.registerWorldLoadedListener(worldLoadedListener);
         }
-
-        urlListener = new ArchitectView.ArchitectUrlListener() {
-            @Override
-            public boolean urlWasInvoked(String s) {
-                Uri invokedUri = Uri.parse(s);
-                switch (invokedUri.getHost()) {
-                    case "details":
-                        Intent intent = new Intent(getApplicationContext(), SceneDetailActivity.class);
-                        intent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(invokedUri.getQueryParameter("id")));
-                        startActivity(intent);
-                        return true;
-                    case "map":
-                        Intent mapIntent = NavUtils.getParentActivityIntent(ArNavigationActivity.this);
-                        mapIntent.putExtra(SceneDetailFragment.ARG_ITEM_ID, String.valueOf(invokedUri.getQueryParameter("id")));
-                        NavUtils.navigateUpTo(ArNavigationActivity.this, mapIntent);
-                        return true;
-                    case "GEOAR":
-                        try {
-                            architectView.load("ModelAtGeoLocation/index.html");
-                            callJavaScript("World.ShowBackBtn", new String[]{});
-                            injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(invokedUri.getQueryParameter("id"))).toString()});
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case "arNav":
-                        try {
-                            architectView.load("ArNavigation/index.html");
-                            injectData(mDataManager.getActiveMapContent());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    case "score":
-                        if (invokedUri.getBooleanQueryParameter("success", false)) {
-                            Log.i("Answer", "correct" + invokedUri.getQueryParameter("id"));
-                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")), true, getApplicationContext());
-                            mDataManager.addVisit(Long.valueOf(invokedUri.getQueryParameter("id")));
-                        } else {
-                            Log.i("Answer", "wrong");
-                            mDataManager.updatePlayer(Long.valueOf(invokedUri.getQueryParameter("id")), false, getApplicationContext());
-                        }
-                        break;
-
-                    default:
-                        Toast.makeText(getApplicationContext(), "Got url: " + invokedUri.getHost(), Toast.LENGTH_SHORT).show();
-                        return true;
-                }
-                return true;
-            }
-        };
         // register valid urlListener in architectView, ensure this is set before content is loaded to not miss any event
         //if (architectView != null) {
         //    architectView.registerUrlListener(urlListener);
@@ -270,8 +213,8 @@ public class ArNavigationActivity extends Activity {
                     injectData(mDataManager.getActiveMapContent());
                 else if (WorldToLoad.contains("ModelAtGeoLocation")) {
                     if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(scene_id)) {
-                        mDataManager.updatePlayer(scene_id, true, this);
-                        mDataManager.addVisit(scene_id);
+                        mDataManager.updatePlayer(true, this);
+                        mDataManager.addVisit(scene_id, this);
                     }
                     injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
                 }else if(WorldToLoad.contains("Instant")){
@@ -439,11 +382,18 @@ public class ArNavigationActivity extends Activity {
                         case "score":
                             if (jsonObject.getBoolean("success")) {
                                 Log.i("Answer", "correct" + jsonObject.getString("id"));
-                                mDataManager.updatePlayer(jsonObject.getLong("id"), true, getApplicationContext());
-                                mDataManager.addVisit(jsonObject.getLong("id"));
+                                mDataManager.updatePlayer( true, getApplicationContext());
+                                mDataManager.addVisit(jsonObject.getLong("id"),getApplicationContext());
                             } else {
                                 Log.i("Answer", "wrong");
-                                mDataManager.updatePlayer(jsonObject.getLong("id"), false, getApplicationContext());
+                                mDataManager.updatePlayer(false, getApplicationContext());
+                            }
+                            break;
+                        case "mark":
+                            if(mDataManager.getActivePlayer().hasPlaced(jsonObject.getLong("id"))){
+                                mDataManager.clearPlace(jsonObject.getLong("id"), getApplicationContext());
+                            }else {
+                                mDataManager.savePlace(jsonObject.getLong("id"), getApplicationContext());
                             }
                             break;
 

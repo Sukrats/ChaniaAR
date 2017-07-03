@@ -151,7 +151,8 @@ var World = {
 		*/
 		// update panel values
 		$("#poi-detail-title").html(marker.poiData.title);
-		$("#poi-detail-description").html(marker.poiData.description);
+		var descr = marker.poiData.description.trunc(25);
+		$("#poi-detail-description").html(descr);
 
 		// It's ok for AR.Location subclass objects to return a distance of `undefined`. In case such a distance was calculated when all distances were queried in `updateDistanceToUserValues`, we recalculate this specific distance before we update the UI.
 		if( undefined == marker.distanceToUser ) {
@@ -166,7 +167,6 @@ var World = {
 		// deselect AR-marker when user exits detail screen div.
         $("#closeBtn").unbind();
 		$("#closeBtn").click(function(){
-
 			World.currentMarker.setDeselected(World.currentMarker);
             $("#panel-poidetail").slideToggle();
             World.panelOpen = false;
@@ -260,7 +260,6 @@ var World = {
         if(!World.isAnswering){
             World.areaMarker = null;
             World.restoreRest();
-            //$("#ar-btn").css({'color':'#A9A9A9'}).button().button("refresh");
         }
     },
     // screen was clicked but no geo-object was hit

@@ -11,6 +11,8 @@ public class Level {
     private String country_code;
     private String adminArea;
     private String subAdminArea;
+    private Double latitude;
+    private Double longitude;
 
     public Level() {
     }
@@ -64,5 +66,21 @@ public class Level {
 
     public void setSubAdminArea(String subAdminArea) {
         this.subAdminArea = adminArea;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 }

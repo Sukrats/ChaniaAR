@@ -284,6 +284,10 @@ public class RestClient implements ContentListener {
                     }
                     Log.i("PUT", "BODY: " + code);
                 }
+                @Override
+                public boolean getUseSynchronousMode() {
+                    return false;
+                }
             });
         mClient = client;
 
@@ -520,8 +524,6 @@ public class RestClient implements ContentListener {
     }
 
     public void downloadScenesForLocation(String country, String area, final ContentListener contentListener) {
-        mDataManager.clearScenes();
-        //mDataManager.clearLocality();
         Log.i(TAG, "Downloading Scenes For Location");
         AsyncHttpClient client = new AsyncHttpClient();
         client.setMaxRetriesAndTimeout(4, 20000);
@@ -601,6 +603,10 @@ public class RestClient implements ContentListener {
                     }
                     Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
                 }
+                @Override
+                public boolean getUseSynchronousMode() {
+                    return false;
+                }
             });
             mClient = client;
         } catch (UnsupportedEncodingException e) {
@@ -647,6 +653,10 @@ public class RestClient implements ContentListener {
                     }
                     Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
                 }
+                @Override
+                public boolean getUseSynchronousMode() {
+                    return false;
+                }
             });
             mClient = client;
         } catch (UnsupportedEncodingException e) {
@@ -682,6 +692,10 @@ public class RestClient implements ContentListener {
                     Log.i("JSON EXCEPTION: ", ex.getMessage());
                 }
                 Toast.makeText(context, result, Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public boolean getUseSynchronousMode() {
+                return false;
             }
         });
         mClient = client;
