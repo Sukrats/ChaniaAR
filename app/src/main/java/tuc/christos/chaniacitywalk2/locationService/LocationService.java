@@ -29,7 +29,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.support.v4.app.TaskStackBuilder;
-import android.text.format.DateUtils;
+import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -122,13 +122,13 @@ public class LocationService extends Service implements LocationCallback, Locati
         // background priority so CPU-intensive work will not disrupt our UI.
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, false);
+        boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, true);
 
         if (!isRunning) {
 
             if (mDataManager.hasLocality()) {
                 java.sql.Date updated = mDataManager.getLastLocalityUpdate();
-                scheduledRegionUpdate = !DateUtils.isToday(updated.getTime());
+                scheduledRegionUpdate = !isToday(updated.getTime());
                 lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
                 Log.i("Geocoder",lastLocationChecked.getLatitude()+","+ lastLocationChecked.getLongitude());
             } else {
@@ -176,7 +176,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             }
             if (intent.getStringExtra("mode") != null) {
                 SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, false);
+                boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, true);
                 if (locApi)
                     mLocationProvider.setMode(intent.getStringExtra("mode"));
             }
@@ -301,7 +301,7 @@ public class LocationService extends Service implements LocationCallback, Locati
 
         if (mDataManager.hasLocality()) {
             java.sql.Date updated = mDataManager.getLastLocalityUpdate();
-            scheduledRegionUpdate = !DateUtils.isToday(updated.getTime());//current.after(updated);
+            scheduledRegionUpdate = !isToday(updated.getTime());//current.after(updated);
             lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
         }
 
@@ -309,7 +309,7 @@ public class LocationService extends Service implements LocationCallback, Locati
         Log.i("Binder", "onBind called");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval, "");
-        boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, false);
+        boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, true);
         if (!locApi) {
             Toast.makeText(LocationService.this, "Android.Location API", Toast.LENGTH_SHORT).show();
             mWikiProvider.onResume();
@@ -356,7 +356,7 @@ public class LocationService extends Service implements LocationCallback, Locati
             showServiceNotification();
         }
         if (mLocationProvider != null)
-            mLocationProvider.setMode(LocationProvider.MODE_BACKGROUND);
+            mLocationProvider.setMode(LocationProvider.MODE_HIGH_ACCURACY);
         return true;
     }
 
@@ -367,14 +367,14 @@ public class LocationService extends Service implements LocationCallback, Locati
     public void onRebind(Intent intent) {
         if (mDataManager.hasLocality()) {
             java.sql.Date updated = mDataManager.getLastLocalityUpdate();
-            scheduledRegionUpdate = !DateUtils.isToday(updated.getTime());//current.after(updated);
+            scheduledRegionUpdate = !isToday(updated.getTime());//current.after(updated);
             lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
         }
         hideServiceNotification();
         Log.i("Binder", "OnRebind called");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String mode = sharedPreferences.getString(SettingsActivity.pref_key_location_update_interval, "");
-        boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, false);
+        boolean locApi = sharedPreferences.getBoolean(SettingsActivity.pref_key_google_api_client, true);
         Log.i("Binder", mode);
         if (!locApi) {
             Toast.makeText(LocationService.this, "Android.Location API", Toast.LENGTH_SHORT).show();
@@ -666,6 +666,18 @@ public class LocationService extends Service implements LocationCallback, Locati
         geoCoderTask.execute(location);
         lastLocationChecked = location;
     }
+    public boolean isToday(long when) {
+        Time time = new Time();
+        time.set(when);
 
+        int thenYear = time.year;
+        int thenMonth = time.month;
+        int thenMonthDay = time.monthDay;
+
+        time.set(System.currentTimeMillis()+7200*1000);
+        return (thenYear == time.year)
+                && (thenMonth == time.month)
+                && (thenMonthDay == time.monthDay);
+    }
 
 }

@@ -41,7 +41,7 @@ var World = {
                 Putting it all together the location and 3D model is added to an AR.GeoObject.
             */
             //for(var i = 0; i < locations.length; i++){
-		    var snippet = World.scene.title.trunc(25)+i;
+		    /*var snippet = World.scene.title.trunc(25)+i;
             var titleLabel = new AR.Label(snippet, 1, {
                 zOrder: 1,
                 offsetY: 0.55,
@@ -49,10 +49,10 @@ var World = {
                     textColor: '#FFFFFF',
                     fontStyle: AR.CONST.FONT_STYLE.BOLD
                 }
-            });
+            });*/
             World.objList.push(new AR.GeoObject(location, {
                 drawables: {
-                   cam: [model,titleLabel],
+                   cam: [model],
                    indicator: [indicatorDrawable]
                 },
                 enabled:false

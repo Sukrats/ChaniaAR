@@ -76,41 +76,22 @@
         android:orientation="horizontal"
         android:visibility="gone">
 
- <!--       <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="4dp"
-            android:background="@color/divider" />
+        <!--       <View
+                   android:layout_width="1dp"
+                   android:layout_height="match_parent"
+                   android:layout_gravity="center_vertical"
+                   android:layout_marginLeft="4dp"
+                   android:layout_marginRight="4dp"
+                   android:background="@color/divider" />
 
-        <ImageButton
-            android:id="@+id/details_button"
-            style="@style/Widget.AppCompat.ImageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:background="@color/transparent"
-            android:contentDescription="@android:string/ok"
-            android:src="@android:drawable/ic_menu_info_details" />-->
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="4dp"
-            android:background="@color/divider" />
-
-        <ImageButton
-            android:id="@+id/ar_button"
-            style="@style/Widget.AppCompat.ImageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:background="@color/transparent"
-            android:contentDescription="@android:string/ok"
-            android:src="@android:drawable/ic_menu_camera" />
+               <ImageButton
+                   android:id="@+id/ar_button"
+                   style="@style/Widget.AppCompat.ImageButton"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_gravity="center_vertical"
+                   android:background="@color/transparent"
+                   android:contentDescription="@android:string/ok" />-->
 
     </LinearLayout>
 </LinearLayout>

@@ -13,7 +13,29 @@ function Marker(poiData) {
     this.animationGroup_idle = null;
     this.animationGroup_selected = null;
 
+    var thumb = new AR.ImageResource(poiData.thumbnail);
 
+    this.thumbnail = new AR.ImageDrawable( thumb, 1.2, {
+         zOrder: 1,
+         offsetY: -0.5,
+         offsetX: -2.3,
+         horizontalAnchor: AR.CONST.HORIZONTAL_ANCHOR.LEFT,
+         verticalAnchor: AR.CONST.HORIZONTAL_ANCHOR.BOTTOM
+     });
+
+    //create an AR.Label for the marker's distance
+    this.distanceLabel = new AR.Label("", 0.5, {
+        zOrder: 1,
+        offsetY: -0.5,
+        offsetX: 1.2,
+        opacity: 1.0,
+        horizontalAnchor: AR.CONST.HORIZONTAL_ANCHOR.CENTER,
+        verticalAnchor: AR.CONST.HORIZONTAL_ANCHOR.BOTTOM,
+        style: {
+            textColor: '#FFFFFF',
+            fontStyle: AR.CONST.FONT_STYLE.BOLD
+        }
+    });
     // create the AR.GeoLocation from the poi data
     var markerLocation = new AR.GeoLocation(poiData.latitude, poiData.longitude, poiData.altitude);
 
@@ -35,24 +57,16 @@ function Marker(poiData) {
     });
 
     // create an AR.Label for the marker's title
-    this.titleLabel = new AR.Label(poiData.title.trunc(25), 1, {
+    var displayTitle = poiData.title;
+    this.titleLabel = new AR.Label(displayTitle.trunc(15), 0.7, {
         zOrder: 1,
-        offsetY: 0.55,
-        scale: 0.70,
+        offsetY: 0.5,
         style: {
             textColor: '#FFFFFF',
             fontStyle: AR.CONST.FONT_STYLE.BOLD
         }
     });
 
-    // create an AR.Label for the marker's description
-    this.descriptionLabel = new AR.Label(poiData.description.trunc(15), 0.8, {
-        zOrder: 1,
-        offsetY: -0.55,
-        style: {
-            textColor: '#FFFFFF'
-        }
-    });
     this.radarCircle = new AR.Circle(0.03, {
             horizontalAnchor: AR.CONST.HORIZONTAL_ANCHOR.CENTER,
             opacity: 0.8,
@@ -78,24 +92,15 @@ function Marker(poiData) {
     /*
         Create the AR.GeoObject with the drawable objects and define the AR.ImageDrawable as an indicator target on the marker AR.GeoObject. The direction indicator is displayed automatically when necessary. AR.Drawable subclasses (e.g. AR.Circle) can be used as direction indicators.
     */
-    if(!World.isInArea || World.currentArea === poiData.id ){
+
         this.markerObject = new AR.GeoObject(markerLocation, {
             drawables: {
-                cam: [this.markerDrawable_idle, this.markerDrawable_selected, this.titleLabel, this.descriptionLabel],
+                cam: [this.markerDrawable_idle, this.markerDrawable_selected, this.titleLabel, this.thumbnail, this.distanceLabel],
                 radar: this.radardrawables
             }
         });
         World.areaMarker = this.markerObject;
-    }else{
-        this.markerObject = new AR.GeoObject(markerLocation, {
-            drawables: {
-                cam: [this.markerDrawable_idle, this.markerDrawable_selected, this.titleLabel, this.descriptionLabel],
-                radar: this.radardrawables
-            },
-            enabled:false
-        });
 
-    }
     return this;
 }
 
@@ -173,29 +178,36 @@ Marker.prototype.setSelected = function(marker) {
 
 
         // create AR.PropertyAnimation that animates the scaling of the title label to 1.2
-        var titleLabelResizeAnimationX = new AR.PropertyAnimation(marker.titleLabel, 'scale.x', null, 0.9, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var titleLabelResizeAnimationX = new AR.PropertyAnimation(marker.titleLabel, 'scale.x', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
          // create AR.PropertyAnimation that animates the scaling of the title label to 1.2
-        var titleLabelResizeAnimationY = new AR.PropertyAnimation(marker.titleLabel, 'scale.y', null, 0.9, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var titleLabelResizeAnimationY = new AR.PropertyAnimation(marker.titleLabel, 'scale.y', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
 
         // create AR.PropertyAnimation that animates the scaling of the description label to 1.2
-        var descriptionLabelResizeAnimationX = new AR.PropertyAnimation(marker.descriptionLabel, 'scale.x', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var descriptionLabelResizeAnimationX = new AR.PropertyAnimation(marker.thumbnail, 'scale.x', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
         // create AR.PropertyAnimation that animates the scaling of the description label to 1.2
-        var descriptionLabelResizeAnimationY = new AR.PropertyAnimation(marker.descriptionLabel, 'scale.y', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var descriptionLabelResizeAnimationY = new AR.PropertyAnimation(marker.thumbnail, 'scale.y', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+            amplitude: 2.0
+        }));
+        // create AR.PropertyAnimation that animates the scaling of the description label to 1.2
+        var distanceLabelResizeAnimationX = new AR.PropertyAnimation(marker.distanceLabel, 'scale.x', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+            amplitude: 2.0
+        }));
+        // create AR.PropertyAnimation that animates the scaling of the description label to 1.2
+        var distanceLabelResizeAnimationY = new AR.PropertyAnimation(marker.distanceLabel, 'scale.y', null, 1.2, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
 
         /*
             There are two types of AR.AnimationGroups. Parallel animations are running at the same time, sequentials are played one after another. This example uses a parallel AR.AnimationGroup.
         */
-        marker.animationGroup_selected = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL, [showSelectedDrawableAnimation,hideIdleDrawableAnimation,
-        idleDrawableResizeAnimationY,idleDrawableResizeAnimationX,selectedDrawableResizeAnimationX,selectedDrawableResizeAnimationY,
-        titleLabelResizeAnimationX,titleLabelResizeAnimationY,descriptionLabelResizeAnimationX,descriptionLabelResizeAnimationY]);
+        marker.animationGroup_selected = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL,
+            [distanceLabelResizeAnimationX, distanceLabelResizeAnimationY, showSelectedDrawableAnimation,hideIdleDrawableAnimation, idleDrawableResizeAnimationY,idleDrawableResizeAnimationX,selectedDrawableResizeAnimationX,selectedDrawableResizeAnimationY, titleLabelResizeAnimationX,titleLabelResizeAnimationY,descriptionLabelResizeAnimationX,descriptionLabelResizeAnimationY]);
     }
 
     // removes function that is set on the onClick trigger of the idle-state marker
@@ -244,28 +256,36 @@ Marker.prototype.setDeselected = function(marker) {
 
 
         // create AR.PropertyAnimation that animates the scaling of the title label to 1.2
-        var titleLabelResizeAnimationX = new AR.PropertyAnimation(marker.titleLabel, 'scale.x', null, 0.7, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var titleLabelResizeAnimationX = new AR.PropertyAnimation(marker.titleLabel, 'scale.x', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
          // create AR.PropertyAnimation that animates the scaling of the title label to 1.2
-        var titleLabelResizeAnimationY = new AR.PropertyAnimation(marker.titleLabel, 'scale.y', null, 0.7, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var titleLabelResizeAnimationY = new AR.PropertyAnimation(marker.titleLabel, 'scale.y', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
 
         // create AR.PropertyAnimation that animates the scaling of the description label to 1.2
-        var descriptionLabelResizeAnimationX = new AR.PropertyAnimation(marker.descriptionLabel, 'scale.x', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var descriptionLabelResizeAnimationX = new AR.PropertyAnimation(marker.thumbnail, 'scale.x', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
         // create AR.PropertyAnimation that animates the scaling of the description label to 1.2
-        var descriptionLabelResizeAnimationY = new AR.PropertyAnimation(marker.descriptionLabel, 'scale.y', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+        var descriptionLabelResizeAnimationY = new AR.PropertyAnimation(marker.thumbnail, 'scale.y', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
             amplitude: 2.0
         }));
 
+        // create AR.PropertyAnimation that animates the scaling of the description label to 1.2
+        var distanceLabelResizeAnimationX = new AR.PropertyAnimation(marker.distanceLabel, 'scale.x', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+            amplitude: 2.0
+        }));
+        // create AR.PropertyAnimation that animates the scaling of the description label to 1.2
+        var distanceLabelResizeAnimationY = new AR.PropertyAnimation(marker.distanceLabel, 'scale.y', null, 1.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+            amplitude: 2.0
+        }));
         /*
             There are two types of AR.AnimationGroups. Parallel animations are running at the same time, sequentials are played one after another. This example uses a parallel AR.AnimationGroup.
         */
         marker.animationGroup_idle = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL,
-        [showIdleDrawableAnimation, hideSelectedDrawableAnimation, idleDrawableResizeAnimationX, selectedDrawableResizeAnimationX, titleLabelResizeAnimationX, descriptionLabelResizeAnimationX, idleDrawableResizeAnimationY, selectedDrawableResizeAnimationY, titleLabelResizeAnimationY, descriptionLabelResizeAnimationY]);
+        [distanceLabelResizeAnimationX, distanceLabelResizeAnimationY, showIdleDrawableAnimation, hideSelectedDrawableAnimation, idleDrawableResizeAnimationX, selectedDrawableResizeAnimationX, titleLabelResizeAnimationX, descriptionLabelResizeAnimationX, idleDrawableResizeAnimationY, selectedDrawableResizeAnimationY, titleLabelResizeAnimationY, descriptionLabelResizeAnimationY]);
 
 
     }

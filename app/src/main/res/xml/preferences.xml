@@ -52,13 +52,13 @@
             android:key="pref_key_allow_background_locations"
             android:summary="@string/allow_background_locations"
             android:title="@string/allow_background_locations_title"
-            android:defaultValue="false"/>
+            android:defaultValue="true"/>
 
         <CheckBoxPreference
             android:key="pref_key_google_api_client"
             android:summary="@string/use_google_api_client"
             android:title="@string/google_api_client"
-            android:defaultValue="false"/>
+            android:defaultValue="true"/>
 
     </PreferenceScreen>
 

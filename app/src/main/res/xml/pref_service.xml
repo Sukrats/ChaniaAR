@@ -5,7 +5,7 @@
         android:key="pref_key_allow_background_locations"
         android:summary="@string/allow_background_locations"
         android:title="@string/allow_background_locations_title"
-        android:defaultValue="false"/>
+        android:defaultValue="true"/>
 
     <ListPreference
         android:key="pref_key_location_update_interval"

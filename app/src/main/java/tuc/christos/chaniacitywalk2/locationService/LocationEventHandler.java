@@ -15,7 +15,7 @@ class LocationEventHandler implements LocationCallback {
     private Location lastKnownLocation = new Location("");
     private ArrayList<LocationEventsListener> iLocationEventListener = new ArrayList<>();
 
-    static int MIN_RADIUS = 25;
+    static int MIN_RADIUS = 40;
     private static long COVER_RADIUS = 80;
 
     private HashMap<Long, Scene> scenes = new HashMap<>();

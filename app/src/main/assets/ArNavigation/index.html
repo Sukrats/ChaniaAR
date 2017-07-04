@@ -43,31 +43,14 @@
 <div data-role="page" id="page1" style="background: none;">
     <!-- MAIN PAGE CONTENT -->
     <div class="radarContainer_left" id="radarContainer"></div>
-
-    <a id="overflowBtn" data-shadow="false" data-role="button" data-iconpos="bottom"
-       data-mini="true"
-       data-theme="d"
-       data-icon="home">
-        <i class="fa fa-align-justify fa-2x" aria-hidden="true"></i>
-    </a>
-
-    <!--<div id="overMenu" class="list-group" data-theme="b">
-        <a id="backBtn" data-shadow="false" data-role="button"
-           data-theme="d"
-           data-inline="true">
-            <i class="fa fa-home fa-2x" aria-hidden="true"></i>
+    <div id="user_image">
+        <a id="score" href="#positionOrigin" data-rel="popup" data-position-to="origin" data-transition="slideup">
+            <img src="assets/circular_user_image_2.png" alt="usermaybe" width="100" height="82" >
         </a>
-        <a id="toggleView" data-shadow="false" data-role="button"
-           data-theme="d"
-           data-inline="true">
-            <i class="fa fa-bullseye fa-2x" aria-hidden="true" style="color:#A9A9A9;"></i>
-        </a>
-        <a id="ar-btn" data-shadow="false" data-role="button"
-           data-theme="d"
-           data-inline="true">
-            <i class="fa fa-play fa-2x" aria-hidden="true" style="color:#A9A9A9;"></i>&nbsp;
-        </a>
-    </div>-->
+    </div>
+    <div data-role="popup"  id="positionOrigin" class="ui-content" data-theme="d">
+        <p></p>
+    </div>
 
     <!-- transparent footer-->
     <div id="info-footer" data-role="footer" class="ui-bar" data-theme="f" data-position="fixed"
@@ -99,11 +82,22 @@
             <!-- title button -->
             <div class="ui-grid-solo" style="align-self:stretch">
 
-                <div class="ui-block-a" style="width:80%;">
+                <div class="ui-block-a" style="align-self:stretch;text-align:center;">
                     <!-- description -->
                     <h4 id="poi-detail-description"></h4>
                     <!-- distance and map button -->
                     <h4>Distance: <a id="poi-detail-distance"></a></h4>
+
+                    <a id="play-ar" data-shadow="true" data-role="button" style="display:none"
+                        data-theme="d"
+                        data-inline="true">3D View
+                        <i class="fa fa-play-circle" aria-hidden="true"></i>
+                    </a>
+                    <a id="answer-ar" data-shadow="true" data-role="button" style="display:none"
+                           data-theme="d"
+                           data-inline="true">Unlock Monument
+                        <i class="fa fa-unlock" aria-hidden="true"></i>
+                    </a>
                 </div>
 
             </div>

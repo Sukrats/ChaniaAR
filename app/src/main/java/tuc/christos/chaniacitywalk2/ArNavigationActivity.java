@@ -124,7 +124,8 @@ public class ArNavigationActivity extends Activity {
 
         @Override
         public void userEnteredArea(long areaID) {
-            callJavaScript("World.userEnteredArea", new String[]{String.valueOf(areaID)});
+            if(!mDataManager.getActivePlayer().hasVisited(areaID))
+                callJavaScript("World.userEnteredArea", new String[]{String.valueOf(areaID)});
             Log.i("GeoFence", "Fence Triggered: " + areaID);
         }
 
@@ -138,14 +139,13 @@ public class ArNavigationActivity extends Activity {
         public void handleNewLocation(Location location) {
             ArNavigationActivity.this.lastKnownLocation = location;
             //update JS Location
-            ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(),  location.getAccuracy());
+            ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
         }
     };
 
     protected boolean mBount = false;
     protected String WorldToLoad = "";
     protected long scene_id = 0;
-    protected String question_id = null;
 
 
     @Override
@@ -155,8 +155,8 @@ public class ArNavigationActivity extends Activity {
         architectView = (ArchitectView) findViewById(R.id.architectView);
         WorldToLoad = getIntent().getStringExtra(Constants.ARCHITECT_WORLD_KEY);
         scene_id = getIntent().getLongExtra(Constants.ARCHITECT_AR_SCENE_KEY, 0);
-        if (getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY) != null)
-            question_id = getIntent().getStringExtra(Constants.ARCHITECT_QUESTION_SCENE_KEY);
+
+
         final ArchitectStartupConfiguration config = new ArchitectStartupConfiguration();
         config.setLicenseKey(Constants.WIKITUDE_SDK_KEY);
         config.setFeatures(1);
@@ -203,24 +203,20 @@ public class ArNavigationActivity extends Activity {
             // call mandatory live-cycle method of architectView
             this.architectView.onPostCreate();
             try {
-                // load content via url in architectView, ensure '<script src="architect://architect.js"></script>' is part of this HTML file,
-                // have a look at wikitude.com's developer section for API references
                 architectView.load(WorldToLoad);
-                if (WorldToLoad.contains("ArNavigation") && scene_id != 0) {
-                    injectArgs("World.focusScene", new String[]{String.valueOf(mDataManager.getScene(scene_id).getId())});
+                if (WorldToLoad.contains("ArNavigation")) {
                     injectData(mDataManager.getActiveMapContent());
-                }else if (WorldToLoad.contains("ArNavigation"))
-                    injectData(mDataManager.getActiveMapContent());
-                else if (WorldToLoad.contains("ModelAtGeoLocation")) {
+                    injectPlayer(mDataManager.getActivePlayer());
+                } else if (WorldToLoad.contains("ModelAtGeoLocation")) {
                     if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(scene_id)) {
                         mDataManager.updatePlayer(true, this);
                         mDataManager.addVisit(scene_id, this);
                     }
                     injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
-                }else if(WorldToLoad.contains("Instant")){
+                } else if (WorldToLoad.contains("Instant")) {
                     String origin = getIntent().getStringExtra(Constants.ARCHITECT_ORIGIN);
                     Scene scene = mDataManager.getArScene(String.valueOf(scene_id));
-                    injectArgs("World.getInstantiation",new String[]{JsonHelper.sceneWithViewportToJSON(scene, scene.getViewport(origin)).toString()});
+                    injectArgs("World.getInstantiation", new String[]{JsonHelper.sceneWithViewportToJSON(scene, scene.getViewport(origin)).toString()});
 
                 }
             } catch (IOException e1) {
@@ -228,16 +224,20 @@ public class ArNavigationActivity extends Activity {
             }
         }
     }
-    private void injectInstant(String method, float[] args){
+
+    private void injectInstant(String method, float[] args) {
         JSONObject json = new JSONObject();
         try {
             json.put("posx", args[0]);
             json.put("posy", args[1]);
-            Log.i("JSON",json.toString());
-        }catch(JSONException e ){
+            Log.i("JSON", json.toString());
+        } catch (JSONException e) {
             Log.i("JSON", e.getMessage());
         }
         injectArgs(method, new String[]{json.toString()});
+    }
+    private void injectPlayer(Player player){
+        injectArgs("World.InjectPlayer", new String[]{JsonHelper.playerToJson(player).toString()});
     }
 
     private void injectArgs(final String method, final String[] args) {
@@ -377,22 +377,24 @@ public class ArNavigationActivity extends Activity {
                             loadWorld("GEOAR", jsonObject.getString("id"));
                             break;
                         case "arNav":
-                            loadWorld("arNav",null);
+                            loadWorld("arNav", null);
                             break;
                         case "score":
                             if (jsonObject.getBoolean("success")) {
                                 Log.i("Answer", "correct" + jsonObject.getString("id"));
-                                mDataManager.updatePlayer( true, getApplicationContext());
-                                mDataManager.addVisit(jsonObject.getLong("id"),getApplicationContext());
+                                mDataManager.updatePlayer(true, getApplicationContext());
+                                mDataManager.addVisit(jsonObject.getLong("id"), getApplicationContext());
+                                injectPlayer(mDataManager.getActivePlayer());
                             } else {
                                 Log.i("Answer", "wrong");
                                 mDataManager.updatePlayer(false, getApplicationContext());
+                                injectPlayer(mDataManager.getActivePlayer());
                             }
                             break;
                         case "mark":
-                            if(mDataManager.getActivePlayer().hasPlaced(jsonObject.getLong("id"))){
+                            if (mDataManager.getActivePlayer().hasPlaced(jsonObject.getLong("id"))) {
                                 mDataManager.clearPlace(jsonObject.getLong("id"), getApplicationContext());
-                            }else {
+                            } else {
                                 mDataManager.savePlace(jsonObject.getLong("id"), getApplicationContext());
                             }
                             break;

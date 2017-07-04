@@ -585,6 +585,7 @@ public class DataManager {
         v.setRegion(getCurrentLevel().getAdminArea());
         v.setScene_name(temp.getName());
         v.setCountry(getCurrentLevel().getCountry());
+        v.setCreated(new java.sql.Date(new java.util.Date().getTime()));
         mDBh.insertVisit(v);
         activePlayer.addVisit(v);
 

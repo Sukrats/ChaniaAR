@@ -152,13 +152,9 @@ public class MapsActivity extends AppCompatActivity implements
         pushButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO TEMPORARY
                 Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
                 if (isFenceTriggered && mDataManager.getScene(fenceTriggered).hasAR()) {
                     intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
-                    intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
-                } else if (isFenceTriggered && !activePlayer.hasVisited(fenceTriggered)) {
-                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");//focus Marker
                     intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
                 } else {
                     intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
@@ -292,9 +288,9 @@ public class MapsActivity extends AppCompatActivity implements
             markerToSceneMap.clear();
             if (mLocationMarker != null) {
                 mLocationMarker.setVisible(false);
-                defaultCameraPosition = new CameraPosition.Builder()
-                        .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
-                        .bearing(0).tilt(50).build();
+                //defaultCameraPosition = new CameraPosition.Builder()
+                //        .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
+                //        .bearing(0).tilt(50).build();
             }
             if (mLocationAccuracyCircle != null)
                 mLocationAccuracyCircle.remove();
@@ -363,7 +359,7 @@ public class MapsActivity extends AppCompatActivity implements
                     .strokeWidth(2)
                     .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
                     .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
-            setCameraPosition(location.getLatitude(), location.getLongitude(), DEFAULT_ZOOM_LEVEL);
+            //setCameraPosition(location.getLatitude(), location.getLongitude(), DEFAULT_ZOOM_LEVEL);
         } else {
             Location loc = latLngToLoc(mLocationMarker.getPosition());
             /*final Handler handler = new Handler();
@@ -681,14 +677,18 @@ public class MapsActivity extends AppCompatActivity implements
         public View getInfoWindow(Marker marker) {
 
             if (!marker.equals(mLocationMarker)) {
-                ImageButton ar_button = (ImageButton) mContents.findViewById(R.id.ar_button);
+                final Scene scene = markerToSceneMap.get(marker);
+                /*ImageButton ar_button = (ImageButton) mContents.findViewById(R.id.ar_button);
+                if(mDataManager.getActivePlayer().hasPlaced(scene.getId())){
+                    ar_button.setImageResource(R.drawable.ic_check_box_outline_blank_white_24dp);
+                }else ar_button.setImageResource(R.drawable.ic_check_box_white_24dp);
+                */
                 //ImageButton det_button = (ImageButton) mContents.findViewById(R.id.details_button);
 
                 final FrameLayout thumb = (FrameLayout) mContents.findViewById(R.id.thumb);
                 final ImageView thumbnail = (ImageView) mContents.findViewById(R.id.thumbnail);
                 mContents.findViewById(R.id.locality).setVisibility(View.GONE);
 
-                final Scene scene = markerToSceneMap.get(marker);
                 Glide.with(getApplicationContext())
                         .load(scene.getUriThumb())
                         .asBitmap()
@@ -711,24 +711,21 @@ public class MapsActivity extends AppCompatActivity implements
                     distance = "Distance: " + (int) mCurrentLocation.distanceTo(markerLocation) + "m";
                 snippetUi.setText(distance);
 
-                //if ((!scene.isVisited() || scene.hasAR()) && isFenceTriggered && scene.getId() == fenceTriggered) {
-                OnInfoWindowElemTouchListener InfoButtonListener = new OnInfoWindowElemTouchListener(ar_button,
+                /*//if ((!scene.isVisited() || scene.hasAR()) && isFenceTriggered && scene.getId() == fenceTriggered) {
+                OnInfoWindowElemTouchListener InfoButtonListener = new OnInfoWindowElemTouchListener(ar_button, marker,
                         ResourcesCompat.getDrawable(getResources(), R.color.transparent, null),
                         ResourcesCompat.getDrawable(getResources(), R.color.textBodyColorSecondary, null)) {
                     @Override
                     protected void onClickConfirmed(View v, Marker marker) {
-                        Intent intent = new Intent(mContents.getContext(), ArNavigationActivity.class);
-                        Log.i("window", String.valueOf(scene.getId()));
-                        if (scene.hasAR() && scene.getId() == fenceTriggered)
-                            intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
-                        else {
-                            intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
+                        if(activePlayer.hasPlaced(scene.getId())) {
+                            mDataManager.clearPlace(scene.getId(),MyApp.getAppContext());
+                        }else{
+                            mDataManager.savePlace(scene.getId(), MyApp.getAppContext());
                         }
-                        intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, scene.getId());
-                        startActivity(intent);
+                        scheduleHideAndShow(marker);
                     }
                 };
-                ar_button.setOnTouchListener(InfoButtonListener);
+                ar_button.setOnTouchListener(InfoButtonListener);*/
 
 
                 mContents.findViewById(R.id.controls_panel).setVisibility(View.VISIBLE);
@@ -787,7 +784,7 @@ public class MapsActivity extends AppCompatActivity implements
                 } else {
                     marker.hideInfoWindow();
                     reshowFlag = true;
-                    handler.postDelayed(this, 100);
+                    handler.postDelayed(this, 500);
                 }
 
             }

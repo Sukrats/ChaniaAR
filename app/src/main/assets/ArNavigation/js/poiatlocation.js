@@ -3,9 +3,6 @@ var World = {
 	// true once data was fetched
 	initiallyLoadedData: false,
     panelOpen: false,
-
-    markerInFocus: null,
-    isMarkerInFocus: false,
 	// POI-Marker asset
 	markerDrawable_idle: null,
 	markerDrawable_selected: null,
@@ -20,13 +17,16 @@ var World = {
     areaMarker:null,
     //POI-Marker List
 	markerList: [],
+	locationUpdateCounter:0,
+	userLocation: null,
+	Player: null,
 
 	// called to inject new POI data
 	loadPoisFromJsonData: function loadPoisFromJsonDataFn(poiData) {
 
 		// show radar & set click-listener
 		PoiRadar.show();
-        PoiRadar.setMaxDistance(Math.max(400, 1));
+        PoiRadar.setMaxDistance(Math.max(1000, 1));
 		$('#radarContainer').unbind('click');
 		$("#radarContainer").click(PoiRadar.clickedRadar);
 
@@ -36,8 +36,10 @@ var World = {
 			This sample loads an AR.ImageResource when the World variable was defined.
 			It will be reused for each marker that we will create afterwards.
 		*/
-		World.markerDrawable_idle = new AR.ImageResource("assets/marker_idle_stretch.png");
-		World.markerDrawable_selected = new AR.ImageResource("assets/marker_selected_stretch.png");
+		World.markerDrawable_idle = new AR.ImageResource("assets/marker_idle_colored.png");
+		World.markerDrawable_selected = new AR.ImageResource("assets/marker_selected_colored.png");
+		World.markerDrawable_idle_q = new AR.ImageResource("assets/marker_idle_stretch.png");
+		World.markerDrawable_selected_q = new AR.ImageResource("assets/marker_selected_stretch.png");
 		/*
 			For creating the marker a new object AR.GeoObject will be created at the specified geolocation.
 			An AR.GeoObject connects one or more AR.GeoLocations with multiple AR.Drawables.
@@ -60,6 +62,7 @@ var World = {
         		"visited":poiData[currentPlaceNr].visited,
         		"saved":poiData[currentPlaceNr].saved,
         		"hasAR":poiData[currentPlaceNr].hasAR,
+        		"thumbnail":poiData[currentPlaceNr].thumb_uri
         	};
         	/*
         		To be able to deselect a marker while the user taps on the empty screen,
@@ -85,74 +88,83 @@ var World = {
 		if(World.markerList.length > 0)
 		    $("#info-footer").hide();
 
-        $("#ar-btn").unbind();
-        $("#ar-btn").click(function(){
-            if(World.isInArea){
-                //alert("it IS")
-                if(!World.areaMarker.poiData.visited && !World.areaMarker.poiData.hasAR){
-
-                    $("#backBtn").unbind();
-                    $("#backBtn").click(function(){
-                        World.resume();
-                    });
-                    World.areaMarker.setDeselected(World.areaMarker);
-                    World.areaMarker.markerObject.enabled = false;
-
-                    World.question = new QuestionObject(World.areaMarker.poiData);
-                    World.isAnswering = true;
-                }else if(World.areaMarker.poiData.hasAR){
-                    //var architectSdkUrl = "architectsdk://GEOAR?id=" + encodeURIComponent(World.areaMarker.poiData.id);
-                    //document.location = architectSdkUrl;
-                    var args = {
-                        action: "GEOAR",
-                        id: World.areaMarker.poiData.id
-                    };
-                    World.areaMarker.setDeselected(World.areaMarker);
-                    AR.platform.sendJSONObject(args);
-                }
-             /*   $("#panel-poidetail").slideToggle();
-                World.panelOpen = false;
-                World.currentMarker = null;
-                World.areaMarker.enabled = false;*/
-            }
-        });
-        //if(!World.isMarkerInFocus)
-		    //World.focusScene(markerInFocus)
+		 World.updateDistanceToUserValues();
 	},
 
 	// location updates, fired every time you call architectView.setLocation() in native environment
 	locationChanged: function locationChangedFn(lat, lon, alt, acc) {
-		/*
-			The custom function World.onLocationChanged checks with the flag World.initiallyLoadedData if the function was already called.
-			With the first call of World.onLocationChanged an object that contains geo information will be created which will be later used
-			to create a marker using the World.loadPoisFromJsonData function.
-		*/
+	    World.userLocation = {
+    			'latitude': lat,
+    			'longitude': lon,
+    			'altitude': alt,
+    			'accuracy': acc
+    		};
+
+        World.locationUpdateCounter++;
+	    if (World.locationUpdateCounter === 10 && World.initiallyLoadedData) {
+    			// update placemark distance information frequently, you max also update distances only every 10m with some more effort
+    			World.updateDistanceToUserValues();
+                World.locationUpdateCounter = 0;
+    	}
 	},
     onMarkerDeSelected: function onMarkerDeSelectedFn(marker){
         $("#panel-poidetail").slideToggle();
         panelOpen = false;
-        var $button = $("#ar-btn");
-        var $clone = $button.clone();
-        $button.button();
-
-        $clone.css({"color":"#A9A9A9"});
-        $clone.button();
-        $button.replaceWith($clone);
-        //$("#ar-btn").css({"color":"#A9A9A9"});
-        //$("#ar-btn").button().button("refresh");
-
         World.currentMarker = null;
     },
 	// fired when user pressed maker in cam
     onMarkerSelected: function onMarkerSelectedFn(marker) {
+        $("#play-ar").hide();
+        $("#poi-detail-description").hide();
+        $("#answer-ar").hide();
 		/*
 			In this sample a POI detail panel appears when pressing a cam-marker (the blue box with title & description),
 			compare index.html in the sample's directory.
 		*/
 		// update panel values
 		$("#poi-detail-title").html(marker.poiData.title);
-		var descr = marker.poiData.description.trunc(25);
-		$("#poi-detail-description").html(descr);
+		var descr = marker.poiData.description.trunc(100);
+
+		if( marker.poiData.visited == true ){
+		    $("#poi-detail-description").html(descr);
+            $("#poi-detail-description").show();
+		}else{
+            $("#answer-ar").show();
+            $("#answer-ar").unbind();
+            $("#answer-ar").click(function(){
+                if(World.isInArea){
+                    $("#backBtn").unbind();
+                    $("#backBtn").click(function(){
+                        World.resume();
+                    });
+                    World.currentMarker.setDeselected(World.currentMarker);
+                    World.areaMarker.setDeselected(World.areaMarker);
+                    World.areaMarker.markerObject.enabled = false;
+                    $("#panel-poidetail").slideToggle();
+
+                    World.question = new QuestionObject(World.areaMarker.poiData);
+                    World.isAnswering = true;
+                }else{
+                    alert("You need to get closer!")
+                }
+            });
+		}
+		if( marker.poiData.hasAR == true){
+            $("#play-ar").show();
+            $("#play-ar").unbind();
+            $("#play-ar").click(function(){
+                if(World.isInArea){
+                    var args = {
+                        action: "GEOAR",
+                        id: World.areaMarker.poiData.id
+                    };
+                    World.areaMarker.setDeselected(World.areaMarker);
+                    AR.platform.sendJSONObject(args);
+                }else{
+                    alert("You need to get closer!")
+                }
+            });
+		}
 
 		// It's ok for AR.Location subclass objects to return a distance of `undefined`. In case such a distance was calculated when all distances were queried in `updateDistanceToUserValues`, we recalculate this specific distance before we update the UI.
 		if( undefined == marker.distanceToUser ) {
@@ -174,16 +186,6 @@ var World = {
 		});
         $("#open-details-activity").unbind();
 		$("#open-details-activity").click(function(){
-            //var architectSdkUrl = "architectsdk://details?id=" + encodeURIComponent(marker.poiData.id);
-            /*
-                The urlListener of the native project intercepts this call and parses the arguments.
-                This is the only way to pass information from JavaSCript to your native code.
-                Ensure to properly encode and decode arguments.
-                Note: you must use 'document.location = "architectsdk://...' to pass information from JavaScript to native.
-                ! This will cause an HTTP error if you didn't register a urlListener in native architectView !
-            */
-            //document.location = architectSdkUrl;
-
             var args = {
                 action: "details",
                 id: marker.poiData.id
@@ -192,8 +194,6 @@ var World = {
 		});
         $("#open-map").unbind();
 		$("#open-map").click(function(){
-            //var architectSdkUrl = "architectsdk://map?id=" + encodeURIComponent(marker.poiData.id);
-            //document.location = architectSdkUrl;
             var args = {
                 action: "map",
                 id: marker.poiData.id
@@ -212,6 +212,7 @@ var World = {
                     $("#mark-place").buttonMarkup({
                         theme: themeToUse
                     });
+                    World.currentMarker.poiData.saved = true;
                     //var architectSdkUrl = "architectsdk://mark?id=" + encodeURIComponent(marker.poiData.id);
                     //document.location = architectSdkUrl;
                     var args = {
@@ -230,15 +231,8 @@ var World = {
                    World.currentMarker = marker;
                    return;
             }
-        }/*
-        if(!marker.poiData.visited && World.isInArea){
-            $("#ar-btn").css({color:'#000000'});
-            $("#ar-btn").button().button("refresh");
-        }else{
-            //$("#ar-btn").css({color:'#A9A9A9'});
-            //$("#ar-btn").button().button("refresh");
         }
-        */
+
         $("#panel-poidetail").slideToggle();
     	World.currentMarker = marker;
     },
@@ -246,11 +240,12 @@ var World = {
     userEnteredArea: function userEnteredAreaFn(areaId){
         World.isInArea = true
         World.currentArea = areaId;
-        if(World.initiallyLoadedData && !World.isMarkerInFocus){
+        if(World.initiallyLoadedData ){
             World.areaMarker = World.minimizeRest(areaId);
-            /*if(!World.areaMarker.poiData.visited || World.areaMarker.poiData.hasAR){
-                $("#ar-btn").css({'color':'#ff000000'}).button().button("refresh");
-            }*/
+        }else{
+            setTimeout(function(){
+                World.userEnteredArea(World.currentArea);
+            }, 3000);
         }
     },
 
@@ -268,20 +263,29 @@ var World = {
 
     questionAnswered: function questionAnsweredFn(success){
         if(success){
-            //update SCORE
-            //alert("Answered Correctly!")
-            //document.location = "architectsdk://score?id=" + encodeURIComponent(World.question.poiData.id)+"&success=true";
+            $("#score").unbind();
+            $("#score").click();
+            $("#positionOrigin").html("+250");
+            setTimeout(function(){
+                World.initPlayerIconPopup();
+                $("#positionOrigin").popup("close");
+                World.resume();
+            }, 1000);
+            World.areaMarker.poiData.visited = true;
             var args = {
                 action: "score",
                 id: World.question.poiData.id,
                 success: true
             };
             AR.platform.sendJSONObject(args);
-            World.resume();
         }else{
-            //alert("Nope!")
-            //update SCORE NEGATIVE
-            //document.location = "architectsdk://score?id=" + encodeURIComponent(World.question.poiData.id)+"&success=false";
+            $("#score").unbind();
+            $("#score").click();
+            $("#positionOrigin").html("-250");
+            setTimeout(function(){
+                World.initPlayerIconPopup();
+                $("#positionOrigin").popup("close");
+            }, 1000);
             var args = {
                 action: "score",
                 id: World.question.poiData.id,
@@ -293,51 +297,15 @@ var World = {
     resume: function resumeFn(){
         if(World.isAnswering){
             World.isAnswering = false;
+            World.question.GeoObject.enabled = false;
             World.question.GeoObject.destroy();
         }
+
         if(World.isInArea){
             World.areaMarker.markerObject.enabled = true;
-        }else{
-            for(var it=0; it < World.markerList.length;it++){
-                World.markerList[it].markerObject.enabled = true;
-            }
+            $("#panel-poidetail").slideToggle();
         }
-    },
-    triggerQuestion: function triggerQuestionFn(args){
-        var singlePoi = {
-        	"id": args.id,
-        	"latitude": parseFloat(args.latitude),
-        	"longitude": parseFloat(args.longitude),
-        	"title": args.name,
-        	"description": args.description
-        };
-        World.userEnteredArea(singlePoi.id);
-    },
-
-    focusScene: function focusSceneFn(scene_id){
-        World.markerInFocus = scene_id;
-        if(World.initiallyLoadedData){
-            World.isMarkerInFocus = true;
-            alert("markerToFocus:"+ World.markerInFocus + "isInFocus: " + World.isMarkerInFocus);
-            World.hideRest(scene_id);
-        }
-    },
-    clearFocus: function clearFocusFn(){
-        World.showAll();
-        World.markerInFocus = null;
-        World.isMarkerInFocus = false;
-    },
-
-    hideRest: function hideRestFn(scene_id){
-        var marker = null;
-        for(var i=0; i < World.markerList.length; i++){
-            World.markerList[i].markerObject.enabled = false;
-            if(World.markerList[i].poiData.id == scene_id){
-                World.markerList[i].markerObject.enabled = true;
-                marker =  World.markerList[i];
-            }
-        }
-        return marker;
+        World.restoreRest();
     },
     minimizeRest: function scaleRestFn(scene_id){
         var marker = null;
@@ -348,31 +316,65 @@ var World = {
                 if(World.markerList[i].poiData.id == scene_id){
                      marker =  World.markerList[i];
                 }else{
-                    var animX = new AR.PropertyAnimation(World.markerList[i].markerObject.drawables.cam[j], 'scale.x', null, 0.3, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
-                        amplitude: 2.0
-                    }));
-                    var animY = new AR.PropertyAnimation(World.markerList[i].markerObject.drawables.cam[j], 'scale.y', null, 0.3, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
-                        amplitude: 2.0
-                    }));
-                    animList.push(animX);
-                    animList.push(animY);
+                    if( World.markerList[i].markerObject.drawables.cam[j].enabled = true ){
+                        var animX = new AR.PropertyAnimation(World.markerList[i].markerObject.drawables.cam[j], 'scale.x', null, 0.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+                            amplitude: 2.0
+                        }));
+                        var animY = new AR.PropertyAnimation(World.markerList[i].markerObject.drawables.cam[j], 'scale.y', null, 0.0, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+                            amplitude: 2.0
+                        }));
+                        animList.push(animX);
+                        animList.push(animY);
+                    }
                 }
             }
         }
         animate = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL, animList);
-        animate.start()
+        animate.start();
         return marker;
     },
     restoreRest: function showAll(){
+        var animList = [];
+        var animate = null;
         for(var i=0; i < World.markerList.length; i++){
-            World.markerList[i].markerObject.scale.x = 1;
-            World.markerList[i].markerObject.scale.y = 1;
+            for(var j=0; j < World.markerList[i].markerObject.drawables.cam.length;j++ ){
+               var animX = new AR.PropertyAnimation(World.markerList[i].markerObject.drawables.cam[j], 'scale.x', null, 1, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+                   amplitude: 2.0
+               }));
+               var animY = new AR.PropertyAnimation(World.markerList[i].markerObject.drawables.cam[j], 'scale.y', null, 1, kMarker_AnimationDuration_Resize, new AR.EasingCurve(AR.CONST.EASING_CURVE_TYPE.EASE_OUT_ELASTIC, {
+                   amplitude: 2.0
+               }));
+               animList.push(animX);
+               animList.push(animY);
+            }
         }
+        animate = new AR.AnimationGroup(AR.CONST.ANIMATION_GROUP_TYPE.PARALLEL, animList);
+        animate.start();
     },
-    showAll: function showAll(){
-        for(var i=0; i < World.markerList.length; i++){
-            World.markerList[i].markerObject.enabled = true;
-        }
+    // sets/updates distances of all makers so they are available way faster than calling (time-consuming) distanceToUser() method all the time
+    updateDistanceToUserValues: function updateDistanceToUserValuesFn() {
+    	for (var i = 0; i < World.markerList.length; i++) {
+    		World.markerList[i].distanceToUser = World.markerList[i].markerObject.locations[0].distanceToUser();
+            // distance and altitude are measured in meters by the SDK. You may convert them to miles / feet if required.
+            var distanceToUserValue = (World.markerList[i].distanceToUser > 999) ? ((World.markerList[i].distanceToUser / 1000).toFixed(2) + " km") : (Math.round(World.markerList[i].distanceToUser) + " m");
+    	    World.markerList[i].distanceLabel.text = distanceToUserValue;
+    	}
+    },
+    InjectPlayer: function injectPlayerFn(player){
+        var tempPlayer = {
+            	"username": player.username,
+            	"firstname": player.firstname,
+            	"lastname": player.lastname,
+            	"score": player.score
+            };
+        World.Player = tempPlayer;
+        World.initPlayerIconPopup();
+    },
+    initPlayerIconPopup: function initPlayerIconPopupFn(){
+            $("#score").unbind();
+            $("#score").click(function(){
+                $("#positionOrigin").html("<h3>"+World.Player.username+"</h3><p>Score: "+World.Player.score+"</p>");
+            });
     }
 };
 

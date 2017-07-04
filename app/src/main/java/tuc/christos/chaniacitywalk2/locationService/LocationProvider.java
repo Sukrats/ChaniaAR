@@ -91,7 +91,7 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
                 break;
             case MODE_BACKGROUND:
                 Log.i("LocationMode",MODE_BACKGROUND);
-                createLocationRequest(60000, 60000, LocationRequest.PRIORITY_NO_POWER);
+                createLocationRequest(30000, 30000, LocationRequest.PRIORITY_NO_POWER);
                 break;
             default:
                 Log.i("LocationMode","DEFAULT");

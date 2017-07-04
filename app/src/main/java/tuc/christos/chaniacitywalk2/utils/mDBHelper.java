@@ -292,7 +292,7 @@ final class mDBHelper extends SQLiteOpenHelper {
 
     boolean insertLocality(Level level) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("DELETE FROM " + LocalityEntry.TABLE_NAME);
+        db.delete(LocalityEntry.TABLE_NAME,null,null);
         ContentValues values = new ContentValues();
         values.put(LocalityEntry.COLUMN_COUNTRY, level.getCountry());
         values.put(LocalityEntry.COLUMN_COUNTRY_CODE, level.getCountry_code());

@@ -193,7 +193,7 @@ public class JsonHelper {
         } catch (JSONException e) {
             Log.i("JSON EXCEPTION", e.getMessage());
         }
-        Log.i("Scene parsed:", json.toString());
+        Log.i("JSON","thumb_uri: " + scene.getUriThumb());
         return json;
     }
 
