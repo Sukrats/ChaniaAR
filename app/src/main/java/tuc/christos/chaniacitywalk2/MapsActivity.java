@@ -117,6 +117,7 @@ public class MapsActivity extends AppCompatActivity implements
             mService = binder.getService();
             binder.setResultActivity(MapsActivity.this);
             mService.checkLocationSettings();
+            mService.updateEventHandlerList(mDataManager.getActiveMapContent());
             mService.registerServiceListener(MapsActivity.this);
             mService.requestFences();
             isFenceTriggered = mService.isFenceTriggered();

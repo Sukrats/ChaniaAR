@@ -83,6 +83,15 @@
             android:visibility="gone"
             tools:context="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment" />
 
+        <ImageView
+            android:id="@+id/locked_gallery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:contentDescription="@string/action_guest"
+            android:src="@drawable/lock"
+            android:visibility="gone" />
+
         <ProgressBar
             android:id="@+id/progress_bar"
             style="?android:attr/progressBarStyleSmall"

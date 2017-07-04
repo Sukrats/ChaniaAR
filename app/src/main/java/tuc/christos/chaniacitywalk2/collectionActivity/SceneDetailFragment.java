@@ -112,6 +112,8 @@ public class SceneDetailFragment extends Fragment implements OnMapReadyCallback 
                              Bundle savedInstanceState) {
         final View rootView = inflater.inflate(R.layout.scene_detail_test, container, false);
         final ProgressBar progressBar = (ProgressBar) rootView.findViewById(R.id.progress_bar);
+        final RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.gallery_container);
+
         // Show the dummy content as text in a TextView.
         if (mItem != null) {
             MapView mapView = (MapView) rootView.findViewById(R.id.lite_map);
@@ -119,21 +121,23 @@ public class SceneDetailFragment extends Fragment implements OnMapReadyCallback 
                 mapView.onCreate(null);
                 mapView.getMapAsync(this);
             }
-            if (DataManager.getInstance().getActivePlayer().hasVisited(mItem.getId()))
+            if (DataManager.getInstance().getActivePlayer().hasVisited(mItem.getId()) || DataManager.getInstance().getActivePlayer().getUsername().contains("Guest")) {
                 ((TextView) rootView.findViewById(R.id.description)).setText(mItem.getDescription());
-            else {
+                recyclerView.setVisibility(View.VISIBLE);
+                rootView.findViewById(R.id.locked_gallery).setVisibility(View.GONE);
+            } else {
                 rootView.findViewById(R.id.locked).setVisibility(View.VISIBLE);
+                rootView.findViewById(R.id.locked_gallery).setVisibility(View.VISIBLE);
                 rootView.findViewById(R.id.description).setVisibility(View.GONE);
+                recyclerView.setVisibility(View.GONE);
             }
             //((TextView) rootView.findViewById(R.id.name)).setText(mItem.getName());
             //((TextView) rootView.findViewById(R.id.visits)).setText("Visits:"+String.valueOf(mItem.getNumOfVisits())+"!");
             //((TextView) rootView.findViewById(R.id.saves)).setText("Marked:"+String.valueOf(mItem.getNumOfSaves())+"!");
             ((TextView) rootView.findViewById(R.id.images)).setText(mItem.getUriImages().toString());
 
-            final RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.gallery_container);
-
             String ms = "No images to display";
-            if(mItem.getUriImages().toString().isEmpty()) {
+            if (mItem.getUriImages().toString().isEmpty()) {
                 recyclerView.setVisibility(View.GONE);
                 rootView.findViewById(R.id.images).setVisibility(View.VISIBLE);
                 ((TextView) rootView.findViewById(R.id.images)).setText(ms);

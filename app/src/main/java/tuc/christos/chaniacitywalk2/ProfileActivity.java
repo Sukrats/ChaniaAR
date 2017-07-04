@@ -384,7 +384,7 @@ public class ProfileActivity extends AppCompatActivity {
             };
             task.execute();
             int prog = 0;
-            List<Scene> scenes = DataManager.getInstance().getPeriodScenes(periods.get(position).getId());
+            List<Scene> scenes = new ArrayList<>(periods.get(position).getScenes().values());
             float control = 0;
             for (Scene temp : scenes) {
                 if (mPlayer.hasVisited(temp.getId())) {

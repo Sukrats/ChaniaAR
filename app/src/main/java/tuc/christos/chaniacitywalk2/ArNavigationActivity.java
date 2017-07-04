@@ -211,6 +211,8 @@ public class ArNavigationActivity extends Activity {
                     if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(scene_id)) {
                         mDataManager.updatePlayer(true, this);
                         mDataManager.addVisit(scene_id, this);
+                    }else{
+                        mDataManager.addGuestVisit(scene_id);
                     }
                     injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
                 } else if (WorldToLoad.contains("Instant")) {

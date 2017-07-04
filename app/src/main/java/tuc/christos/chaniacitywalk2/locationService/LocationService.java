@@ -130,7 +130,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                 java.sql.Date updated = mDataManager.getLastLocalityUpdate();
                 scheduledRegionUpdate = !isToday(updated.getTime());
                 lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
-                Log.i("Geocoder",lastLocationChecked.getLatitude()+","+ lastLocationChecked.getLongitude());
+                Log.i("Geocoder", lastLocationChecked.getLatitude() + "," + lastLocationChecked.getLongitude());
             } else {
                 scheduledRegionUpdate = true;
             }
@@ -328,7 +328,6 @@ public class LocationService extends Service implements LocationCallback, Locati
         mLocationProvider.connect();
 
 
-
         return mBinder;
     }
 
@@ -457,17 +456,15 @@ public class LocationService extends Service implements LocationCallback, Locati
         for (IServiceListener l : listeners)
             l.handleNewLocation(location);
 
-        if (!mDataManager.getActivePlayer().getUsername().contains("Guest"))
-
-            if (scheduledRegionUpdate && System.currentTimeMillis() - updated >= 10 * 1000) {
-                Log.i("Geocoder","schedule pnigetai!");
-                updated = System.currentTimeMillis();
-                checkForRegionChange(location);
-            } else if (lastLocationChecked.distanceTo(location) >= 50000) {
-                Log.i("Geocoder","to last location pnigetai!");
-                updated = System.currentTimeMillis();
-                checkForRegionChange(location);
-            }
+        if (scheduledRegionUpdate && System.currentTimeMillis() - updated >= 10 * 1000) {
+            Log.i("Geocoder", "schedule pnigetai!");
+            updated = System.currentTimeMillis();
+            checkForRegionChange(location);
+        } else if (lastLocationChecked.distanceTo(location) >= 50000) {
+            Log.i("Geocoder", "to last location pnigetai!");
+            updated = System.currentTimeMillis();
+            checkForRegionChange(location);
+        }
     }
 
     public void checkLocationSettings() {
@@ -551,6 +548,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     public void triggerRegionChange(final Level level) {
         //Toast.makeText(this, "Downloading Scenes For Region:\n" + level.getAdminArea(), Toast.LENGTH_LONG).show();
         mDataManager.clearScenes();
+        mEventHandler.removeLocationEventListener(this);
         for (IServiceListener i : listeners)
             i.regionChanged(level.getAdminArea(), level.getCountry());
 
@@ -582,6 +580,8 @@ public class LocationService extends Service implements LocationCallback, Locati
                     }
                 } else {
                     Toast.makeText(getApplicationContext(), "Scenes For Region Downloaded", Toast.LENGTH_SHORT).show();
+                    Log.i("Fence", "Scenes For Region Downloaded");
+                    mEventHandler.setLocationEventListener(LocationService.this);
                     mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
                     for (IServiceListener i : listeners) {
                         i.regionChanged(level.getAdminArea(), level.getCountry());
@@ -666,6 +666,7 @@ public class LocationService extends Service implements LocationCallback, Locati
         geoCoderTask.execute(location);
         lastLocationChecked = location;
     }
+
     public boolean isToday(long when) {
         Time time = new Time();
         time.set(when);
@@ -674,7 +675,7 @@ public class LocationService extends Service implements LocationCallback, Locati
         int thenMonth = time.month;
         int thenMonthDay = time.monthDay;
 
-        time.set(System.currentTimeMillis()+7200*1000);
+        time.set(System.currentTimeMillis() - 7200 * 1000);
         return (thenYear == time.year)
                 && (thenMonth == time.month)
                 && (thenMonthDay == time.monthDay);

@@ -46,7 +46,6 @@ public class DataManager {
     private Player activePlayer;
 
     private boolean scenesLoaded = false;
-    private Level locality;
     private Level currentLevel;
 
     private HashMap<String, Scene> Route = new HashMap<>();
@@ -132,17 +131,15 @@ public class DataManager {
 
     public ArrayList<Scene> getActiveMapContent() {
         Log.i(TAG, "" + scenesLoaded);
-        if(getActivePlayer().getUsername().equals("Guest"))
+        getScenes();            //DUMMY FOR ROUTE IMPL
+        if (getActivePlayer().getUsername().equals("Guest"))
             return new ArrayList<>(Route.values());
 
-        if (scenesLoaded) {
-            if (getActivePlayer().getScore() < 1000 )
-                return new ArrayList<>(getRoute());
-            else
-                return new ArrayList<>(getScenes());
-        } else {
+        if (getActivePlayer().getScore() < 750)
+            return new ArrayList<>(getRoute());
+        else
             return new ArrayList<>(getScenes());
-        }
+
     }
   /*  /*********************************************************CONTENT METHODS**************************************************************/
    /* public void getContent(Player player) {
@@ -230,13 +227,13 @@ public class DataManager {
     }
 
     public void updatePlayer(boolean success, Context context) {
-        if(activePlayer.getUsername().contains("Guest"))
+        if (activePlayer.getUsername().contains("Guest"))
             return;
 
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
-        if( activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
+        if (activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
             getActivePlayer().updateScore(success);
             mDBh.updatePlayer(getActivePlayer());
             RestClient rs = RestClient.getInstance();
@@ -272,10 +269,10 @@ public class DataManager {
                 player.setCreated(new java.util.Date(c.getString(c.getColumnIndexOrThrow(mDBHelper.PlayerEntry.COLUMN_RECENT_ACTIVITY))));
             }
 
-            for(Place p: getPlaces()){
+            for (Place p : getPlaces()) {
                 player.addPlace(p);
             }
-            for(Visit v: getVisits()){
+            for (Visit v : getVisits()) {
                 player.addVisit(v);
             }
             activePlayer = player;
@@ -372,6 +369,7 @@ public class DataManager {
 
     public List<Scene> getPeriodScenes(long periodid) {
         List<Scene> scenes = new ArrayList<>();
+        List<Scene> guestScenes = new ArrayList<>();
         if (!scenesLoaded) {
             Cursor c = mDBh.getPeriodScenes(periodid);
             while (c.moveToNext()) {
@@ -391,14 +389,25 @@ public class DataManager {
                 temp.setUriImages(images);
                 temp.setUriThumb(thumbnail);
                 scenes.add(temp);
+
+                if(Route.containsKey(String.valueOf(temp.getId()))){
+                    guestScenes.add(temp);
+                }
             }
         } else {
             for (Scene temp : ScenesMap.values()) {
-                if (temp.getPeriod_id() == periodid)
+                if (temp.getPeriod_id() == periodid) {
                     scenes.add(temp);
+                    if(Route.containsKey(String.valueOf(temp.getId()))){
+                        guestScenes.add(temp);
+                    }
+                }
             }
 
         }
+        if(getActivePlayer().getUsername().contains("Guest"))
+            return guestScenes;
+
         return scenes;
     }
 
@@ -414,7 +423,7 @@ public class DataManager {
     }
 
     public Scene getScene(long id) {
-        if(getActivePlayer().getUsername().contains("Guest"))
+        if (getActivePlayer().getUsername().contains("Guest"))
             return Route.get(String.valueOf(id));
 
         if (!scenesLoaded) {
@@ -434,7 +443,15 @@ public class DataManager {
                 //s.setVisited(hasVisited(s.getId()));
                 if (!Route.containsKey(String.valueOf(s.getId())))
                     s.setHasAR(false);
-                else s.setHasAR(true);
+                else {
+                    s.setHasAR(true);
+                    Route.get(String.valueOf(s.getId())).setUriImages(s.getUriImages().toString());
+                    Route.get(String.valueOf(s.getId())).setUriThumb(s.getUriThumb().toString());
+                    Route.get(String.valueOf(s.getId())).setDescription(s.getDescription());
+                    Route.get(String.valueOf(s.getId())).setNumOfSaves(s.getNumOfSaves());
+                    Route.get(String.valueOf(s.getId())).setNumOfVisits(s.getNumOfVisits());
+                    s = Route.get(String.valueOf(s.getId()));
+                }
             }
             return s;
         } else
@@ -478,9 +495,6 @@ public class DataManager {
                         Route.get(String.valueOf(temp.getId())).setNumOfVisits(visited);
                         temp = Route.get(String.valueOf(temp.getId()));
                     }
-                    if(temp.getId() == 37){
-                        Log.i("Scene","Byzantine Wall: "+ temp.getName()+ "\nDescription: "+temp.getDescription());
-                    }
                     scenes.add(temp);
                     ScenesMap.put(temp.getId(), temp);
                 }
@@ -508,7 +522,7 @@ public class DataManager {
         activePlayer.addPlace(p);
 
         RestClient rs = RestClient.getInstance();
-        rs.postPlace(id,context);
+        rs.postPlace(id, context);
     }
 
     public void clearPlace(long id, Context context) {
@@ -516,7 +530,7 @@ public class DataManager {
         activePlayer.removePlace(id);
 
         RestClient rs = RestClient.getInstance();
-        rs.deletePlace(id,context);
+        rs.deletePlace(id, context);
     }
 
     /*
@@ -577,7 +591,7 @@ public class DataManager {
 
     /*****************************************************VISITS METHODS************************************************************************/
 
-    public void addVisit(long scene_id ,Context context) {
+    public void addVisit(long scene_id, Context context) {
         Visit v = new Visit();
         Scene temp = getScene(scene_id);
         v.setScene_id(scene_id);
@@ -592,12 +606,26 @@ public class DataManager {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
-        if( activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
+        if (activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
             RestClient rs = RestClient.getInstance();
             rs.postVisit(scene_id, context);
             return;
         }
-        Toast.makeText(MyApp.getAppContext(),"No intenret Connection",Toast.LENGTH_SHORT).show();
+        Toast.makeText(MyApp.getAppContext(), "No intenret Connection", Toast.LENGTH_SHORT).show();
+    }
+
+    public void addGuestVisit(long scene_id) {
+        Visit v = new Visit();
+
+        Scene temp = getScene(scene_id);
+        v.setScene_id(scene_id);
+        v.setThumb(temp.getUriThumb());
+        v.setRegion(getCurrentLevel().getAdminArea());
+        v.setScene_name(temp.getName());
+        v.setCountry(getCurrentLevel().getCountry());
+        v.setCreated(new java.sql.Date(new java.util.Date().getTime()));
+        mDBh.insertVisit(v);
+        activePlayer.addVisit(v);
     }
 
    /*
@@ -697,14 +725,21 @@ public class DataManager {
 
     /**********************************************************ROUTE HARD CODED *************************************************************/
     private void initRoute() {
+        Route = new HashMap<>();
         ArrayList<Scene> mRoute = new ArrayList<>();
         //KIDONIA PENDING
-        Scene minoiki = new Scene(35.5171461, 24.019581, 38, 1, "Minoan Kydonia", "");
-        mRoute.add(new Scene(35.5171461, 24.019581, 38, 1, "Minoan Kydonia", ""));
+        //Scene minoiki = new Scene(35.5171461, 24.019581, 38, 1, "Minoan Kydonia", "");
+        //mRoute.add(new Scene(35.5171461, 24.019581, 38, 1, "Minoan Kydonia", ""));
 
         //BYZANTINE WALL PENDING
-        Scene wall = new Scene(35.51711, 24.020557, 37, 2, "The Byzantine Wall", "");//35.516954, 24.020359
-        wall.addArScene(new ArScene("assets/wall/wall.wt3",35.516934 , 24.020343));
+        Scene wall = new Scene(35.516904, 24.020253, 37, 2, "The Byzantine Wall", "");//35.516954, 24.020359
+
+        wall.addSlamScene(new ArScene("assets/wall/wall_Slam_2048.wt3", 35.516904, 24.020253));
+        wall.addViewport(new Viewport("1", 35.516778, 24.020272, 0, 10.0f, 0.0f));
+        wall.addViewport(new Viewport("2", 35.516908, 24.020405, 0, -9.0f, 0.0f));
+
+        wall.addArScene(new ArScene("assets/wall/wall_Geo_2048.wt3", 35.516934, 24.020343));
+        wall.addArScene(new ArScene("assets/wall/wall.wt3", 35.516934, 24.020343));
         mRoute.add(wall);
 
 
@@ -714,22 +749,21 @@ public class DataManager {
         mosque.addViewport(new Viewport("2", 35.517239, 24.017891, -180, 0.0f, 0.0f));//south 35.517239, 24.017891
         mosque.addViewport(new Viewport("3", 35.517458, 24.018026, -270, 0.0f, 0.0f));//east 35.517458, 24.018026
         mosque.addViewport(new Viewport("4", 35.517548, 24.017727, 0, 0.0f, 0.0f));//north 35.517548, 24.017727
-        mosque.addSlamScene(new ArScene("assets/mosque/Giali_Slam.wt3",35.517394 , 24.017851));
-        mosque.addSlamScene(new ArScene("assets/mosque/minaret_Slam.wt3",35.517394 , 24.017851));
-        mosque.addArScene(new ArScene("assets/mosque/Giali_Geo_4096_jpeg.wt3",35.517394 , 24.017851));
-        mosque.addArScene(new ArScene("assets/mosque/minaret_Geo_png.wt3",35.517394 , 24.017851));
-        mosque.addArScene(new ArScene("assets/mosque/minaret_Geo_no_base.wt3",35.517394 , 24.017851));
+        mosque.addSlamScene(new ArScene("assets/mosque/Giali_Slam.wt3", 35.517394, 24.017851));
+        mosque.addSlamScene(new ArScene("assets/mosque/minaret_Slam.wt3", 35.517394, 24.017851));
+        mosque.addArScene(new ArScene("assets/mosque/Giali_Geo_4096_jpeg.wt3", 35.517394, 24.017851));
+        mosque.addArScene(new ArScene("assets/mosque/minaret_Geo_png.wt3", 35.517394, 24.017851));
+        mosque.addArScene(new ArScene("assets/mosque/minaret_Geo_no_base.wt3", 35.517394, 24.017851));
         mRoute.add(mosque);
 
         // Saint Rocco asset initialization
         Scene rocco = new Scene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "");//35.516551, 24.021191
         rocco.addViewport(new Viewport("1", 35.516459, 24.021050, 0, 0.0f, 0.0f));
-        rocco.addViewport(new Viewport("2", 35.516419, 24.021270, -90,(float) -5.3, 8.0f));
-        rocco.addSlamScene(new ArScene("assets/rocco/rocco_1024_slam_skt.wt3",35.516551, 24.021191));
-        rocco.addSlamScene(new ArScene("assets/rocco/rocco_2048_slam.wt3",35.516551, 24.021191));
-
-        rocco.addArScene(new ArScene("assets/rocco/rocco_1024_geo.wt3",35.516551, 24.021191));
-        rocco.addArScene(new ArScene("assets/rocco/rocco_2048_geo.wt3",35.516551, 24.021191));
+        rocco.addViewport(new Viewport("2", 35.516419, 24.021270, -90, (float) -5.3, 8.0f));
+        rocco.addSlamScene(new ArScene("assets/rocco/rocco_1024_slam_skt.wt3", 35.516551, 24.021191));
+        //rocco.addSlamScene(new ArScene("assets/rocco/rocco_2048_slam.wt3",35.516551, 24.021191));
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_1024_geo.wt3",35.516551, 24.021191));
+        rocco.addArScene(new ArScene("assets/rocco/rocco_2048_geo.wt3", 35.516551, 24.021191));
         mRoute.add(rocco);
 
         for (Scene temp : mRoute) {
@@ -738,13 +772,13 @@ public class DataManager {
         }
     }
 
-    public Scene getArScene(String scene_id){
+    public Scene getArScene(String scene_id) {
         return Route.get(scene_id);
     }
 
 
     public void setLevelLocality(Level level) {
-        if(mDBh.insertLocality(level)){
+        if (mDBh.insertLocality(level)) {
             Toast.makeText(MyApp.getAppContext(), "Updated Level", Toast.LENGTH_SHORT).show();
             this.currentLevel = level;
             return;
@@ -752,11 +786,11 @@ public class DataManager {
         Toast.makeText(MyApp.getAppContext(), "Can't find Locality", Toast.LENGTH_SHORT).show();
     }
 
-    public boolean hasLocality(){
+    public boolean hasLocality() {
         return mDBh.getLocality().moveToNext();
     }
 
-    public Date getLastLocalityUpdate(){
+    public Date getLastLocalityUpdate() {
         Cursor c = mDBh.getLocality();
         if (!c.moveToNext())
             return null;
@@ -764,11 +798,11 @@ public class DataManager {
         Date updated = Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED)));
         double lat = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED_LATITUDE));
         double lon = c.getDouble(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED_LONGITUDE));
-        Log.i("Geocoder","SQLite Locality: "+adminArea+" \nLocation: "+lat+","+lon+" \nUpdated:"+updated.toString());
+        Log.i("Geocoder", "SQLite Locality: " + adminArea + " \nLocation: " + lat + "," + lon + " \nUpdated:" + updated.toString());
         return Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED)));
     }
 
-    public Location getLastLocalityLocationUpdate(){
+    public Location getLastLocalityLocationUpdate() {
         Cursor c = mDBh.getLocality();
         if (!c.moveToNext())
             return null;
@@ -781,7 +815,7 @@ public class DataManager {
 
     public boolean compareExistingLocality(Level level) {
         Cursor c = mDBh.getLocality();
-        if( level != null ) {
+        if (level != null) {
             if (!c.moveToNext())
                 return true;
             else if (level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA))))
@@ -790,19 +824,20 @@ public class DataManager {
             String country = c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY));
             String city = c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_LOCALITY));
             Date updated = Date.valueOf(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_UPDATED)));
-            Log.i("Geocoder","SQLite Locality: "+country+" "+adminArea+" "+city+" \nUpdated:"+updated.toString());
+            Log.i("Geocoder", "SQLite Locality: " + country + " " + adminArea + " " + city + " \nUpdated:" + updated.toString());
             return true;
-        }else {
+        } else {
             return false;
         }
     }
-    public void printExistingLocality(){
+
+    public void printExistingLocality() {
         Cursor c = mDBh.getLocality();
-        while (c.moveToNext()){
-            Log.i("Geocoder","\nCountry: "+c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY))+
-                    "\nCode: "+c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY_CODE))+
-                    "\nAdmin Area: "+c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA))+
-                    "\nLocality: "+c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_LOCALITY)));
+        while (c.moveToNext()) {
+            Log.i("Geocoder", "\nCountry: " + c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY)) +
+                    "\nCode: " + c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY_CODE)) +
+                    "\nAdmin Area: " + c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA)) +
+                    "\nLocality: " + c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_LOCALITY)));
         }
     }
 
@@ -826,22 +861,20 @@ public class DataManager {
     }*/
 
     private ArrayList<Scene> getRoute() {
-        ArrayList<Scene> route = new ArrayList<>();
-        route.add(getScene(36));
-        route.add(getScene(37));
-        route.add(getScene(38));
-        route.add(getScene(39));
-        return route;
+        return new ArrayList<>(Route.values());
     }
-/****************************************** Images for Fullscreen gallery view*****************************************************/
+
+    /****************************************** Images for Fullscreen gallery view*****************************************************/
     private ArrayList<Uri> imgs = new ArrayList<>();
 
-    public void setImages(ArrayList<Uri> images){
+    public void setImages(ArrayList<Uri> images) {
         imgs = images;
     }
-    public ArrayList<Uri> getImages(){
+
+    public ArrayList<Uri> getImages() {
         return imgs;
     }
+
     /**********************************************************POPULATE DB TASK*************************************************************************/
 
     public void clearScenes() {
@@ -885,6 +918,17 @@ public class DataManager {
                             JSONObject obj = new JSONObject(jsonArray.get(i).toString());
                             Scene scene = JsonHelper.parseSceneFromJson(obj);
                             scene.setRegion(getCurrentLevel().getAdminArea());
+
+                            if (Route.containsKey(String.valueOf(scene.getId()))) {
+                                Route.get(String.valueOf(scene.getId())).setUriImages(scene.getUriImages().toString());
+                                Route.get(String.valueOf(scene.getId())).setUriThumb(scene.getUriThumb().toString());
+                                Route.get(String.valueOf(scene.getId())).setDescription(scene.getDescription());
+                                Route.get(String.valueOf(scene.getId())).setNumOfSaves(scene.getNumOfSaves());
+                                Route.get(String.valueOf(scene.getId())).setNumOfVisits(scene.getNumOfVisits());
+                                scene = Route.get(String.valueOf(scene.getId()));
+                                scene.setHasAR(true);
+                            }else scene.setHasAR(false);
+
                             if (!mDBh.insertScene(scene)) {
                                 Log.i(TAG, "DELETED SCENES");
                                 mDBh.clearScenes();
