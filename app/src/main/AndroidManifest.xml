@@ -108,6 +108,9 @@
             android:name=".locationService.LocationService"
             android:exported="false" />
 
+        <service
+            android:name=".testSensorService.SensorService" />
+
         <activity
             android:name=".locationService.NotificationResult"
             android:excludeFromRecents="true"
@@ -125,6 +128,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity" />
         </activity>
+        <activity android:name=".testSensorService.SensorCheckActivity"/>
     </application>
 
 </manifest>

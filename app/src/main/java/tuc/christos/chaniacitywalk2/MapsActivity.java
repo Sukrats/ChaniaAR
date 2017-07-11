@@ -22,7 +22,6 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.TypedValue;
@@ -55,6 +54,7 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
+import tuc.christos.chaniacitywalk2.testSensorService.SensorCheckActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.leaderboards.LeaderBoardActivity;
@@ -63,7 +63,6 @@ import tuc.christos.chaniacitywalk2.model.Viewport;
 import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
 import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.MapWrapperLayout;
-import tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.OnInfoWindowElemTouchListener;
 import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.utils.Constants;
@@ -172,6 +171,13 @@ public class MapsActivity extends AppCompatActivity implements
                 } else {
                     Toast.makeText(MapsActivity.this.getApplicationContext(), "Please enable Location", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+        ImageButton sensors = (ImageButton) findViewById(R.id.sensor_button);
+        sensors.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MapsActivity.this, SensorCheckActivity.class));
             }
         });
 

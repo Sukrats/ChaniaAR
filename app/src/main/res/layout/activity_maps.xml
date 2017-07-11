@@ -41,6 +41,17 @@
         android:background="@color/colorPrimaryDark"
         android:src="@drawable/ic_menu_mylocation" />
 
+    <android.support.v7.widget.AppCompatImageButton
+        android:id="@+id/sensor_button"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|end"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:background="@color/colorPrimaryDark"
+        android:src="@android:drawable/ic_menu_compass" />
+
+
     <include layout="@layout/bottom_bar_custom" />
 
     <ImageButton

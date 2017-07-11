@@ -10,6 +10,8 @@ var World = {
     areas:[],
     scale:1,
     rotate:0,
+    cHBearing: 0,
+    cHDistance:0,
 
     posX:0,
     posY:0,
@@ -60,7 +62,6 @@ var World = {
     },
 
     changeTrackerState: function changeTrackerStateFn() {
-        
         if (this.tracker.state === AR.InstantTrackerState.INITIALIZING) {
             document.getElementById("tracking-start-stop-button").src = "assets/buttons/stop.png";
             this.tracker.state = AR.InstantTrackerState.TRACKING;
@@ -76,7 +77,7 @@ var World = {
     locationChanged: function locationChangedFn(lat, lon, alt, acc) {
         var location1 = {
             "lat": lat,
-            "lon":lon
+            "lon": lon
         };
         World.location = location1;
         /*
@@ -191,8 +192,13 @@ var World = {
         }else{
             World.currentModelShown = World.modelList[index-1];
         }
+    },
+    OnCrosshairPositionChange: function( bearing, distance){
+        World.cHBearing = bearing;
+        World.cHDistance = distance;
     }
 };
+
 
 
 AR.context.onLocationChanged = World.locationChanged;

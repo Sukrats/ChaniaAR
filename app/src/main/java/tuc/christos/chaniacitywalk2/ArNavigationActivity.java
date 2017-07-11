@@ -44,6 +44,8 @@ import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
 import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Viewport;
+import tuc.christos.chaniacitywalk2.testSensorService.SensorService;
+import tuc.christos.chaniacitywalk2.testSensorService.SensorServiceListener;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.locationService.LocationService;
 import tuc.christos.chaniacitywalk2.model.Scene;
@@ -71,6 +73,16 @@ public class ArNavigationActivity extends Activity {
      * sensor accuracy listener in case you want to display calibration hints
      */
     protected ArchitectView.SensorAccuracyChangeListener sensorAccuracyListener;
+
+    /**
+     * sensorservice listener to simulate instant tracking mechanics
+     */
+    protected SensorServiceListener mSensorServiceListener = new SensorServiceListener() {
+        @Override
+        public void updateData(double bearing, double theta, double distance) {
+            callJavaScript("World.OnCrosshairPositionChange", new String[]{String.valueOf((float)bearing),String.valueOf((float)distance)});
+        }
+    };
 
     /**
      * last known location of the user, used internally for content-loading after user location was fetched
@@ -109,6 +121,23 @@ public class ArNavigationActivity extends Activity {
         public void onServiceDisconnected(ComponentName name) {
             mBount = false;
             mService.removeListener(mLocationServiceListener);
+        }
+    };
+    boolean mSensorBount = false;
+    SensorService service1;
+    final ServiceConnection mSensorConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            SensorService.mIBinder binder = (SensorService.mIBinder) service;
+            service1 = binder.getService();
+            service1.registerServiceListener(mSensorServiceListener);
+            mSensorBount = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            service1.removeListener();
+            mSensorBount = false;
         }
     };
     final IServiceListener mLocationServiceListener = new IServiceListener() {
@@ -216,6 +245,7 @@ public class ArNavigationActivity extends Activity {
                     }
                     injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
                 } else if (WorldToLoad.contains("Instant")) {
+                    startService(new Intent(this, SensorService.class));
                     String origin = getIntent().getStringExtra(Constants.ARCHITECT_ORIGIN);
                     Scene scene = mDataManager.getArScene(String.valueOf(scene_id));
                     injectArgs("World.getInstantiation", new String[]{JsonHelper.sceneWithViewportToJSON(scene, scene.getViewport(origin)).toString()});
@@ -444,6 +474,10 @@ public class ArNavigationActivity extends Activity {
             bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
             mBount = true;
         }
+        if(!mSensorBount){
+            bindService(new Intent(this, SensorService.class),mSensorConnection,Context.BIND_NOT_FOREGROUND);
+        }
+
         // call mandatory live-cycle method of architectView
         if (architectView != null) {
             architectView.onResume();
@@ -463,6 +497,9 @@ public class ArNavigationActivity extends Activity {
             mService.removeListener(mLocationServiceListener);
             unbindService(mConnection);
             mBount = false;
+        }
+        if(mSensorBount){
+            unbindService(mSensorConnection);
         }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {
