@@ -24,3 +24,10 @@ body {
     max-width: 350px;
     align-self: center;
 }
+#bearing {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    align-self: center;
+    text-align: center;
+}

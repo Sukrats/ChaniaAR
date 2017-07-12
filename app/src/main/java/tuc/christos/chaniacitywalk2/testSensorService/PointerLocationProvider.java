@@ -31,6 +31,15 @@ class PointerLocationProvider implements SensorEventListener {
         Log.i("SensorService","Created Provider");
         this.listener = listener;
         this.mSensorManager = (SensorManager) context.getSystemService(SENSOR_SERVICE);
+        accel[0] = 0;
+        accel[1] = 0;
+        accel[2] = 0;
+        gravity[0] = 0;
+        gravity[1] = 0;
+        gravity[2] = 0;
+        magnetic[0] = 0;
+        magnetic[1] = 0;
+        magnetic[2] = 0;
     }
 
     void onStart() {
@@ -52,14 +61,17 @@ class PointerLocationProvider implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        final float FILTER_COEFFICIENT = 0.85f;
         switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
                 // copy new accelerometer data into accel array
                 System.arraycopy(event.values, 0, accel, 0, 3);
                 break;
             case Sensor.TYPE_GRAVITY:
+                gravity[0] = ( gravity[0]*FILTER_COEFFICIENT + event.values[0]*(1-FILTER_COEFFICIENT));
+                gravity[1] = ( gravity[1]*FILTER_COEFFICIENT + event.values[1]*(1-FILTER_COEFFICIENT));
+                gravity[2] = ( gravity[2]*FILTER_COEFFICIENT + event.values[2]*(1-FILTER_COEFFICIENT));
                 // copy new accelerometer data into accel array and calculate orientation
-                System.arraycopy(event.values, 0, gravity, 0, 3);
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
                 // copy new accelerometer data into accel array and calculate orientation
@@ -87,9 +99,10 @@ class PointerLocationProvider implements SensorEventListener {
             //distancce between the users position and the location the device is Pointing at
             double crosshair = Math.tan(complement)*deviceHeight;
             //angle between the z-axis(the one that points at the desired location) and the magnetic north
-            double bearing = Math.toDegrees(orientation[0]+Math.toRadians(90));
+            double bearing = Math.toDegrees(orientation[0]);
+            //bearing = (360 - ((bearing + 360) % 360));
 
-            if(System.currentTimeMillis() - lastUpdate >= 500){
+            if(System.currentTimeMillis() - lastUpdate >= 100){
                 Log.i("SensorService","Provider calculated");
                 listener.injectSensorData(bearing,complement,crosshair);
                 lastUpdate = System.currentTimeMillis();

@@ -10,8 +10,16 @@ var World = {
     areas:[],
     scale:1,
     rotate:0,
+
+    controlObject:null,
+    camGeoDrawable:null,
     cHBearing: 0,
     cHDistance:0,
+    modelBearing: 0,
+    modelDistance: 0,
+    inPosition: false,
+    cHInit: false,
+    modelInit: false,
 
     posX:0,
     posY:0,
@@ -21,7 +29,7 @@ var World = {
 
     createOverlays: function createOverlaysFn() {
         var crossHairsRedImage = new AR.ImageResource("assets/crosshairs_red.png");
-        var crossHairsRedDrawable = new AR.ImageDrawable(crossHairsRedImage, 1.0, {
+        this.crossHairsRedDrawable = new AR.ImageDrawable(crossHairsRedImage, 1.0, {
             rotate : { x: 90}
         });
 
@@ -30,13 +38,18 @@ var World = {
             rotate : { x: 90}
         });
 
+        var crossHairsPlayImage = new AR.ImageResource("assets/buttons/start.png");
+        this.crossHairsPlayDrawable = new AR.ImageDrawable(crossHairsPlayImage, 2.0,{
+            rotate : { x: 90}
+        });
+        World.camGeoDrawable = this.crossHairsPlayDrawable;
 
         this.tracker = new AR.InstantTracker({
             onChangedState:  function onChangedStateFn(state) {
             },
             // device height needs to be as accurate as possible to have an accurate scale
             // returned by the Wikitude SDK
-            deviceHeight: 1.7,
+            deviceHeight: 1.8,
             onError: function(errorMessage) {
                 alert(errorMessage);
             }
@@ -45,7 +58,7 @@ var World = {
         this.instantTrackable = new AR.InstantTrackable(this.tracker, {
             drawables: {
                 cam: crossHairsBlueDrawable,
-                initialization: crossHairsRedDrawable
+                initialization: this.crossHairsRedDrawable
             },
             onTrackingStarted: function onTrackingStartedFn() {
                 this.drawables.addCamDrawable(World.currentModelShown);
@@ -62,7 +75,7 @@ var World = {
     },
 
     changeTrackerState: function changeTrackerStateFn() {
-        if (this.tracker.state === AR.InstantTrackerState.INITIALIZING) {
+        if (this.tracker.state === AR.InstantTrackerState.INITIALIZING ) {
             document.getElementById("tracking-start-stop-button").src = "assets/buttons/stop.png";
             this.tracker.state = AR.InstantTrackerState.TRACKING;
         } else {
@@ -96,6 +109,7 @@ var World = {
             };
             World.sceneList.push(ar);
         }
+        World.makeControlObject(World.sceneList[0]);
         var view = {
           "latitude": parseFloat(args.viewport.latitude),
           "longitude": parseFloat(args.viewport.longitude),
@@ -177,9 +191,11 @@ var World = {
             World.setModel(1);
         }
     },
+
     isTracking: function isTrackingFn() {
         return (this.tracker.state === AR.InstantTrackerState.TRACKING);
     },
+
     setModel: function setModelFn(index){
         if (World.isTracking()) {
             World.scale = 1;
@@ -193,12 +209,61 @@ var World = {
             World.currentModelShown = World.modelList[index-1];
         }
     },
-    OnCrosshairPositionChange: function( bearing, distance){
+
+    OnCrosshairPositionChange: function( bearing, distance ){
         World.cHBearing = bearing;
         World.cHDistance = distance;
+        if(!World.cHInit)
+            World.cHInit = true;
+        $("#bearing-text").html("Bearing: "+bearing+"\nDistance: "+ distance);
+        World.calcPointingPosition();
+    },
+
+    UpdateUserPosition: function ( bearing, distance ){
+        World.modelBearing = bearing;
+        World.modelDistance = distance;
+        if(!World.modelInit){
+            World.modelInit = true;
+            alert("Target Bearing: "+bearing+"\nTarget Distance: "+ distance);
+        }
+        World.calcPointingPosition();
+    },
+    calcPointingPosition: function (){
+        if( World.cHInit && World.modelInit ){
+            if( Math.abs(World.cHBearing - World.modelBearing) <= 15 && Math.abs(World.modelDistance - World.cHDistance) <= 3 ){
+                World.inPosition = true;
+                document.getElementById("tracking-start-stop-button").disabled = false;
+            } else {
+                document.getElementById("tracking-start-stop-button").disabled = true;
+            }
+        }
+    },
+    makeControlObject: function (arg){
+
+        var geoLoc = new AR.GeoLocation(arg.latitude, arg.longitude, 0.0);
+        var modelEarth = new AR.Model("assets/earth.wt3", {
+        			onLoaded: this.worldLoaded,
+        			scale: {
+        				x: 1,
+        				y: 1,
+        				z: 1
+        			}
+        		});
+
+        var indicatorImage = new AR.ImageResource("assets/indi.png");
+
+        var indicatorDrawable = new AR.ImageDrawable(indicatorImage, 0.1, {
+            verticalAnchor: AR.CONST.VERTICAL_ANCHOR.TOP
+        });
+
+        var geoObject1 = new AR.GeoObject(geoLoc, {
+          drawables: {
+             cam: [modelEarth],
+             indicator: [indicatorDrawable]
+          }
+        });
+        World.controlObject = geoObject1;
     }
 };
-
-
 
 AR.context.onLocationChanged = World.locationChanged;

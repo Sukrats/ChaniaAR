@@ -28,10 +28,12 @@
 
 <body>
 <div data-role="page" id="page1" style="background: none;">
-
+    <div id="bearing">
+        <p id="bearing-text">Dummy</p>
+    </div>
     <div id="controls-container-lower">
         <input id="tracking-start-stop-button" type="image" src="assets/buttons/start.png"
-               onclick="World.changeTrackerState()"/>
+               onclick="World.changeTrackerState()" disabled/>
 
         <div id="tracking-height-slider-container">
             <div id="model-slider-container">

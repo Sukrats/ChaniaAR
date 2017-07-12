@@ -80,7 +80,7 @@ public class ArNavigationActivity extends Activity {
     protected SensorServiceListener mSensorServiceListener = new SensorServiceListener() {
         @Override
         public void updateData(double bearing, double theta, double distance) {
-            callJavaScript("World.OnCrosshairPositionChange", new String[]{String.valueOf((float)bearing),String.valueOf((float)distance)});
+            callJavaScript("World.OnCrosshairPositionChange", new String[]{String.valueOf((float) bearing), String.valueOf((float) distance)});
         }
     };
 
@@ -140,6 +140,9 @@ public class ArNavigationActivity extends Activity {
             mSensorBount = false;
         }
     };
+    private Location instantModelLocation;
+    private Location instantTrackingLocation;
+    private long updatedInMillis = System.currentTimeMillis();
     final IServiceListener mLocationServiceListener = new IServiceListener() {
         @Override
         public void drawGeoFences(long[] areas, int radius) {
@@ -153,7 +156,7 @@ public class ArNavigationActivity extends Activity {
 
         @Override
         public void userEnteredArea(long areaID) {
-            if(!mDataManager.getActivePlayer().hasVisited(areaID))
+            if (!mDataManager.getActivePlayer().hasVisited(areaID))
                 callJavaScript("World.userEnteredArea", new String[]{String.valueOf(areaID)});
             Log.i("GeoFence", "Fence Triggered: " + areaID);
         }
@@ -169,6 +172,30 @@ public class ArNavigationActivity extends Activity {
             ArNavigationActivity.this.lastKnownLocation = location;
             //update JS Location
             ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
+
+            if(WorldToLoad.contains("Instant")) {
+                if (instantTrackingLocation == null)
+                    instantTrackingLocation = location;
+
+                if (instantTrackingLocation.getAccuracy() >= location.getAccuracy() || System.currentTimeMillis() - updatedInMillis > 10000) {
+                    instantTrackingLocation = location;
+                    double lat1 = instantTrackingLocation.getLatitude();
+                    double lng1 = instantTrackingLocation.getLongitude();
+
+                    double lat2 = instantModelLocation.getLatitude();
+                    double lng2 = instantModelLocation.getLongitude();
+
+                    double distance = instantModelLocation.distanceTo(instantTrackingLocation);
+
+                    double dLon = (lng2-lng1);
+                    double y = Math.sin(dLon) * Math.cos(lat2);
+                    double x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+                    double bearing = Math.toDegrees((Math.atan2(y, x)));
+                    bearing = (360 - ((bearing + 360) % 360));
+
+                    callJavaScript("World.UpdateUserPosition", new String[]{String.valueOf(bearing), String.valueOf(distance)});
+                }
+            }
         }
     };
 
@@ -240,7 +267,7 @@ public class ArNavigationActivity extends Activity {
                     if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(scene_id)) {
                         mDataManager.updatePlayer(true, this);
                         mDataManager.addVisit(scene_id, this);
-                    }else{
+                    } else {
                         mDataManager.addGuestVisit(scene_id);
                     }
                     injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
@@ -248,6 +275,9 @@ public class ArNavigationActivity extends Activity {
                     startService(new Intent(this, SensorService.class));
                     String origin = getIntent().getStringExtra(Constants.ARCHITECT_ORIGIN);
                     Scene scene = mDataManager.getArScene(String.valueOf(scene_id));
+                    instantModelLocation = new Location("");
+                    instantModelLocation.setLatitude(scene.getLatitude());
+                    instantModelLocation.setLongitude(scene.getLongitude());
                     injectArgs("World.getInstantiation", new String[]{JsonHelper.sceneWithViewportToJSON(scene, scene.getViewport(origin)).toString()});
 
                 }
@@ -268,7 +298,8 @@ public class ArNavigationActivity extends Activity {
         }
         injectArgs(method, new String[]{json.toString()});
     }
-    private void injectPlayer(Player player){
+
+    private void injectPlayer(Player player) {
         injectArgs("World.InjectPlayer", new String[]{JsonHelper.playerToJson(player).toString()});
     }
 
@@ -474,8 +505,8 @@ public class ArNavigationActivity extends Activity {
             bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
             mBount = true;
         }
-        if(!mSensorBount){
-            bindService(new Intent(this, SensorService.class),mSensorConnection,Context.BIND_NOT_FOREGROUND);
+        if (!mSensorBount) {
+            bindService(new Intent(this, SensorService.class), mSensorConnection, Context.BIND_NOT_FOREGROUND);
         }
 
         // call mandatory live-cycle method of architectView
@@ -498,7 +529,7 @@ public class ArNavigationActivity extends Activity {
             unbindService(mConnection);
             mBount = false;
         }
-        if(mSensorBount){
+        if (mSensorBount) {
             unbindService(mSensorConnection);
         }
         // call mandatory live-cycle method of architectView
