@@ -145,11 +145,6 @@ var World = {
                rotate: {
                    x: 0,
                    y: 0,
-                   z: World.viewport.rotation
-               },
-               translate: {
-                   x: World.viewport.posX,
-                   y: World.viewport.posY,
                    z: 0
                },
                onScaleChanged: function(scale) {
@@ -226,6 +221,8 @@ var World = {
             World.modelInit = true;
             alert("Target Bearing: "+bearing+"\nTarget Distance: "+ distance);
         }
+        if(World.currentModelShown)
+            World.currentModelShown.rotate.z = World.modelBearing;
         World.calcPointingPosition();
     },
     calcPointingPosition: function (){

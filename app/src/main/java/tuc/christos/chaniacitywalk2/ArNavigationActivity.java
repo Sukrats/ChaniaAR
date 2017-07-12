@@ -531,6 +531,7 @@ public class ArNavigationActivity extends Activity {
         }
         if (mSensorBount) {
             unbindService(mSensorConnection);
+            mBount = false;
         }
         // call mandatory live-cycle method of architectView
         if (architectView != null) {

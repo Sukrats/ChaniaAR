@@ -100,7 +100,8 @@ class PointerLocationProvider implements SensorEventListener {
             double crosshair = Math.tan(complement)*deviceHeight;
             //angle between the z-axis(the one that points at the desired location) and the magnetic north
             double bearing = Math.toDegrees(orientation[0]);
-            //bearing = (360 - ((bearing + 360) % 360));
+            if( bearing < 0 )
+                bearing = (360 + bearing);
 
             if(System.currentTimeMillis() - lastUpdate >= 100){
                 Log.i("SensorService","Provider calculated");
