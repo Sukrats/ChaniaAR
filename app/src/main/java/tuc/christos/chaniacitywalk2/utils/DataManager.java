@@ -733,11 +733,9 @@ public class DataManager {
 
         //BYZANTINE WALL PENDING
         Scene wall = new Scene(35.516904, 24.020253, 37, 2, "The Byzantine Wall", "");//35.516954, 24.020359
-
         wall.addSlamScene(new ArScene("assets/wall/wall_Slam_2048.wt3", 35.516904, 24.020253));
-        wall.addViewport(new Viewport("1", 35.516778, 24.020272, 0, 0.0f, 0.0f));
+        wall.addViewport(new Viewport("1", 35.516904, 24.020253, 0, 0.0f, 0.0f));
         //wall.addViewport(new Viewport("2", 35.516908, 24.020405, 0, -9.0f, 0.0f));
-
         wall.addArScene(new ArScene("assets/wall/wall_Geo_2048.wt3", 35.516934, 24.020343));
         //wall.addArScene(new ArScene("assets/wall/wall.wt3", 35.516934, 24.020343));
         mRoute.add(wall);
@@ -745,7 +743,7 @@ public class DataManager {
 
         //GLASS MOSQUE ASSETS INITIALIZATION
         Scene mosque = new Scene(35.517398, 24.01779, 36, 4, "Glass Mosque", "");
-        mosque.addViewport(new Viewport("1", 35.517327, 24.017647, 0, 0.0f, 0.0f));//west 35.517327, 24.017647
+        mosque.addViewport(new Viewport("1", 35.517398, 24.01779, 0, 0.0f, 0.0f));//west 35.517327, 24.017647
         //mosque.addViewport(new Viewport("2", 35.517548, 24.017727, 0, 0.0f, 0.0f));//north 35.517548, 24.017727
         //mosque.addViewport(new Viewport("3", 35.517239, 24.017891, -180, 0.0f, 0.0f));//south 35.517239, 24.017891
         //mosque.addViewport(new Viewport("4", 35.517458, 24.018026, -270, 0.0f, 0.0f));//east 35.517458, 24.018026
@@ -758,7 +756,7 @@ public class DataManager {
 
         // Saint Rocco asset initialization
         Scene rocco = new Scene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "");//35.516551, 24.021191
-        rocco.addViewport(new Viewport("1", 35.516459, 24.021050, 0, 0.0f, 0.0f));
+        rocco.addViewport(new Viewport("1", 35.5164899, 24.021208, 0, 0.0f, 0.0f));
         //rocco.addViewport(new Viewport("2", 35.516419, 24.021270, -90, (float) -5.3, 8.0f));
         rocco.addSlamScene(new ArScene("assets/rocco/rocco_slam_geo_centered.wt3", 35.516551, 24.021191));
         //rocco.addSlamScene(new ArScene("assets/rocco/rocco_1024_slam_skt.wt3", 35.516551, 24.021191));

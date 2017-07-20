@@ -25,6 +25,7 @@ class PointerLocationProvider implements SensorEventListener {
 
     private double deviceHeight = 1.8;
     private long lastUpdate = System.currentTimeMillis();
+    private boolean hasInitialOrientation = false;
 
 
     PointerLocationProvider(SensorDataListener listener, Context context) {
@@ -47,23 +48,26 @@ class PointerLocationProvider implements SensorEventListener {
         this.mSensorManager.registerListener(this,
                 mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY),
                 SensorManager.SENSOR_DELAY_FASTEST);
-        this.mSensorManager.registerListener(this,
+        /*this.mSensorManager.registerListener(this,
                 mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                SensorManager.SENSOR_DELAY_FASTEST);
+                SensorManager.SENSOR_DELAY_FASTEST);*/
         this.mSensorManager.registerListener(this,
                 mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
                 SensorManager.SENSOR_DELAY_FASTEST);
     }
 
-    public void onPause() {
+    void onPause() {
         mSensorManager.unregisterListener(this);
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        final float FILTER_COEFFICIENT = 0.85f;
+        final float FILTER_COEFFICIENT = 0.8f;
         switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
+                accel[0] = ( accel[0]*FILTER_COEFFICIENT + event.values[0]*(1-FILTER_COEFFICIENT));
+                accel[1] = ( accel[1]*FILTER_COEFFICIENT + event.values[1]*(1-FILTER_COEFFICIENT));
+                accel[2] = ( accel[2]*FILTER_COEFFICIENT + event.values[2]*(1-FILTER_COEFFICIENT));
                 // copy new accelerometer data into accel array
                 System.arraycopy(event.values, 0, accel, 0, 3);
                 break;
@@ -72,22 +76,34 @@ class PointerLocationProvider implements SensorEventListener {
                 gravity[1] = ( gravity[1]*FILTER_COEFFICIENT + event.values[1]*(1-FILTER_COEFFICIENT));
                 gravity[2] = ( gravity[2]*FILTER_COEFFICIENT + event.values[2]*(1-FILTER_COEFFICIENT));
                 // copy new accelerometer data into accel array and calculate orientation
+                //System.arraycopy(event.values, 0, gravity, 0, 3);
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
+                magnetic[0] = ( magnetic[0]*FILTER_COEFFICIENT + event.values[0]*(1-FILTER_COEFFICIENT));
+                magnetic[1] = ( magnetic[1]*FILTER_COEFFICIENT + event.values[1]*(1-FILTER_COEFFICIENT));
+                magnetic[2] = ( magnetic[2]*FILTER_COEFFICIENT + event.values[2]*(1-FILTER_COEFFICIENT));
+
                 // copy new accelerometer data into accel array and calculate orientation
-                System.arraycopy(event.values, 0, magnetic, 0, 3);
+                //System.arraycopy(event.values, 0, magnetic, 0, 3);
+                calcOrientation();
                 break;
         }
+    }
 
-        if (magnetic != null && gravity != null) {
+    private void calcOrientation(){
+
+        if (magnetic != null && gravity != null && accel != null) {
             float rotationMatrix[] = new float[9];
             float I[] = new float[9];
             if (SensorManager.getRotationMatrix(rotationMatrix, I, gravity, magnetic)) {
+                SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_X,
+                        SensorManager.AXIS_Z, rotationMatrix);
                 SensorManager.getOrientation(rotationMatrix, orientation);
+                hasInitialOrientation = true;
             }
         }
 
-        if (accel != null && gravity != null && orientation != null) {
+        if (hasInitialOrientation) {
             //compute gravity vector magnitude
             double gravityMagnitude = Math.sqrt(gravity[0]*gravity[0] + gravity[1]*gravity[1] + gravity[2]*gravity[2]);
 
@@ -109,14 +125,12 @@ class PointerLocationProvider implements SensorEventListener {
                 lastUpdate = System.currentTimeMillis();
             }
         }
-
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
-
 
     public void registerSensorListener(SensorDataListener listener) {
         this.listener = listener;

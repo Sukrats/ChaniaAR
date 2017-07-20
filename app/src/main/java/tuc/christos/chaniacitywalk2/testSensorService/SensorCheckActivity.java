@@ -4,6 +4,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.opengl.GLES20;
+import android.opengl.GLSurfaceView;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,7 +15,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+
+import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.R;
+import tuc.christos.chaniacitywalk2.testSensorService.myOpenGlStarterPack.MyGLRenderer;
 
 
 public class SensorCheckActivity extends AppCompatActivity implements SensorServiceListener {
@@ -25,6 +36,7 @@ public class SensorCheckActivity extends AppCompatActivity implements SensorServ
     private TextView distanceTx;
 
     private SensorService.mIBinder mBinder;
+
     private boolean mBount = false;
     private SensorService mService;
     final ServiceConnection mConnection = new ServiceConnection() {
@@ -45,65 +57,52 @@ public class SensorCheckActivity extends AppCompatActivity implements SensorServ
         }
     };
 
+
+    private MyGLSurfaceView mGLView = new MyGLSurfaceView(MyApp.getAppContext());
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sensor_check);
-        thor = (ImageView) findViewById(R.id.thor);
-        odin = (FrameLayout) findViewById(R.id.odin);
-        bearingTx = (TextView) findViewById(R.id.bearing);
-        thetaTx = (TextView) findViewById(R.id.theta);
-        distanceTx = (TextView) findViewById(R.id.distance);
+        setContentView(mGLView);
         startService(new Intent(this,SensorService.class));
+
     }
 
     @Override
     public void onResume() {
-        bindService(new Intent(this, SensorService.class), mConnection, Context.BIND_NOT_FOREGROUND);
         super.onResume();
+        if(!mBount)
+            bindService(new Intent(this, SensorService.class), mConnection, Context.BIND_NOT_FOREGROUND);
     }
 
     @Override
     public void onPause() {
-        Toast.makeText(this,"Bount?:"+mBount,Toast.LENGTH_SHORT).show();
-        unbindService(mConnection);
-        mBount = false;
         super.onPause();
+        if(mBount) {
+            unbindService(mConnection);
+            mBount = false;
+        }
     }
 
 
     @Override
     public void updateData(double bearing, double theta, double distance) {
-        if (thor == null || odin == null) {
-            return;
-        }
         Log.i("SensorService", "received...");
-        thetaTx.setText("Ground Angle: "+theta+"o");
-        bearingTx.setText("Bearing: "+bearing+"o");
-        distanceTx.setText("Distance: "+distance+"m");
 
-        int pLeft = 0;
-        int pRight = 0;
-        int pTop = 0;
-        int pBottom = 0;
+    }
 
-        int radius = (int) distance;
+    private class MyGLSurfaceView extends GLSurfaceView {
 
-        int posX = radius * (int) Math.cos(bearing);
-        int posY = radius * (int) Math.sin(bearing);
+        private final MyGLRenderer mRenderer;
 
-        if (posX < 0) {
-            pRight = posX;
-        } else {
-            pLeft = posX;
+        public MyGLSurfaceView(Context context){
+            super(context);
+            // Create an OpenGL ES 2.0 context
+            setEGLContextClientVersion(2);
+            mRenderer = new MyGLRenderer();
+            // Set the Renderer for drawing on the GLSurfaceView
+            setRenderer(mRenderer);
         }
-
-        if (posY < 0) {
-            pTop = posY;
-        } else {
-            pBottom = posY;
-        }
-
-        thor.setPadding(pLeft * 1000, pTop * 1000, pRight * 1000, pBottom * 1000);
     }
 }

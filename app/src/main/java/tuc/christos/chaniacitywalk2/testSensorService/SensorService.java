@@ -100,7 +100,7 @@ public class SensorService extends Service implements SensorDataListener {
     @Override
     public IBinder onBind(Intent intent) {
         Log.i("SensorService","Service onBind Called");
-        Toast.makeText(this, "onBind Called", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "onBind Called", Toast.LENGTH_SHORT).show();
         sensorDataProvider.onStart();
         return mBinder;
     }
@@ -110,10 +110,9 @@ public class SensorService extends Service implements SensorDataListener {
      */
     @Override
     public boolean onUnbind(Intent intent) {
-        Toast.makeText(this, "onUnbind Called", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "onUnbind Called", Toast.LENGTH_SHORT).show();
         Log.i("SensorService","Service onUnbind Called");
         sensorDataProvider.onPause();
-        stopSelf();
         return true;
     }
 
@@ -122,7 +121,7 @@ public class SensorService extends Service implements SensorDataListener {
      */
     @Override
     public void onRebind(Intent intent) {
-        Toast.makeText(this, "onRebind Called", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "onRebind Called", Toast.LENGTH_SHORT).show();
         Log.i("SensorService","Service onRebind Called");
         sensorDataProvider.onStart();
     }

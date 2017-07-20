@@ -12,6 +12,8 @@ var World = {
     rotate:0,
 
     controlObject:null,
+    controlObjectModel:null,
+    controlObjectTriggeredModel:null,
     camGeoDrawable:null,
     cHBearing: 0,
     cHDistance:0,
@@ -227,18 +229,24 @@ var World = {
     },
     calcPointingPosition: function (){
         if( World.cHInit && World.modelInit ){
-            if( Math.abs(World.cHBearing - World.modelBearing) <= 15 && Math.abs(World.modelDistance - World.cHDistance) <= 3 ){
+            if( Math.abs(World.cHBearing - World.modelBearing) <= 10 && Math.abs(World.modelDistance - World.cHDistance) <= 1.5 ){
                 World.inPosition = true;
                 document.getElementById("tracking-start-stop-button").disabled = false;
-            } else {
-                document.getElementById("tracking-start-stop-button").disabled = true;
+                World.controlObjectModel.enabled = false;
+                World.controlObjectTriggeredModel.enabled = true;
+            } else if(this.tracker.state === AR.InstantTrackerState.INITIALIZING){
+                    document.getElementById("tracking-start-stop-button").disabled = true;
+                    World.controlObjectModel.enabled = true;
+                    World.controlObjectTriggeredModel.enabled = false;
             }
         }
     },
     makeControlObject: function (arg){
 
-        var geoLoc = new AR.GeoLocation(arg.latitude, arg.longitude, 0.0);
-        var modelEarth = new AR.Model("assets/earth.wt3", {
+        var geoLoc = new AR.GeoLocation(arg.latitude, arg.longitude, 0);
+        var relLoc = new AR.RelativeLocation(geoLoc,0, 0, -2);
+
+        var placemark = new AR.Model("assets/buttons/placemark.wt3", {
         			onLoaded: this.worldLoaded,
         			scale: {
         				x: 1,
@@ -246,19 +254,31 @@ var World = {
         				z: 1
         			}
         		});
+        World.controlObjectModel = placemark;
+        var placemarkTriggered = new AR.Model("assets/buttons/placemark_triggered.wt3", {
+                			onLoaded: this.worldLoaded,
+                			scale: {
+                				x: 1,
+                				y: 1,
+                				z: 1
+                			},
+                			enabled : false
+                		});
+        World.controlObjectTriggeredModel = placemarkTriggered;
 
         var indicatorImage = new AR.ImageResource("assets/indi.png");
 
-        var indicatorDrawable = new AR.ImageDrawable(indicatorImage, 0.1, {
+        var indicatorDrawable = new AR.ImageDrawable(indicatorImage, 0.05, {
             verticalAnchor: AR.CONST.VERTICAL_ANCHOR.TOP
         });
 
-        var geoObject1 = new AR.GeoObject(geoLoc, {
+        var geoObject1 = new AR.GeoObject(relLoc, {
           drawables: {
-             cam: [modelEarth],
+             cam: [World.controlObjectModel,World.controlObjectTriggeredModel],
              indicator: [indicatorDrawable]
           }
         });
+        geoObject1.locations[0].altitude = -2;
         World.controlObject = geoObject1;
     }
 };
