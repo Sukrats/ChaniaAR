@@ -747,7 +747,8 @@ public class DataManager {
         //mosque.addViewport(new Viewport("2", 35.517548, 24.017727, 0, 0.0f, 0.0f));//north 35.517548, 24.017727
         //mosque.addViewport(new Viewport("3", 35.517239, 24.017891, -180, 0.0f, 0.0f));//south 35.517239, 24.017891
         //mosque.addViewport(new Viewport("4", 35.517458, 24.018026, -270, 0.0f, 0.0f));//east 35.517458, 24.018026
-        mosque.addSlamScene(new ArScene("assets/mosque/giali_slam_geo_centered.wt3", 35.517398, 24.01779));
+        //mosque.addSlamScene(new ArScene("assets/mosque/giali_slam_geo_centered.wt3", 35.517398, 24.01779));
+        mosque.addSlamScene(new ArScene("assets/mosque/Giali_Geo_4096_jpeg.wt3", 35.517394, 24.017851));
         //mosque.addSlamScene(new ArScene("assets/mosque/minaret_Slam.wt3", 35.517394, 24.017851));
         mosque.addArScene(new ArScene("assets/mosque/Giali_Geo_4096_jpeg.wt3", 35.517394, 24.017851));
         //mosque.addArScene(new ArScene("assets/mosque/minaret_Geo_png.wt3", 35.517394, 24.017851));
@@ -758,7 +759,8 @@ public class DataManager {
         Scene rocco = new Scene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "");//35.516551, 24.021191
         rocco.addViewport(new Viewport("1", 35.5164899, 24.021208, 0, 0.0f, 0.0f));
         //rocco.addViewport(new Viewport("2", 35.516419, 24.021270, -90, (float) -5.3, 8.0f));
-        rocco.addSlamScene(new ArScene("assets/rocco/rocco_slam_geo_centered.wt3", 35.516551, 24.021191));
+        //rocco.addSlamScene(new ArScene("assets/rocco/rocco_slam_geo_centered.wt3", 35.516551, 24.021191));
+        rocco.addSlamScene(new ArScene("assets/rocco/rocco_2048_geo.wt3", 35.516551, 24.021191));
         //rocco.addSlamScene(new ArScene("assets/rocco/rocco_1024_slam_skt.wt3", 35.516551, 24.021191));
         //rocco.addSlamScene(new ArScene("assets/rocco/rocco_2048_slam.wt3",35.516551, 24.021191));
         //rocco.addArScene(new ArScene("assets/rocco/rocco_1024_geo.wt3",35.516551, 24.021191));

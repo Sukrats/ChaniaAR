@@ -23,7 +23,7 @@ class PointerLocationProvider implements SensorEventListener {
     private float[] magnetic = new float[3];
     private float[] orientation = new float[3];
 
-    private double deviceHeight = 1.8;
+    private double deviceHeight = 1.2;
     private long lastUpdate = System.currentTimeMillis();
     private boolean hasInitialOrientation = false;
 
@@ -71,6 +71,7 @@ class PointerLocationProvider implements SensorEventListener {
                 // copy new accelerometer data into accel array
                 System.arraycopy(event.values, 0, accel, 0, 3);
                 break;
+
             case Sensor.TYPE_GRAVITY:
                 gravity[0] = ( gravity[0]*FILTER_COEFFICIENT + event.values[0]*(1-FILTER_COEFFICIENT));
                 gravity[1] = ( gravity[1]*FILTER_COEFFICIENT + event.values[1]*(1-FILTER_COEFFICIENT));
@@ -78,15 +79,16 @@ class PointerLocationProvider implements SensorEventListener {
                 // copy new accelerometer data into accel array and calculate orientation
                 //System.arraycopy(event.values, 0, gravity, 0, 3);
                 break;
+
             case Sensor.TYPE_MAGNETIC_FIELD:
                 magnetic[0] = ( magnetic[0]*FILTER_COEFFICIENT + event.values[0]*(1-FILTER_COEFFICIENT));
                 magnetic[1] = ( magnetic[1]*FILTER_COEFFICIENT + event.values[1]*(1-FILTER_COEFFICIENT));
                 magnetic[2] = ( magnetic[2]*FILTER_COEFFICIENT + event.values[2]*(1-FILTER_COEFFICIENT));
-
                 // copy new accelerometer data into accel array and calculate orientation
                 //System.arraycopy(event.values, 0, magnetic, 0, 3);
                 calcOrientation();
                 break;
+
         }
     }
 
@@ -107,13 +109,22 @@ class PointerLocationProvider implements SensorEventListener {
             //compute gravity vector magnitude
             double gravityMagnitude = Math.sqrt(gravity[0]*gravity[0] + gravity[1]*gravity[1] + gravity[2]*gravity[2]);
 
+            //MY WAY
+            //double alphaCos = Math.abs();
+            //testing
+            double alphaAngle = Math.acos(gravity[2]/gravityMagnitude);
+            //not testing
+            double crosshairMyWay = Math.tan(alphaAngle)*deviceHeight;
+
+            //THE HIGHWAY
             //angle between the gravity vector and the devices x-y plane ( pitch and roll ) in radians
             double thetaAngle = Math.asin(gravity[2]/gravityMagnitude);
-
             //we need the thetaAngles complement in radians
             double complement = Math.toRadians(90)-thetaAngle;
             //distancce between the users position and the location the device is Pointing at
             double crosshair = Math.tan(complement)*deviceHeight;
+
+
             //angle between the z-axis(the one that points at the desired location) and the magnetic north
             double bearing = Math.toDegrees(orientation[0]);
             if( bearing < 0 )
@@ -121,7 +132,7 @@ class PointerLocationProvider implements SensorEventListener {
 
             if(System.currentTimeMillis() - lastUpdate >= 100){
                 Log.i("SensorService","Provider calculated");
-                listener.injectSensorData(bearing,complement,crosshair);
+                listener.injectSensorData(bearing, complement, crosshairMyWay);
                 lastUpdate = System.currentTimeMillis();
             }
         }

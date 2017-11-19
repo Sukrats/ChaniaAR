@@ -10,7 +10,7 @@ var World = {
     areas:[],
     scale:1,
     rotate:0,
-
+    height:1.2,
     controlObject:null,
     controlObjectModel:null,
     controlObjectTriggeredModel:null,
@@ -51,7 +51,7 @@ var World = {
             },
             // device height needs to be as accurate as possible to have an accurate scale
             // returned by the Wikitude SDK
-            deviceHeight: 1.8,
+            deviceHeight: World.height,
             onError: function(errorMessage) {
                 alert(errorMessage);
             }
@@ -92,7 +92,8 @@ var World = {
     locationChanged: function locationChangedFn(lat, lon, alt, acc) {
         var location1 = {
             "lat": lat,
-            "lon": lon
+            "lon": lon,
+            "acc": acc
         };
         World.location = location1;
         /*
@@ -130,6 +131,7 @@ var World = {
         	"description": args.description,
         	"num": args.num
         };
+
         World.scene = singlePoi;
         World.initModels();
         World.init();
@@ -223,13 +225,21 @@ var World = {
             World.modelInit = true;
             alert("Target Bearing: "+bearing+"\nTarget Distance: "+ distance);
         }
+        if(World.modelInit){
+            World.controlObjectModel.scale.x = World.location.acc;
+            World.controlObjectModel.scale.y = World.location.acc;
+            World.controlObjectTriggeredModel.scale.x = World.location.acc;
+            World.controlObjectTriggeredModel.scale.y = World.location.acc;
+        }
         if(World.currentModelShown)
             World.currentModelShown.rotate.z = World.modelBearing;
         World.calcPointingPosition();
     },
+
     calcPointingPosition: function (){
+        var degrees = World.location.acc/World.modelDistance * 180 / Math.PI;
         if( World.cHInit && World.modelInit ){
-            if( Math.abs(World.cHBearing - World.modelBearing) <= 10 && Math.abs(World.modelDistance - World.cHDistance) <= 1.5 ){
+            if( Math.abs(World.cHBearing - World.modelBearing) <= degrees && Math.abs(World.modelDistance - World.cHDistance) <= World.location.acc ){
                 World.inPosition = true;
                 document.getElementById("tracking-start-stop-button").disabled = false;
                 World.controlObjectModel.enabled = false;
@@ -244,7 +254,7 @@ var World = {
     makeControlObject: function (arg){
 
         var geoLoc = new AR.GeoLocation(arg.latitude, arg.longitude, 0);
-        var relLoc = new AR.RelativeLocation(geoLoc,0, 0, -2);
+        var relLoc = new AR.RelativeLocation(geoLoc,0, 0, -World.height);
 
         var placemark = new AR.Model("assets/buttons/placemark.wt3", {
         			onLoaded: this.worldLoaded,

@@ -299,11 +299,11 @@ public class LocationService extends Service implements LocationCallback, Locati
     @Override
     public IBinder onBind(Intent intent) {
 
-        if (mDataManager.hasLocality()) {
+        /*if (mDataManager.hasLocality()) {
             java.sql.Date updated = mDataManager.getLastLocalityUpdate();
             scheduledRegionUpdate = !isToday(updated.getTime());//current.after(updated);
             lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
-        }
+        }*/
 
         hideServiceNotification();
         Log.i("Binder", "onBind called");
@@ -364,11 +364,11 @@ public class LocationService extends Service implements LocationCallback, Locati
      */
     @Override
     public void onRebind(Intent intent) {
-        if (mDataManager.hasLocality()) {
+        /*if (mDataManager.hasLocality()) {
             java.sql.Date updated = mDataManager.getLastLocalityUpdate();
             scheduledRegionUpdate = !isToday(updated.getTime());//current.after(updated);
             lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
-        }
+        }*/
         hideServiceNotification();
         Log.i("Binder", "OnRebind called");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -548,7 +548,8 @@ public class LocationService extends Service implements LocationCallback, Locati
     public void triggerRegionChange(final Level level) {
         //Toast.makeText(this, "Downloading Scenes For Region:\n" + level.getAdminArea(), Toast.LENGTH_LONG).show();
         mDataManager.clearScenes();
-        mEventHandler.removeLocationEventListener(this);
+        //mEventHandler.updateSceneList(new ArrayList<Scene>());
+        //mEventHandler.removeLocationEventListener(this);
         for (IServiceListener i : listeners)
             i.regionChanged(level.getAdminArea(), level.getCountry());
 
@@ -571,9 +572,9 @@ public class LocationService extends Service implements LocationCallback, Locati
                                 scheduledRegionUpdate = false;
                             } else {
                                 Toast.makeText(getApplicationContext(),
-                                        "Server seems to be offline, scheduled to check again in 1 min!",
+                                        "Server seems to be offline, you should manually try again in a few minutes!",
                                         Toast.LENGTH_LONG).show();
-                                scheduledRegionUpdate = true;
+                                scheduledRegionUpdate = false;
                                 retryCount = 0;
                             }
                             break;
@@ -581,8 +582,9 @@ public class LocationService extends Service implements LocationCallback, Locati
                 } else {
                     Toast.makeText(getApplicationContext(), "Scenes For Region Downloaded", Toast.LENGTH_SHORT).show();
                     Log.i("Fence", "Scenes For Region Downloaded");
-                    mEventHandler.setLocationEventListener(LocationService.this);
+                    //mEventHandler.setLocationEventListener(LocationService.this);
                     mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
+                    scheduledRegionUpdate = false;
                     for (IServiceListener i : listeners) {
                         i.regionChanged(level.getAdminArea(), level.getCountry());
                         i.drawGeoFences(mEventHandler.getActiveFences(), LocationEventHandler.MIN_RADIUS);

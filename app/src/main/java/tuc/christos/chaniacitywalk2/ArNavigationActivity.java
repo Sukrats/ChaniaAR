@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.hardware.GeomagneticField;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.Uri;
@@ -41,6 +42,7 @@ import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.IServiceListener;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.model.ArScene;
 import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Viewport;
@@ -73,13 +75,24 @@ public class ArNavigationActivity extends Activity {
      * sensor accuracy listener in case you want to display calibration hints
      */
     protected ArchitectView.SensorAccuracyChangeListener sensorAccuracyListener;
-
+    protected boolean onlyOnce = false;
+    protected float magneticDeclination = 0.0f;
     /**
      * sensorservice listener to simulate instant tracking mechanics
      */
     protected SensorServiceListener mSensorServiceListener = new SensorServiceListener() {
         @Override
         public void updateData(double bearing, double theta, double distance) {
+
+            if (ArNavigationActivity.this.lastKnownLocation != null && !onlyOnce){
+                onlyOnce = true;
+                Location location = ArNavigationActivity.this.lastKnownLocation;
+                GeomagneticField field = new GeomagneticField((float)location.getLatitude(), (float)location.getLatitude(), (float)location.getAltitude(), System.currentTimeMillis());
+                magneticDeclination = field.getDeclination();
+                Toast.makeText(MyApp.getAppContext(),"Declination: "+magneticDeclination,Toast.LENGTH_SHORT).show();
+            }
+
+            //bearing += magneticDeclination;
             callJavaScript("World.OnCrosshairPositionChange", new String[]{String.valueOf((float) bearing), String.valueOf((float) distance)});
         }
     };
@@ -174,18 +187,18 @@ public class ArNavigationActivity extends Activity {
             ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
 
             if(WorldToLoad.contains("Instant")) {
-                if (instantTrackingLocation == null)
-                    instantTrackingLocation = location;
+                //if (instantTrackingLocation == null)
+                    //instantTrackingLocation = location;
 
-                if (instantTrackingLocation.getAccuracy() >= location.getAccuracy() || System.currentTimeMillis() - updatedInMillis > 10000) {
+                //if (instantTrackingLocation.getAccuracy() >= location.getAccuracy() || System.currentTimeMillis() - updatedInMillis > 10000) {
                     instantTrackingLocation = location;
-                    double lat1 = instantTrackingLocation.getLatitude();
-                    double lng1 = instantTrackingLocation.getLongitude();
+                    double lat1 = location.getLatitude();
+                    double lng1 = location.getLongitude();
 
                     double lat2 = instantModelLocation.getLatitude();
                     double lng2 = instantModelLocation.getLongitude();
 
-                    double distance = instantModelLocation.distanceTo(instantTrackingLocation);
+                    double distance = instantModelLocation.distanceTo(location);
 
                     double dLon = (lng2-lng1);
                     double y = Math.sin(dLon) * Math.cos(lat2);
@@ -194,7 +207,7 @@ public class ArNavigationActivity extends Activity {
                     bearing = (360 - ((bearing + 360) % 360));
 
                     callJavaScript("World.UpdateUserPosition", new String[]{String.valueOf(bearing), String.valueOf(distance)});
-                }
+                //}
             }
         }
     };
@@ -276,8 +289,9 @@ public class ArNavigationActivity extends Activity {
                     String origin = getIntent().getStringExtra(Constants.ARCHITECT_ORIGIN);
                     Scene scene = mDataManager.getArScene(String.valueOf(scene_id));
                     instantModelLocation = new Location("");
-                    instantModelLocation.setLatitude(scene.getLatitude());
-                    instantModelLocation.setLongitude(scene.getLongitude());
+                    ArrayList<ArScene> l = scene.getArScene();
+                    instantModelLocation.setLatitude(l.get(0).getLatitude());
+                    instantModelLocation.setLongitude(l.get(0).getLongitude());
                     injectArgs("World.getInstantiation", new String[]{JsonHelper.sceneWithViewportToJSON(scene, scene.getViewport(origin)).toString()});
 
                 }
