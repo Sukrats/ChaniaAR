@@ -121,7 +121,7 @@ class PointerLocationProvider implements SensorEventListener {
             double thetaAngle = Math.asin(gravity[2]/gravityMagnitude);
             //we need the thetaAngles complement in radians
             double complement = Math.toRadians(90)-thetaAngle;
-            //distancce between the users position and the location the device is Pointing at
+            //distancce between the users position and the location the camera is Pointing at
             double crosshair = Math.tan(complement)*deviceHeight;
 
 

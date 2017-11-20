@@ -31,6 +31,9 @@ public class Constants {
 
 
     public static final String ARCHITECT_WORLD_KEY = "WorldToLoad";
+    public static final String ARCHITECT_MODEL_AT_GEOLOCATION_KEY = "ModelAtGeoLocation";
+    public static final String ARCHITECT_AR_NAVIGATION_KEY = "ArNavigation";
+    public static final String ARCHITECT_INSTANT_TRACKING_KEY = "Instant";
     public static final String ARCHITECT_AR_SCENE_KEY = "scene";
     public static final String ARCHITECT_ORIGIN = "origin";
     public static final String ARCHITECT_QUESTION_SCENE_KEY = "question";

@@ -239,7 +239,9 @@ var World = {
     calcPointingPosition: function (){
         var degrees = World.location.acc/World.modelDistance * 180 / Math.PI;
         if( World.cHInit && World.modelInit ){
-            if( Math.abs(World.cHBearing - World.modelBearing) <= degrees && Math.abs(World.modelDistance - World.cHDistance) <= World.location.acc ){
+            if( (( World.modelBearing - degrees <= World.cHBearing  && World.modelBearing + degrees >=  World.cHBearing ) || ( World.modelBearing - degrees +360 <= World.cHBearing  && World.modelBearing + degrees +360 >=  World.cHBearing ))
+                && Math.abs(World.modelDistance - World.cHDistance) <= World.location.acc ){
+
                 World.inPosition = true;
                 document.getElementById("tracking-start-stop-button").disabled = false;
                 World.controlObjectModel.enabled = false;

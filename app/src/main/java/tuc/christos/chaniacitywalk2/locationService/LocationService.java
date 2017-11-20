@@ -652,9 +652,9 @@ public class LocationService extends Service implements LocationCallback, Locati
                     count++;
                     return;
                 }
-                if (level == null) {
-                    Toast.makeText(LocationService.this, "Could not locate you!Geocoder Seems to be offline! Check yur internet connection and restart the app", Toast.LENGTH_SHORT).show();
-                    scheduledRegionUpdate = true;
+                else if (level == null && count == 2) {
+                    Toast.makeText(LocationService.this, "Could not locate you! Geocoder Seems to be offline! Check your internet connection and restart the app", Toast.LENGTH_SHORT).show();
+                    scheduledRegionUpdate = false;
                     count = 0;
                     return;
                 }

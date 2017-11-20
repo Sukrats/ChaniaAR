@@ -3,31 +3,24 @@
     package="tuc.christos.chaniacitywalk2">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    !-- Needed only if your app targets Android 5.0 (API level 21) or higher. -->
+
+    !-- Needed only if the app targets Android 5.0 (API level 21) or higher. -->
     <uses-feature android:name="android.hardware.location.gps" />
     <uses-feature android:name="android.hardware.location.network" />
-    !-- Needed for Augmented Reality experiences. -->
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="true" />
+
+    !-- Needed for Augmented Reality -->
     <uses-feature android:name="android.hardware.camera.autofocus" />
-    <uses-feature
-        android:name="android.hardware.location"
-        android:required="true" />
-    <uses-feature
-        android:name="android.hardware.sensor.accelerometer"
-        android:required="true" />
-    <uses-feature
-        android:name="android.hardware.sensor.compass"
-        android:required="true" />
-    <uses-feature
-        android:glEsVersion="0x00020000"
-        android:required="true" />
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <uses-feature android:name="android.hardware.location" android:required="true" />
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
+    <uses-feature android:name="android.hardware.sensor.compass" android:required="true" />
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+
     !-- Needed by SQLite for local storage. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -42,7 +35,6 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDQpGOwAEEwez9OkJ7atLCO0Sv8C3JAmr0" />
-
         <activity
             android:name=".LoginActivity"
             android:noHistory="false"
@@ -50,13 +42,14 @@
             android:theme="@style/AppTheme.Dark">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".MapsActivity"
             android:screenOrientation="portrait" />
+
         <activity
             android:name=".collectionActivity.CollectionActivity"
             android:label="@string/title_activity_collection_siblings"
@@ -67,6 +60,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
         </activity>
+
         <activity
             android:name=".collectionActivity.SceneDetailActivity"
             android:label="@string/title_scene_detail"
@@ -77,6 +71,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="tuc.christos.chaniacitywalk2.collectionActivity.CollectionActivity" />
         </activity>
+
         <activity
             android:name=".SettingsActivity"
             android:label="@string/title_settings"
@@ -87,6 +82,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
         </activity>
+
         <activity
             android:name=".ProfileActivity"
             android:label="@string/title_profile"
@@ -96,6 +92,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
         </activity>
+
         <activity
             android:name=".ArNavigationActivity"
             android:configChanges="screenSize|orientation">

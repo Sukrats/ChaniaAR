@@ -250,7 +250,7 @@ public class MapsActivity extends AppCompatActivity implements
                 //marker.showInfoWindow();
                 if (markerToViewport.containsKey(marker)) {
                     Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "InstantExamples/index.html");
+                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "InstantTracking/index.html");
                     intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
                     intent.putExtra(Constants.ARCHITECT_ORIGIN, markerToViewport.get(marker).getId());
                     startActivity(intent);

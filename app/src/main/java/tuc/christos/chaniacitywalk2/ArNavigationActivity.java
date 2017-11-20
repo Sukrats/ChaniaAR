@@ -233,8 +233,6 @@ public class ArNavigationActivity extends Activity {
         config.setCameraResolution(CameraSettings.CameraResolution.AUTO);
         config.setCamera2Enabled(false);
 
-        //final StartupConfiguration config = new StartupConfiguration(Constants.WIKITUDE_SDK_KEY, 1, StartupConfiguration.CameraPosition.DEFAULT);
-
         architectView.setCameraLifecycleListener(null);
         try {
             /* first mandatory life-cycle notification */
@@ -249,11 +247,8 @@ public class ArNavigationActivity extends Activity {
         if (worldLoadedListener != null && architectView != null) {
             architectView.registerWorldLoadedListener(worldLoadedListener);
         }
-        // register valid urlListener in architectView, ensure this is set before content is loaded to not miss any event
-        //if (architectView != null) {
-        //    architectView.registerUrlListener(urlListener);
-        //}
         this.mArchitectJavaScriptInterfaceListener = this.getArchitectJavaScriptInterfaceListener();
+
         if (this.mArchitectJavaScriptInterfaceListener != null && this.architectView != null) {
             this.architectView.addArchitectJavaScriptInterfaceListener(mArchitectJavaScriptInterfaceListener);
         }
@@ -273,10 +268,13 @@ public class ArNavigationActivity extends Activity {
             this.architectView.onPostCreate();
             try {
                 architectView.load(WorldToLoad);
-                if (WorldToLoad.contains("ArNavigation")) {
+                if (WorldToLoad.contains(Constants.ARCHITECT_AR_NAVIGATION_KEY)) {
+
                     injectData(mDataManager.getActiveMapContent());
                     injectPlayer(mDataManager.getActivePlayer());
-                } else if (WorldToLoad.contains("ModelAtGeoLocation")) {
+
+                } else if (WorldToLoad.contains(Constants.ARCHITECT_MODEL_AT_GEOLOCATION_KEY)) {
+
                     if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(scene_id)) {
                         mDataManager.updatePlayer(true, this);
                         mDataManager.addVisit(scene_id, this);
@@ -284,14 +282,18 @@ public class ArNavigationActivity extends Activity {
                         mDataManager.addGuestVisit(scene_id);
                     }
                     injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
-                } else if (WorldToLoad.contains("Instant")) {
+
+                } else if (WorldToLoad.contains(Constants.ARCHITECT_INSTANT_TRACKING_KEY)) {
+
                     startService(new Intent(this, SensorService.class));
                     String origin = getIntent().getStringExtra(Constants.ARCHITECT_ORIGIN);
                     Scene scene = mDataManager.getArScene(String.valueOf(scene_id));
+
                     instantModelLocation = new Location("");
                     ArrayList<ArScene> l = scene.getArScene();
                     instantModelLocation.setLatitude(l.get(0).getLatitude());
                     instantModelLocation.setLongitude(l.get(0).getLongitude());
+
                     injectArgs("World.getInstantiation", new String[]{JsonHelper.sceneWithViewportToJSON(scene, scene.getViewport(origin)).toString()});
 
                 }
