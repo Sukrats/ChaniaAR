@@ -1,6 +1,7 @@
 package tuc.christos.chaniacitywalk2.utils;
 
 import android.content.Context;
+import android.location.Location;
 import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
@@ -14,15 +15,15 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
-import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.mInterfaces.ClientListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.LocalDBWriteListener;
+import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Player;
+import tuc.christos.chaniacitywalk2.model.Scene;
 
 /**
  * Created by Christos on 29-May-17.
@@ -253,7 +254,7 @@ public class RestClient implements ContentListener {
 
     /**********************************************************UPDATE PLAYER*************************************************************************/
 
-    void putPlayer(Player player, Context context) {
+    public void putPlayer(Player player, Context context) {
         ByteArrayEntity entity = null;
         AsyncHttpClient client = new AsyncHttpClient();
         JSONObject json = JsonHelper.playerToJson(player);
@@ -283,6 +284,50 @@ public class RestClient implements ContentListener {
                         code = code + ((char) b);
                     }
                     Log.i("PUT", "BODY: " + code);
+                }
+                @Override
+                public boolean getUseSynchronousMode() {
+                    return false;
+                }
+            });
+        mClient = client;
+    }
+
+
+    public void putPlayerInfo(Player player, Context context, final ContentListener contentListener) {
+        ByteArrayEntity entity = null;
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        client.setBasicAuth(player.getUsername(), player.getPassword());
+        player.setPassword(player.getNewPassword());
+        JSONObject json = JsonHelper.playerToJson(player);
+        try {
+            entity = new ByteArrayEntity(json.toString().getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException es) {
+            Log.i(TAG, es.getMessage());
+        }
+        if (entity != null)
+            client.put(context, Constants.URL_PUT_USER + player.getUsername(), entity, "application/json", new AsyncHttpResponseHandler() {
+                @Override
+                public void onSuccess(int i, Header[] headers, byte[] bytes) {
+                    Log.i("PUT", "SUCCESS" + i);
+                    String code = "";
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("PUT", "BODY: " + code);
+                    contentListener.downloadComplete(true,i,"Put Player",code);
+                }
+
+                @Override
+                public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                    Log.i("PUT", "NOPE" + i);
+                    String code = "";
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("PUT", "BODY: " + code);
+                    contentListener.downloadComplete(false,i,"Put Player",code);
                 }
                 @Override
                 public boolean getUseSynchronousMode() {
@@ -565,6 +610,91 @@ public class RestClient implements ContentListener {
         mClient = client;
     }
 
+    public void downloadLevelContent(String levelId, final ContentListener contentListener) {
+        Log.i(TAG, "Downloading Scenes For Location");
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.setMaxRetriesAndTimeout(4, 20000);
+        client.get(Constants.URL_LEVELS+"/"+levelId + "/content", null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
+                try {
+                    JSONObject json = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
+                    mDataManager.populateContent(JsonHelper.parseContentFromJson(json),  new LocalDBWriteListener() {
+                        @Override
+                        public void OnWriteComplete(boolean success) {
+                            contentListener.downloadComplete(success, i, "", "Download Complete!");
+                        }
+                    });
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                String code = "";
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                String result = "Error on Download";
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    result = errorMessage.getString("message");
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                }
+                contentListener.downloadComplete(false, i, "Guest", result);
+            }
+        });
+        mClient = client;
+    }
+
+    public void downloadScenesForAbsoluteLocation(Location location, final ContentListener contentListener) {
+        mDataManager.clearScenes();
+        Log.i(TAG, "Downloading Scenes For Location");
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.setMaxRetriesAndTimeout(4, 20000);
+        client.get(Constants.URL_SCENES + "?latitude=" + location.getLatitude() + "&longitude=" + location.getLongitude(), null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
+                try {
+                    JSONArray json = new JSONArray(new String(bytes, StandardCharsets.UTF_8));
+                    mDataManager.populateUserData(json, "Scenes", new LocalDBWriteListener() {
+                        @Override
+                        public void OnWriteComplete(boolean success) {
+                            contentListener.downloadComplete(success, i, "", "Download Complete!");
+                        }
+                    });
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                String code = "";
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                String result = "Error on Download";
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    result = errorMessage.getString("message");
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                }
+                contentListener.downloadComplete(false, i, "Guest", result);
+            }
+        });
+        mClient = client;
+    }
+
     void postVisit(long scene_id, final Context context) {
         try {
             Player player = mDataManager.getActivePlayer();
@@ -736,6 +866,102 @@ public class RestClient implements ContentListener {
         });
     }
 
+    public void downloadLevel(final Location location, final ContentListener contentListener){
+        mDataManager.clearScenes();
+        Log.i(TAG, "Fetching Level");
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.setMaxRetriesAndTimeout(4, 20000);
+        client.get(Constants.URL_LEVELS_LOC + "?lat=" + location.getLatitude() + "&lon=" + location.getLongitude(), null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
+                try {
+                    JSONObject json = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
+                    Level downloaded = JsonHelper.parseLevelFromJson(json);
+                    if(mDataManager.compareExistingLocality(downloaded))
+                        mDataManager.setLevelLocality(location, downloaded, new LocalDBWriteListener(){
+                            @Override
+                            public void OnWriteComplete(boolean success){
+                                contentListener.downloadComplete(success, i ,"", "Download Complete!");
+                            }
+                        });
+                    else
+                        contentListener.downloadComplete(false, i, "","Same Level");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(final int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                String code = "";
+
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                String res = "Error on Download";
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    res = errorMessage.getString("message");
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                }
+                final String result = res;
+                Level level = new Level();
+                level.setCountry(("unknown"));
+                level.setCountry_code(("unknown"));
+                level.setAdminArea(("unknown"));
+                level.setCity(("unknown"));
+                level.setAdminAreaID(("unknown"));
+                level.setBoundLongitude(0.0);
+                level.setBoundLatitude(0.0);
+                level.setBound(0.0);
+                mDataManager.setLevelLocality(location, level, new LocalDBWriteListener(){
+                    @Override
+                    public void OnWriteComplete(boolean success){
+                        contentListener.downloadComplete(false, i, "Guest", result);
+                    }
+                });
+
+            }
+        });
+        mClient = client;
+    }
+
+    public void downloadScene(final String sceneId, final ContentListener cl){
+        Log.i(TAG, "get Scene "+sceneId);
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get(Constants.URL_SCENES+"/"+sceneId, null, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(final int i, Header[] headers, byte[] bytes) {
+                    cl.downloadComplete(true, i,sceneId,new String(bytes, StandardCharsets.UTF_8));
+
+            }
+
+            @Override
+            public void onFailure(int i, Header[] headers, byte[] bytes, Throwable throwable) {
+                String code = "";
+                if (bytes != null) {
+                    for (byte b : bytes) {
+                        code = code + ((char) b);
+                    }
+                    Log.i("Response Body: ", code);
+                }
+                String result = "Error on Download";
+                try {
+                    JSONObject errorMessage = new JSONObject(code);
+                    result = errorMessage.getString("message");
+                } catch (JSONException ex) {
+                    Log.i("JSON EXCEPTION: ", ex.getMessage());
+                }
+                cl.downloadComplete(false, i, mDBHelper.SceneEntry.TABLE_NAME, result);
+            }
+        });
+        mClient = client;
+
+    }
     public void cancel() {
         if (mClient != null)
             mClient.cancelAllRequests(true);

@@ -1,4 +1,5 @@
-<tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.MapWrapperLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.MapWrapperLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/map_container"
     android:layout_width="match_parent"
@@ -12,6 +13,33 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context="tuc.christos.chaniacitywalk2.MapsActivity" />
+
+    <LinearLayout
+        android:id="@+id/ar_buttons_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="?attr/actionBarSize"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp"
+        android:paddingTop="4dp"
+        android:background="@drawable/arbuttonholder"
+        android:orientation="vertical"
+        android:layout_gravity="bottom|end">
+        <ImageButton
+            android:id="@+id/instant_tracking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/round_button_instant"
+            android:paddingBottom="4dp"
+            android:contentDescription="@string/app_name"/>
+        <ImageButton
+            android:id="@+id/sensors_tracking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="4dp"
+            android:background="@drawable/round_button_sensor"
+            android:contentDescription="@string/app_name" />
+    </LinearLayout>
 
     <View
         android:id="@+id/horizontal_shadow"
@@ -41,16 +69,6 @@
         android:background="@color/colorPrimaryDark"
         android:src="@drawable/ic_menu_mylocation" />
 
-    <android.support.v7.widget.AppCompatImageButton
-        android:id="@+id/sensor_button"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|end"
-        android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:background="@color/colorPrimaryDark"
-        android:src="@android:drawable/ic_menu_compass" />
-
 
     <include layout="@layout/bottom_bar_custom" />
 
@@ -64,3 +82,14 @@
         android:contentDescription="@android:string/ok" />
 
 </tuc.christos.chaniacitywalk2.mapCustomUiHelperClasses.MapWrapperLayout>
+
+
+    <!-- <android.support.v7.widget.AppCompatImageButton
+         android:id="@+id/sensor_button"
+         style="?android:attr/buttonStyleSmall"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center_vertical|end"
+         android:layout_marginEnd="@dimen/activity_horizontal_margin"
+         android:background="@color/colorPrimaryDark"
+         android:src="@android:drawable/ic_menu_compass" /> -->

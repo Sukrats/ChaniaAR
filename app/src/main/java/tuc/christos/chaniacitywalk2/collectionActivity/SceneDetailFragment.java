@@ -9,6 +9,7 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -57,7 +60,6 @@ public class SceneDetailFragment extends Fragment implements OnMapReadyCallback 
      * The dummy content this fragment is presenting.
      */
     private Scene mItem;
-
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -76,13 +78,21 @@ public class SceneDetailFragment extends Fragment implements OnMapReadyCallback 
             // arguments. In a real-WorldToLoad scenario, use a Loader
             // to load content from a content provider.
             if (!mDataManager.getActivePlayer().getUsername().contains("Guest")) {
-                Scene tmpScene = mDataManager.getScene(Long.parseLong(getArguments().getString(ARG_ITEM_ID)));
-                if (tmpScene != null)
-                    mItem = tmpScene;
+                if (!mDataManager.getScenes().isEmpty())
+                    mItem =  mDataManager.getScene(Long.parseLong(getArguments().getString(ARG_ITEM_ID)));
+                else if(mDataManager.getTempScene() != null){
+                    mItem = mDataManager.getTempScene();
+                }
+                else{
+                    mItem = new Scene();
+                }
             } else {
                 Scene tmpScene = mDataManager.getArScene(getArguments().getString(ARG_ITEM_ID));
                 if (tmpScene != null)
                     mItem = tmpScene;
+                else{
+                    mItem = new Scene();
+                }
             }
             Activity activity = this.getActivity();
             CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
@@ -106,13 +116,16 @@ public class SceneDetailFragment extends Fragment implements OnMapReadyCallback 
         googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
     }
+    View rootView;
+    ProgressBar progressBar;
+    RecyclerView recyclerView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final View rootView = inflater.inflate(R.layout.scene_detail_test, container, false);
-        final ProgressBar progressBar = (ProgressBar) rootView.findViewById(R.id.progress_bar);
-        final RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.gallery_container);
+        rootView = inflater.inflate(R.layout.scene_detail_test, container, false);
+        progressBar = (ProgressBar) rootView.findViewById(R.id.progress_bar);
+        recyclerView = (RecyclerView) rootView.findViewById(R.id.gallery_container);
 
         // Show the dummy content as text in a TextView.
         if (mItem != null) {
@@ -174,8 +187,10 @@ public class SceneDetailFragment extends Fragment implements OnMapReadyCallback 
             }
         }
 
+
         return rootView;
     }
+
 
 
     static class ImageRecyclerViewAdapter extends RecyclerView.Adapter<ImageRecyclerViewAdapter.ViewHolder> {
@@ -199,6 +214,7 @@ public class SceneDetailFragment extends Fragment implements OnMapReadyCallback 
                     .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                     .placeholder(R.drawable.empty_photo)
                     .into(holder.image);
+
             holder.image.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

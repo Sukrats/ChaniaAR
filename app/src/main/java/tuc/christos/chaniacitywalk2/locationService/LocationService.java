@@ -103,6 +103,7 @@ public class LocationService extends Service implements LocationCallback, Locati
     private ArrayList<IServiceListener> listeners = new ArrayList<>();
 
     private boolean fenceTriggered = false;
+    private boolean checking = false;
     private boolean scheduledRegionUpdate = false;
     private static boolean isRunning = false;
     private long updated = 0;
@@ -128,7 +129,7 @@ public class LocationService extends Service implements LocationCallback, Locati
 
             if (mDataManager.hasLocality()) {
                 java.sql.Date updated = mDataManager.getLastLocalityUpdate();
-                scheduledRegionUpdate = !isToday(updated.getTime());
+                scheduledRegionUpdate = mDataManager.getCurrentLevel().getAdminArea().equals("unknown") || !isToday(updated.getTime());
                 lastLocationChecked = mDataManager.getLastLocalityLocationUpdate();
                 Log.i("Geocoder", lastLocationChecked.getLatitude() + "," + lastLocationChecked.getLongitude());
             } else {
@@ -456,11 +457,11 @@ public class LocationService extends Service implements LocationCallback, Locati
         for (IServiceListener l : listeners)
             l.handleNewLocation(location);
 
-        if (scheduledRegionUpdate && System.currentTimeMillis() - updated >= 10 * 1000) {
+        if (!checking && scheduledRegionUpdate && System.currentTimeMillis() - updated >= 30 * 1000) {
             Log.i("Geocoder", "schedule pnigetai!");
             updated = System.currentTimeMillis();
             checkForRegionChange(location);
-        } else if (lastLocationChecked.distanceTo(location) >= 50000) {
+        } else if (!checking && mDataManager.hasLocality() && (lastLocationChecked.distanceTo(location) >= mDataManager.getCurrentLevel().getBound()) && !mDataManager.getCurrentLevel().getAdminArea().equals("unknown")) {
             Log.i("Geocoder", "to last location pnigetai!");
             updated = System.currentTimeMillis();
             checkForRegionChange(location);
@@ -545,7 +546,7 @@ public class LocationService extends Service implements LocationCallback, Locati
         }
     }
 
-    public void triggerRegionChange(final Level level) {
+   /* public void triggerRegionChange(final Level level) {
         //Toast.makeText(this, "Downloading Scenes For Region:\n" + level.getAdminArea(), Toast.LENGTH_LONG).show();
         mDataManager.clearScenes();
         //mEventHandler.updateSceneList(new ArrayList<Scene>());
@@ -592,7 +593,7 @@ public class LocationService extends Service implements LocationCallback, Locati
                 }
             }
         });
-    }
+    }*/
 
     public void requestFences() {
         Log.i("FENCES", "REQUEST FENCES");
@@ -610,6 +611,7 @@ public class LocationService extends Service implements LocationCallback, Locati
 
     private int count = 0;
 
+    /*
     private void checkForRegionChange(Location location) {
         Toast.makeText(this, "checking region for scenes", Toast.LENGTH_SHORT).show();
         AsyncTask<Location, Void, Level> geoCoderTask = new AsyncTask<Location, Void, Level>() {
@@ -667,6 +669,128 @@ public class LocationService extends Service implements LocationCallback, Locati
         };
         geoCoderTask.execute(location);
         lastLocationChecked = location;
+    }*/
+    private void checkForRegionChange(Location location) {
+        checking = true;
+        lastLocationChecked = location;
+        Toast.makeText(this, "checking location for content", Toast.LENGTH_SHORT).show();
+        RestClient mClient = RestClient.getInstance();
+        mClient.downloadLevel(location, new ContentListener() {
+            @Override
+            public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                Level level = mDataManager.getCurrentLevel();
+                if(success) {
+                    triggerRegionLevelChange(level);
+                }else{
+                    Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+                    scheduledRegionUpdate = true;
+                    checking = false;
+                    for (IServiceListener i : listeners) {
+                        i.regionChanged(level.getAdminArea(), level.getCountry());
+                        i.drawGeoFences(mEventHandler.getActiveFences(), LocationEventHandler.MIN_RADIUS);
+                    }
+                }
+            }
+        });
+
+    }
+
+    public void triggerRegionChange(final Level level) {
+        mDataManager.clearScenes();
+        mDataManager.clearPeriods();
+        final RestClient mRestClient = RestClient.getInstance();
+        mRestClient.downloadScenesForLocation(level.getCountry(), level.getAdminArea(), new ContentListener() {
+            @Override
+            public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                if (!success) {
+                    Log.i("Download", String.valueOf(httpCode));
+                    switch (httpCode) {
+                        case 404:
+                            Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                            scheduledRegionUpdate = false;
+                            checking = false;
+                            break;
+
+                        default:
+                            if (retryCount < 2) {
+                                triggerRegionChange(level);
+                                retryCount++;
+                                scheduledRegionUpdate = false;
+                            } else {
+                                Toast.makeText(getApplicationContext(),
+                                        "Server seems to be offline, you should manually try again in a few minutes!",
+                                        Toast.LENGTH_LONG).show();
+                                scheduledRegionUpdate = false;
+                                checking = false;
+                                retryCount = 0;
+                            }
+                            break;
+                    }
+                } else {
+                    Toast.makeText(getApplicationContext(), "Level Content Downloaded", Toast.LENGTH_SHORT).show();
+                    Log.i("Fence", "Scenes For Region Downloaded");
+                    //mEventHandler.setLocationEventListener(LocationService.this);
+                    mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
+                    scheduledRegionUpdate = false;
+                    for (IServiceListener i : listeners) {
+                        i.regionChanged(level.getAdminArea(), level.getCountry());
+                        i.drawGeoFences(mEventHandler.getActiveFences(), LocationEventHandler.MIN_RADIUS);
+                    }
+                    checking = false;
+                }
+            }
+        });
+    }
+    public void triggerRegionLevelChange(final Level level) {
+        mDataManager.clearScenes();
+        mDataManager.clearPeriods();
+        final RestClient mRestClient = RestClient.getInstance();
+        mRestClient.downloadLevelContent(level.getAdminAreaID(), new ContentListener() {
+            @Override
+            public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                if (!success) {
+                    Log.i("Download", String.valueOf(httpCode));
+                    switch (httpCode) {
+                        case 404:
+                            Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                            mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
+                            scheduledRegionUpdate = false;
+                            checking = false;
+                            for (IServiceListener i : listeners) {
+                                i.regionChanged(level.getAdminArea(), level.getCountry());
+                                i.drawGeoFences(mEventHandler.getActiveFences(), LocationEventHandler.MIN_RADIUS);
+                            }
+                            break;
+
+                        default:
+                            if (retryCount < 2) {
+                                triggerRegionLevelChange(level);
+                                retryCount++;
+                                scheduledRegionUpdate = false;
+                            } else {
+                                Toast.makeText(getApplicationContext(),
+                                        "Server seems to be offline, you should manually try again in a few minutes!",
+                                        Toast.LENGTH_LONG).show();
+                                scheduledRegionUpdate = false;
+                                retryCount = 0;
+                                checking = false;
+                            }
+                            break;
+                    }
+                } else {
+                    Toast.makeText(getApplicationContext(), "Level Content Downloaded", Toast.LENGTH_SHORT).show();
+                    Log.i("Fence", "Scenes For Region Downloaded");
+                    //mEventHandler.setLocationEventListener(LocationService.this);
+                    mEventHandler.updateSceneList(mDataManager.getActiveMapContent());
+                    scheduledRegionUpdate = false;
+                    for (IServiceListener i : listeners) {
+                        i.regionChanged(level.getAdminArea(), level.getCountry());
+                        i.drawGeoFences(mEventHandler.getActiveFences(), LocationEventHandler.MIN_RADIUS);
+                    }
+                    checking = false;
+                }
+            }
+        });
     }
 
     public boolean isToday(long when) {

@@ -14,6 +14,8 @@ public class Constants {
 
     public static final String URL_SCENES = URL_APP + "scenes";
     public static final String URL_SCENES_SYNC = URL_SCENES + "/sync";
+    public static final String URL_LEVELS = URL_APP+"levels";
+    public static final String URL_LEVELS_LOC = URL_APP+"levels/loc";
 
     public static final String URL_PERIODS = URL_APP + "periods";
     public static final String URL_PERIODS_SYNC = URL_PERIODS + "/sync";

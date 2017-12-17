@@ -1,6 +1,5 @@
 package tuc.christos.chaniacitywalk2.locationService;
 
-import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -79,7 +78,7 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
         switch(mode){
             case MODE_HIGH_ACCURACY:
                 Log.i("LocationMode",MODE_HIGH_ACCURACY);
-                createLocationRequest(1000, 1000, LocationRequest.PRIORITY_HIGH_ACCURACY);
+                createLocationRequest(200, 200, LocationRequest.PRIORITY_HIGH_ACCURACY);
                 break;
             case MODE_BALANCED_POWER_ACCURACY:
                 Log.i("LocationMode",MODE_BALANCED_POWER_ACCURACY);
@@ -95,7 +94,7 @@ class LocationProvider implements ConnectionCallbacks, OnConnectionFailedListene
                 break;
             default:
                 Log.i("LocationMode","DEFAULT");
-                createLocationRequest(1000, 1000, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+                createLocationRequest(200, 200, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         }
     }
 

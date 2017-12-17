@@ -10,7 +10,7 @@ var World = {
     areas:[],
     scale:1,
     rotate:0,
-    height:1.2,
+    height:1.5,
     controlObject:null,
     controlObjectModel:null,
     controlObjectTriggeredModel:null,
@@ -29,14 +29,25 @@ var World = {
         this.createOverlays();
     },
 
+    ShowBackBtn: function ShowBackBtnFn(){
+              $("#backBtn").show();
+              $("#backBtn").click(function(){
+                  //document.location = "architectsdk://arNav";
+                  var args = {
+                      action: "arNav"
+                  };
+                  AR.platform.sendJSONObject(args);
+              });
+    },
+
     createOverlays: function createOverlaysFn() {
         var crossHairsRedImage = new AR.ImageResource("assets/crosshairs_red.png");
-        this.crossHairsRedDrawable = new AR.ImageDrawable(crossHairsRedImage, 1.0, {
+        this.crossHairsRedDrawable = new AR.ImageDrawable(crossHairsRedImage, 1.5, {
             rotate : { x: 90}
         });
 
         var crossHairsBlueImage = new AR.ImageResource("assets/crosshairs_blue.png");
-        var crossHairsBlueDrawable = new AR.ImageDrawable(crossHairsBlueImage, 1.0,{
+        var crossHairsBlueDrawable = new AR.ImageDrawable(crossHairsBlueImage, 1.5,{
             rotate : { x: 90}
         });
 
@@ -227,9 +238,9 @@ var World = {
         }
         if(World.modelInit){
             World.controlObjectModel.scale.x = World.location.acc;
-            World.controlObjectModel.scale.y = World.location.acc;
+            World.controlObjectModel.scale.z = World.location.acc;
             World.controlObjectTriggeredModel.scale.x = World.location.acc;
-            World.controlObjectTriggeredModel.scale.y = World.location.acc;
+            World.controlObjectTriggeredModel.scale.z = World.location.acc;
         }
         if(World.currentModelShown)
             World.currentModelShown.rotate.z = World.modelBearing;
@@ -239,7 +250,8 @@ var World = {
     calcPointingPosition: function (){
         var degrees = World.location.acc/World.modelDistance * 180 / Math.PI;
         if( World.cHInit && World.modelInit ){
-            if( (( World.modelBearing - degrees <= World.cHBearing  && World.modelBearing + degrees >=  World.cHBearing ) || ( World.modelBearing - degrees +360 <= World.cHBearing  && World.modelBearing + degrees +360 >=  World.cHBearing ))
+            if( (( World.modelBearing - degrees <= World.cHBearing  && World.modelBearing + degrees >=  World.cHBearing ) ||
+            ( World.modelBearing - degrees +360 <= World.cHBearing  && World.modelBearing + degrees +360 >=  World.cHBearing ))
                 && Math.abs(World.modelDistance - World.cHDistance) <= World.location.acc ){
 
                 World.inPosition = true;

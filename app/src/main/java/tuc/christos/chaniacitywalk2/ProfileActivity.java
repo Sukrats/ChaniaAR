@@ -1,5 +1,7 @@
 package tuc.christos.chaniacitywalk2;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -17,6 +19,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.AppCompatButton;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -24,8 +27,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,21 +38,28 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Text;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailFragment;
+import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Place;
 import tuc.christos.chaniacitywalk2.model.Visit;
+import tuc.christos.chaniacitywalk2.utils.Constants;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
 import tuc.christos.chaniacitywalk2.model.Player;
 import tuc.christos.chaniacitywalk2.model.Scene;
+import tuc.christos.chaniacitywalk2.utils.JsonHelper;
+import tuc.christos.chaniacitywalk2.utils.RestClient;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -161,16 +173,17 @@ public class ProfileActivity extends AppCompatActivity {
             return fragment;
         }
 
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             int index = getArguments().getInt(ARG_SECTION_NUMBER);
-            View rootView;
+            final View rootView;
             if (index == 2) {
                 ArrayList<Scene> items = new ArrayList<>();
-                for (Place p : mPlayer.getPlaces().values()) {
+                for (Place p : DataManager.getInstance().getActivePlayer().getPlaces().values()) {
                     Scene temp = new Scene(p.getScene_id(), p.getScene_name(), p.getThumb());
-                    temp.setUriThumb(DataManager.getInstance().getScene(p.getScene_id()).getUriThumb().toString());
+                    temp.setUriThumb(Constants.URL_SCENES + "/" + p.getScene_id() + "/" + "images/thumb.jpg");
                     temp.setComment(p.getComment());
                     temp.setCreated(p.getCreated());
                     temp.setCountry(p.getCountry());
@@ -187,7 +200,7 @@ public class ProfileActivity extends AppCompatActivity {
                 ArrayList<Scene> items = new ArrayList<>();
                 for (Visit v : mPlayer.getVisited().values()) {
                     Scene temp = new Scene(v.getScene_id(), v.getScene_name(), v.getThumb());
-                    temp.setUriThumb(DataManager.getInstance().getScene(v.getScene_id()).getUriThumb().toString());
+                    temp.setUriThumb(Constants.URL_SCENES + "/" + v.getScene_id() + "/" + "images/thumb.jpg");
                     temp.setCreated(v.getCreated());
                     temp.setCountry(v.getCountry());
                     temp.setRegion(v.getRegion());
@@ -200,33 +213,149 @@ public class ProfileActivity extends AppCompatActivity {
                 recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(items));
             } else if (index == 0) {
                 rootView = inflater.inflate(R.layout.profile_details, container, false);
-                TextView fName = (TextView) rootView.findViewById(R.id.tx1);
-                TextView lName = (TextView) rootView.findViewById(R.id.tx2);
-                TextView created = (TextView) rootView.findViewById(R.id.tx3);
-                TextView recentActivity = (TextView) rootView.findViewById(R.id.tx4);
-                TextView score = (TextView) rootView.findViewById(R.id.tx5);
+                final LinearLayout infoForm = (LinearLayout) rootView.findViewById(R.id.info_form);
+                final LinearLayout editForm = (LinearLayout) rootView.findViewById(R.id.edit_form);
+
+                AppCompatButton editButton = (AppCompatButton) rootView.findViewById(R.id.edit_prof_but);
+                AppCompatButton saveButton = (AppCompatButton) rootView.findViewById(R.id.save_changes_but);
+                AppCompatButton cancelButton = (AppCompatButton) rootView.findViewById(R.id.cancel_button);
+
+                final TextView fName = (TextView) rootView.findViewById(R.id.tx1);
+                final TextView lName = (TextView) rootView.findViewById(R.id.tx2);
+                final TextView created = (TextView) rootView.findViewById(R.id.tx3);
+                final TextView recentActivity = (TextView) rootView.findViewById(R.id.tx4);
+                final TextView score = (TextView) rootView.findViewById(R.id.tx5);
+
+                final EditText fNameEdit = (EditText) rootView.findViewById(R.id.first_name_edit);
+                final EditText lNameEdit = (EditText) rootView.findViewById(R.id.last_name_edit);
+                final EditText oldPassword = (EditText) rootView.findViewById(R.id.enter_password);
+                final EditText newPassword = (EditText) rootView.findViewById(R.id.new_password);
+                final EditText confirmPassword = (EditText) rootView.findViewById(R.id.confirm_new_password);
+
+                editButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        swapForms(infoForm, editForm);
+                    }
+                });
+
+                saveButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String password = oldPassword.getText().toString();
+                        final String newPass = newPassword.getText().toString();
+                        String confirmPass = confirmPassword.getText().toString();
+                        final String firstName = fNameEdit.getText().toString();
+                        final String lastName = lNameEdit.getText().toString();
+                        if (password.equals(DataManager.getInstance().getActivePlayer().getPassword())) {
+                            if (newPass.equals(confirmPass)) {
+                                Player playerToPut = DataManager.getInstance().getActivePlayer();
+                                playerToPut.setLastname(lastName);
+                                playerToPut.setFirstname(firstName);
+                                playerToPut.setNewPassword(newPass);
+                                RestClient.getInstance().putPlayerInfo(playerToPut, getActivity().getApplicationContext(), new ContentListener() {
+                                    @Override
+                                    public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                                        if (success) {
+                                            try {
+                                                JSONObject json = new JSONObject(msg);
+
+                                                Player newPlayer = JsonHelper.parsePlayerFromJson(json);
+                                                DataManager.getInstance().insertPlayer(newPlayer);
+                                                Player mPlayer = DataManager.getInstance().getActivePlayer();
+                                                final String fNameConcut = "First Name: "+ mPlayer.getFirstname();
+                                                fName.setText(fNameConcut);
+                                                final String lNameConcut = "Last Name: "+mPlayer.getLastname() ;
+                                                lName.setText(lNameConcut);
+                                                final String createdS = "Member Since: "+mPlayer.getCreated().toString();
+                                                created.setText(createdS);
+                                                final String activeTime = "Last Activity " + computeTimeDiff(mPlayer.getRecentActivity()) + " ago";
+                                                recentActivity.setText(activeTime);
+                                                final String scoreTx = "Score: "+String.valueOf(mPlayer.getScore());
+                                                score.setText(scoreTx);
+                                                swapForms(editForm, infoForm);
+                                            } catch (JSONException ex) {
+                                                Log.i("JSON", ex.getMessage());
+                                            }
+                                        }else{
+                                            Toast.makeText(getActivity().getApplicationContext(),msg,Toast.LENGTH_LONG).show();
+                                            swapForms(editForm, infoForm);
+                                        }
+                                    }
+                                });
+                            } else {
+                                newPassword.setError("Passwords don't Match");
+                                newPassword.requestFocus();
+                            }
+                        } else {
+                            oldPassword.setError("Wrong Password");
+                            oldPassword.requestFocus();
+                        }
+                    }
+                });
+                cancelButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        swapForms(editForm,infoForm);
+                    }
+                });
 
                 Player mPlayer = DataManager.getInstance().getActivePlayer();
-                fName.setText(mPlayer.getFirstname());
-                lName.setText(mPlayer.getLastname());
-                created.setText(mPlayer.getCreated().toString());
-                final String activeTime = "Last Active on: " + mPlayer.getRecentActivity();
+                final String fNameConcut = "First Name: "+ mPlayer.getFirstname();
+                fName.setText(fNameConcut);
+                final String lNameConcut = "Last Name: "+mPlayer.getLastname() ;
+                lName.setText(lNameConcut);
+                final String createdS = "Member Since: "+mPlayer.getCreated().toString();
+                created.setText(createdS);
+                final String activeTime = "Last Activity " + computeTimeDiff(mPlayer.getRecentActivity()) + " ago";
                 recentActivity.setText(activeTime);
-                score.setText(String.valueOf(mPlayer.getScore()));
+                final String scoreTx = "Score: "+String.valueOf(mPlayer.getScore());
+                score.setText(scoreTx);
+                fNameEdit.setText(mPlayer.getFirstname());
+                lNameEdit.setText(mPlayer.getLastname());
 
             } else {
                 rootView = inflater.inflate(R.layout.progress_details_test, container, false);
                 Level level = DataManager.getInstance().getCurrentLevel();
-                ((TextView) rootView.findViewById(R.id.country)).setText(level.getCountry() + " (" + level.getCountry_code() + ")");
-                ((TextView) rootView.findViewById(R.id.admin_area)).setText(level.getAdminArea());
-                ((TextView) rootView.findViewById(R.id.locality)).setText("Currently playing at " + level.getCity() + "");
+                if(level != null) {
+                    ((TextView) rootView.findViewById(R.id.country)).setText(level.getCountry() + " (" + level.getCountry_code() + ")");
+                    ((TextView) rootView.findViewById(R.id.admin_area)).setText(level.getAdminArea());
+                    ((TextView) rootView.findViewById(R.id.locality)).setText("Currently playing at " + level.getCity() + "");
 
-                RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.progress_container);
-                recyclerView.setAdapter(new SimpleProgressRecyclerViewAdapter(new ArrayList<>(DataManager.getInstance().getPeriods())));
-
+                    RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.progress_container);
+                    if (!DataManager.getInstance().getPeriods().isEmpty())
+                        recyclerView.setAdapter(new SimpleProgressRecyclerViewAdapter(new ArrayList<>(DataManager.getInstance().getPeriods())));
+                    else
+                        ((TextView) rootView.findViewById(R.id.locality)).setText("No Progress for " + level.getCity() + "");
+                }else {
+                    ((TextView) rootView.findViewById(R.id.country)).setText("No Content found for your area!");
+                    ((TextView) rootView.findViewById(R.id.admin_area)).setText("");
+                    ((TextView) rootView.findViewById(R.id.locality)).setText("");
+                }
             }
 
             return rootView;
+        }
+
+        public void swapForms(final View from, final View to) {
+            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+
+            from.setVisibility(View.GONE);
+            from.animate().setDuration(shortAnimTime).alpha(0).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    from.setVisibility(View.GONE);
+                }
+            });
+
+            to.setVisibility(View.VISIBLE);
+            to.animate().setDuration(shortAnimTime).alpha(1).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    to.setVisibility(View.VISIBLE);
+                }
+            });
+
         }
 
         static class SimpleItemRecyclerViewAdapter extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
@@ -445,7 +574,7 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
-    static String computeTimeDiff(java.sql.Date created) {
+    static String computeTimeDiff(java.util.Date created) {
         String toShow = "...";
         Long time = created.getTime();
         java.util.Date curr = new java.util.Date();

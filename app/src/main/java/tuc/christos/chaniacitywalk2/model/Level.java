@@ -1,5 +1,6 @@
 package tuc.christos.chaniacitywalk2.model;
 
+import android.location.Location;
 import android.os.Bundle;
 
 import java.util.Locale;
@@ -10,9 +11,13 @@ public class Level {
     private String country;
     private String country_code;
     private String adminArea;
+    private String adminAreaId;
     private String subAdminArea;
     private Double latitude;
     private Double longitude;
+    private Double boundLatitude;
+    private Double boundLongitude;
+    private Double bound;
 
     public Level() {
     }
@@ -26,6 +31,30 @@ public class Level {
         this.city = city;
         this.country = country;
         this.country_code = country_code;
+    }
+
+    public Double getBoundLatitude() {
+        return boundLatitude;
+    }
+
+    public void setBoundLatitude(Double boundLatitude) {
+        this.boundLatitude = boundLatitude;
+    }
+
+    public Double getBoundLongitude() {
+        return boundLongitude;
+    }
+
+    public void setBoundLongitude(Double boundLongitude) {
+        this.boundLongitude = boundLongitude;
+    }
+
+    public Double getBound() {
+        return bound;
+    }
+
+    public void setBound(Double bound) {
+        this.bound = bound;
     }
 
     public String getCity() {
@@ -60,6 +89,14 @@ public class Level {
         this.adminArea = adminArea;
     }
 
+    public String getAdminAreaID() {
+        return adminAreaId;
+    }
+
+    public void setAdminAreaID(String id) {
+        this.adminAreaId = id;
+    }
+
     public String getSubAdminArea() {
         return subAdminArea;
     }
@@ -82,5 +119,19 @@ public class Level {
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public Location getLastUpdatedLocation(){
+        Location loc = new Location("");
+        loc.setLatitude(this.latitude);
+        loc.setLongitude(this.longitude);
+        return loc;
+    }
+    public Location getLevelLocation(){
+        Location loc = new Location("");
+        loc.setLatitude(this.boundLatitude);
+        loc.setLongitude(this.boundLongitude);
+        return loc;
+
     }
 }

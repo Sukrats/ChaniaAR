@@ -31,13 +31,15 @@ public class Scene {
 
     private String briefDesc;
     private String description;
-    private Uri uriImages;
-    private Uri uriThumb;
+    private Uri uriImages = Uri.parse("");
+    private Uri uriThumb = Uri.parse("");
     private String TAG;
 
-    private int numOfScenes = 0;
-    private ArrayList<ArScene> geoScenes =new ArrayList<>();
     private int numOfSlamScenes = 0;
+    private int numOfScenes = 0;
+
+
+    private ArrayList<ArScene> geoScenes =new ArrayList<>();
     private ArrayList<ArScene> slamScenes =new ArrayList<>();
     private ArrayList<Viewport> viewports = new ArrayList<>();
 
@@ -244,9 +246,11 @@ public class Scene {
     public void setViewports(ArrayList<Viewport> viewports) {
         this.viewports = viewports;
     }
+
     public void addViewport(Viewport viewport){
         this.viewports.add(viewport);
     }
+
     public Viewport getViewport(String id){
         for(Viewport v : viewports){
             if(v.getId().equals(id))

@@ -6,14 +6,11 @@ function Marker(poiData) {
     this.poiData = poiData;
     this.isSelected = false;
 
-    /*
-        With AR.PropertyAnimations you are able to animate almost any property of ARchitect objects. This sample will animate the opacity of both background drawables so that one will fade out while the other one fades in. The scaling is animated too. The marker size changes over time so the labels need to be animated too in order to keep them relative to the background drawable. AR.AnimationGroups are used to synchronize all animations in parallel or sequentially.
-    */
-
     this.animationGroup_idle = null;
     this.animationGroup_selected = null;
 
     var thumb = new AR.ImageResource(poiData.thumbnail);
+
 
     this.thumbnail = new AR.ImageDrawable( thumb, 1.2, {
          zOrder: 1,

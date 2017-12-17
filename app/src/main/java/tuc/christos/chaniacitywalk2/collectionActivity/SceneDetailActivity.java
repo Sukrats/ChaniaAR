@@ -9,6 +9,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NavUtils;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
@@ -19,10 +20,16 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.R;
+import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.model.Scene;
 import tuc.christos.chaniacitywalk2.utils.DataManager;
+import tuc.christos.chaniacitywalk2.utils.JsonHelper;
+import tuc.christos.chaniacitywalk2.utils.RestClient;
 
 /**
  * An activity representing a single Scene detail screen. This
@@ -32,12 +39,41 @@ import tuc.christos.chaniacitywalk2.utils.DataManager;
  */
 public class SceneDetailActivity extends AppCompatActivity {
 
+    public boolean downloading = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scene_detail);
         final String scene_id = getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID);
         final Scene scene = DataManager.getInstance().getScene(Long.valueOf(scene_id));
+
+        if(!DataManager.getInstance().getScenes().isEmpty()){
+            Log.i("SCENE_ACTIVITY","Not Downloading");
+            drawLayouts(scene);
+            if (savedInstanceState == null ) {
+                startFragment();
+            }
+        }else{
+            Log.i("SCENE_ACTIVITY","Downloading");
+            downloading=true;
+            RestClient.getInstance().downloadScene(scene_id, new ContentListener() {
+                @Override
+                public void downloadComplete(boolean success, int httpCode, String TAG, String msg) {
+                    try {
+                        JSONObject json = new JSONObject(msg);
+                        Scene scene = JsonHelper.parseSceneFromJson(json);//ADD SCENE TO DATA MANAGER
+                        DataManager.getInstance().setTempScene(scene);
+                        drawLayouts(scene);
+                        startFragment();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
+    public void drawLayouts(final Scene scene){
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.detail_toolbar);
         setSupportActionBar(toolbar);
@@ -83,18 +119,9 @@ public class SceneDetailActivity extends AppCompatActivity {
                     .into(img);
         }
 
-        // savedInstanceState is non-null when there is fragment state
-        // saved from previous configurations of this activity
-        // (e.g. when rotating the screen from portrait to landscape).
-        // In this case, the fragment will automatically be re-added
-        // to its container so we don't need to manually add it.
-        // For more information, see the Fragments API guide at:
-        //
-        // http://developer.android.com/guide/components/fragments.html
-        //
-        if (savedInstanceState == null) {
-            // Create the detail fragment and add it to the activity
-            // using a fragment transaction.
+    }
+
+    public void startFragment(){
             Bundle arguments = new Bundle();
             arguments.putString(SceneDetailFragment.ARG_ITEM_ID,
                     getIntent().getStringExtra(SceneDetailFragment.ARG_ITEM_ID));
@@ -103,7 +130,6 @@ public class SceneDetailActivity extends AppCompatActivity {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.scene_detail_container, fragment)
                     .commit();
-        }
     }
 
     @Override

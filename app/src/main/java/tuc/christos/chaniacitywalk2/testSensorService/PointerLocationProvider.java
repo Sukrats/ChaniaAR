@@ -6,6 +6,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
+import android.view.Surface;
+import android.view.WindowManager;
 
 import static android.content.Context.SENSOR_SERVICE;
 
@@ -21,15 +23,19 @@ class PointerLocationProvider implements SensorEventListener {
     private float[] accel = new float[3];
     private float[] gravity = new float[3];
     private float[] magnetic = new float[3];
+    private float[] rotation = new float[3];
     private float[] orientation = new float[3];
+    private float[] rotationOrientation = new float[3];
 
-    private double deviceHeight = 1.2;
+    private double deviceHeight = 1.5;
     private long lastUpdate = System.currentTimeMillis();
     private boolean hasInitialOrientation = false;
+    private WindowManager mWindowManager;
 
 
-    PointerLocationProvider(SensorDataListener listener, Context context) {
+    PointerLocationProvider(SensorDataListener listener, WindowManager wManager, Context context) {
         Log.i("SensorService","Created Provider");
+        mWindowManager = wManager;
         this.listener = listener;
         this.mSensorManager = (SensorManager) context.getSystemService(SENSOR_SERVICE);
         accel[0] = 0;
@@ -48,9 +54,9 @@ class PointerLocationProvider implements SensorEventListener {
         this.mSensorManager.registerListener(this,
                 mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY),
                 SensorManager.SENSOR_DELAY_FASTEST);
-        /*this.mSensorManager.registerListener(this,
-                mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                SensorManager.SENSOR_DELAY_FASTEST);*/
+        this.mSensorManager.registerListener(this,
+                mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR),
+                SensorManager.SENSOR_DELAY_FASTEST);
         this.mSensorManager.registerListener(this,
                 mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
                 SensorManager.SENSOR_DELAY_FASTEST);
@@ -77,7 +83,19 @@ class PointerLocationProvider implements SensorEventListener {
                 gravity[1] = ( gravity[1]*FILTER_COEFFICIENT + event.values[1]*(1-FILTER_COEFFICIENT));
                 gravity[2] = ( gravity[2]*FILTER_COEFFICIENT + event.values[2]*(1-FILTER_COEFFICIENT));
                 // copy new accelerometer data into accel array and calculate orientation
-                //System.arraycopy(event.values, 0, gravity, 0, 3);
+                System.arraycopy(event.values, 0, gravity, 0, 3);
+                break;
+            case Sensor.TYPE_ROTATION_VECTOR:
+                float[] rotationMatrix = new float[9];
+                System.arraycopy(event.values, 0, rotation, 0, 3);
+
+                SensorManager.getRotationMatrixFromVector(rotationMatrix,event.values);
+
+                SensorManager.remapCoordinateSystem(rotationMatrix, SensorManager.AXIS_X,
+                        SensorManager.AXIS_Z, rotationMatrix);
+
+                SensorManager.getOrientation(rotationMatrix,rotationOrientation);
+                calculatePosition();
                 break;
 
             case Sensor.TYPE_MAGNETIC_FIELD:
@@ -86,15 +104,15 @@ class PointerLocationProvider implements SensorEventListener {
                 magnetic[2] = ( magnetic[2]*FILTER_COEFFICIENT + event.values[2]*(1-FILTER_COEFFICIENT));
                 // copy new accelerometer data into accel array and calculate orientation
                 //System.arraycopy(event.values, 0, magnetic, 0, 3);
-                calcOrientation();
                 break;
 
         }
+
     }
 
-    private void calcOrientation(){
+    private void calculatePosition(){
 
-        if (magnetic != null && gravity != null && accel != null) {
+        if (magnetic != null && gravity != null && rotation != null) {
             float rotationMatrix[] = new float[9];
             float I[] = new float[9];
             if (SensorManager.getRotationMatrix(rotationMatrix, I, gravity, magnetic)) {
@@ -105,28 +123,26 @@ class PointerLocationProvider implements SensorEventListener {
             }
         }
 
-        if (hasInitialOrientation) {
+        if (hasInitialOrientation && gravity != null) {
             //compute gravity vector magnitude
             double gravityMagnitude = Math.sqrt(gravity[0]*gravity[0] + gravity[1]*gravity[1] + gravity[2]*gravity[2]);
 
-            //MY WAY
+            //Using Gravity
             //double alphaCos = Math.abs();
-            //testing
+            //angle between the gravity vector and the devices x-y plane ( pitch and roll ) in radians
             double alphaAngle = Math.acos(gravity[2]/gravityMagnitude);
-            //not testing
+            //distancce between the users position and the location the camera is Pointing at
             double crosshairMyWay = Math.tan(alphaAngle)*deviceHeight;
 
-            //THE HIGHWAY
-            //angle between the gravity vector and the devices x-y plane ( pitch and roll ) in radians
-            double thetaAngle = Math.asin(gravity[2]/gravityMagnitude);
+            //Using Rotation Vector NON VIABLE LIKE DIS
             //we need the thetaAngles complement in radians
-            double complement = Math.toRadians(90)-thetaAngle;
+            double complement = rotationOrientation[1];
             //distancce between the users position and the location the camera is Pointing at
             double crosshair = Math.tan(complement)*deviceHeight;
 
 
             //angle between the z-axis(the one that points at the desired location) and the magnetic north
-            double bearing = Math.toDegrees(orientation[0]);
+            double bearing = Math.toDegrees(rotationOrientation[0]);
             if( bearing < 0 )
                 bearing = (360 + bearing);
 

@@ -3,8 +3,12 @@ package tuc.christos.chaniacitywalk2.locationService;
 import android.location.Location;
 import android.util.Log;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
 import tuc.christos.chaniacitywalk2.mInterfaces.LocationCallback;
 import tuc.christos.chaniacitywalk2.mInterfaces.LocationEventsListener;
@@ -13,9 +17,10 @@ import tuc.christos.chaniacitywalk2.model.Scene;
 class LocationEventHandler implements LocationCallback {
 
     private Location lastKnownLocation = new Location("");
+    private Location lastUpdatedLocation = new Location("");
     private ArrayList<LocationEventsListener> iLocationEventListener = new ArrayList<>();
 
-    static int MIN_RADIUS = 40;
+    static int MIN_RADIUS = 25;
     private static long COVER_RADIUS = 80;
 
     private HashMap<Long, Scene> scenes = new HashMap<>();
@@ -33,6 +38,7 @@ class LocationEventHandler implements LocationCallback {
     LocationEventHandler(ArrayList<Scene> scenes) {
         for (Scene temp : scenes)
             this.scenes.put(temp.getId(), temp);
+        setGeoFencesWithDistance(lastKnownLocation);
     }
 
 
@@ -66,19 +72,27 @@ class LocationEventHandler implements LocationCallback {
      * @param location new location
      */
     public void handleNewLocation(Location location) {
+        this.lastKnownLocation = location;
         /*
          *      Set GeoFences based on User Location
          *COVER_RADIUS is the distance in which we enable the fences
          */
-        if (location.distanceTo(lastKnownLocation) >= (COVER_RADIUS - COVER_RADIUS / 2)) {
-            setGeoFences(location);
+        if (!fenceTriggered && !fencesDistance.isEmpty() && location.distanceTo(lastUpdatedLocation) >= fencesDistance.get(0).getDistance() - COVER_RADIUS -4 ) {
+            //TODO TESTING
+            //setGeoFences(location);
+            setGeoFencesWithDistance(location);
         }
-        /*
-         *      Check GeoFence Status
-         *  if a fence is triggered we fire the event on the Listeners
-         *  else we check when the user leaves the area to fire the event
-         */
-        this.lastKnownLocation = location;
+
+        //checkFenceTriggers(location);
+        checkFenceTriggersWithDistance(location);
+    }
+
+    /*
+     *      Check GeoFence Status
+     *  if a fence is triggered we fire the event on the Listeners
+     *  else we check when the user leaves the area to fire the event
+     */
+    public void checkFenceTriggers(Location location) {
         if (!fenceTriggered) {
             for (GeoFence temp : GeoFences) {
                 if (location.distanceTo(temp.getLocation()) <= MIN_RADIUS) {
@@ -86,6 +100,7 @@ class LocationEventHandler implements LocationCallback {
                     activeFenceID = temp.getID();
                     fenceTriggered = true;
                     triggerUserEnteredArea(activeFenceID);
+                    return;
                 }
             }
         } else if (location.distanceTo(activeFenceLocation) >= MIN_RADIUS + 5) {
@@ -94,13 +109,17 @@ class LocationEventHandler implements LocationCallback {
         }
     }
 
+
     public void updateSceneList(ArrayList<Scene> list) {
         HashMap<Long, Scene> scenes = new HashMap<>();
         for (Scene s : list) {
             scenes.put(s.getId(), s);
         }
         this.scenes = scenes;
-        setGeoFences(lastKnownLocation);
+
+        //TODO TESTING
+        //setGeoFences(location);
+        setGeoFencesWithDistance(lastKnownLocation);
     }
 
     /**
@@ -141,9 +160,74 @@ class LocationEventHandler implements LocationCallback {
                 i++;
             }
             triggerDrawGeoFences(areaIds);
-            //Toast.makeText(mContext,"GEO FENCES ACTIVE: " + GeoFences.size(), Toast.LENGTH_LONG).show();
         }
 
+    }
+
+    private ArrayList<GeoFence> fencesDistance = new ArrayList<>();
+
+    private void setGeoFencesWithDistance(Location location) {
+        this.lastUpdatedLocation = location;
+        fencesDistance.clear();
+        if (!scenes.values().isEmpty()) {
+            for (Scene scene : scenes.values()) {
+                long id = scene.getId();
+                Location loc = new Location("");
+                loc.setLatitude(scene.getLatitude());
+                loc.setLongitude(scene.getLongitude());
+                fencesDistance.add(new GeoFence(loc, id, location.distanceTo(loc)));
+            }
+            fencesDistance = sortDistances(fencesDistance);
+
+        }
+        if (!fencesDistance.isEmpty()) {
+            /*
+             * Else we prepare the data for the map display
+             * and trigger the event
+             */
+            final int size = fencesDistance.size();
+            long[] areaIds = new long[size];
+            int i = 0;
+            for (GeoFence fence : fencesDistance) {
+                areaIds[i] = fence.getID();
+                i++;
+            }
+            triggerDrawGeoFences(areaIds);
+        }
+    }
+
+    public void checkFenceTriggersWithDistance(Location location) {
+        if (!fenceTriggered && !fencesDistance.isEmpty()) {
+            GeoFence temp = fencesDistance.get(0);
+            if (location.distanceTo(temp.getLocation()) <=  MIN_RADIUS - 3) {
+                activeFenceLocation = temp.getLocation();
+                activeFenceID = temp.getID();
+                fenceTriggered = true;
+                triggerUserEnteredArea(activeFenceID);
+            }
+        } else if (fenceTriggered && location.distanceTo(activeFenceLocation) >= MIN_RADIUS + 3) {
+            fenceTriggered = false;
+            triggerUserLeftArea(activeFenceID);
+            setGeoFencesWithDistance(location);
+        }
+    }
+
+    private ArrayList<GeoFence> sortDistances(ArrayList<GeoFence> list) {
+        Collections.sort(list, new Comparator<GeoFence>() {
+            @Override
+            public int compare(GeoFence lhs, GeoFence rhs) {
+                float cur = lhs.getDistance();
+                if (cur == 0)
+                    return -1;
+
+                float next = rhs.getDistance();
+                if (next == 0)
+                    return 1;
+                // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
+                return cur > next ? 1 : (cur < next) ? -1 : 0;
+            }
+        });
+        return list;
     }
 
     /**
@@ -168,6 +252,7 @@ class LocationEventHandler implements LocationCallback {
         for (LocationEventsListener temp : iLocationEventListener)
             temp.userLeftArea(id);
     }
+
     /**
      * Fire Draw Geo Fences for every Listener
      *
@@ -178,12 +263,13 @@ class LocationEventHandler implements LocationCallback {
             temp.drawGeoFences(ids, MIN_RADIUS);
     }
 
-    public void requestFences(){
-        if(!GeoFences.isEmpty()){
-            final int size = GeoFences.size();
+    public void requestFences() {
+        //TODO change fencesDistance to GeoFences
+        if (!fencesDistance.isEmpty()) {
+            final int size = fencesDistance.size();
             long[] areaIds = new long[size];
             int i = 0;
-            for (GeoFence fence : GeoFences) {
+            for (GeoFence fence : fencesDistance) {
                 areaIds[i] = fence.getID();
                 i++;
             }
@@ -209,7 +295,7 @@ class LocationEventHandler implements LocationCallback {
     long[] getActiveFences() {
         long[] fences = new long[GeoFences.size()];
         for (int i = 0; i < GeoFences.size(); i++)
-            fences[i] = GeoFences.get(i).ID;
+            fences[i] = GeoFences.get(i).getID();
         return fences;
     }
 
@@ -219,10 +305,25 @@ class LocationEventHandler implements LocationCallback {
     private class GeoFence {
         private Location location;
         private long ID;
+        private float distance;
 
         GeoFence(Location location, long id) {
             this.location = location;
             this.ID = id;
+        }
+
+        GeoFence(Location location, long id, float distance) {
+            this.location = location;
+            this.ID = id;
+            this.distance = distance;
+        }
+
+        public float getDistance() {
+            return this.distance;
+        }
+
+        public void setDistance(float dist) {
+            this.distance = dist;
         }
 
         public Location getLocation() {
@@ -236,5 +337,6 @@ class LocationEventHandler implements LocationCallback {
         long getID() {
             return ID;
         }
+
     }
 }

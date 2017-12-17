@@ -23,18 +23,29 @@ body
     left: 0px;
     display: none;
 }
+#controls
+{
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+}
+#tracking-height-slider-container {
+    text-align: center;
+}
+#model-slider-container {
+    display: none;
+    text-align: center;
+    width: 75%;
+    max-width: 350px;
+    align-self: center;
+}/*
 #overflow
 {
     position: fixed;
     right: 0px;
     bottom: 0px;
     align-self: stretch;
-}
-#controls
-{
-    position: fixed;
-    bottom: 0px;
-    width: 100%;
-    display: none;
-    align-self: baseline|center;
-}
+}*/

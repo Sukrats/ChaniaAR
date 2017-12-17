@@ -27,7 +27,9 @@
     <color name="semiTransparent">#2FFFFFFF</color>
 
     <color name="circleStroke">#00106FF3</color>
+
     <color name="circleFill">#1B106FF3</color>
+    <color name="circleEnableFill">#5A3cc473</color>
 
     <color name="lineColor">#7F106FF3</color>
     <color name="completed_1">#3cc473</color>

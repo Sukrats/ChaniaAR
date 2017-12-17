@@ -99,7 +99,7 @@ var World = {
 		    var val = $("#slider").val();
 		    World.showModel(val);
 		} );
-		$("#overflow").click(function(){
+		/*$("#overflow").click(function(){
 		    World.controlsShown = World.controlsShown ? false : true ;
 		    var iconToUse = World.controlsShown ? "arrow-d" : "arrow-u" ;
 		    $("#controls").slideToggle();
@@ -112,12 +112,22 @@ var World = {
             $("#overflow").buttonMarkup({
                 icon: iconToUse
             });
-		});
+		});*/
         if(World.sceneList.length > 1){
+            $("#model-slider-container").css("display", "inline-block");
+            $("#slider").prop({
+                min: 1,
+                max: World.sceneList.length
+            }).slider("refresh");
+
+            $("#slider").on( "slidestop", function( event, ui ) {
+                var val = $("#slider").val();
+                World.showModel(val);
+            } );
+
             var val = $("#slider").val();
             World.showModel(val);
         }else{
-            $("#overflow").css("display", "none");
             World.showModel(1);
         }
 	},

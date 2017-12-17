@@ -1,0 +1,92 @@
+[
+  {
+    "id": 39,
+    "periodId": 3,
+    "name": "Church of St. Rocco",
+    "description": " ",
+    "latitude": 35.5164899,
+    "longitude": 24.021208,
+    "arScenes": [
+      {
+        "path": "assets/rocco/rocco_2048_geo.wt3",
+        "latitude": 35.516551,
+        "longitude": 24.021191
+      },
+      {
+        "path": "assets/rocco/rocco_ar_part.wt3",
+        "latitude": 35.516551,
+        "longitude": 24.021191
+      }
+    ],
+    "viewports": [
+      {
+        "viewport_id": 1,
+        "latitude": 35.5164899,
+        "longitude" : 24.021208,
+        "rotate" : 0,
+        "translate_x" : 0.0,
+        "translate_y" : 0.0
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "periodId": 2,
+    "name": "The Byzantine Walls",
+    "description": " ",
+    "latitude": 35.516904,
+    "longitude": 24.020253,
+    "arScenes": [
+      {
+        "path": "assets/wall/wall_Geo_2048.wt3",
+        "latitude": 35.516934,
+        "longitude": 24.020343
+      },
+      {
+        "path": "assets/wall/wall_Slam_2048.wt3",
+        "latitude": 35.516934,
+        "longitude": 24.020343
+      }
+    ],
+    "viewports": [
+      {
+        "viewport_id": 1,
+        "latitude": 35.516904,
+        "longitude" : 24.020253,
+        "rotate" : 0,
+        "translate_x" : 0.0,
+        "translate_y" : 0.0
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "periodId": 4,
+    "name": "Glass Mosque",
+    "description": " ",
+    "latitude": 35.517398,
+    "longitude": 24.01779,
+    "arScenes": [
+      {
+        "path": "assets/mosque/Giali_Geo_4096_jpeg.wt3",
+        "latitude": 35.517394,
+        "longitude": 24.017851
+      },
+      {
+        "path": "assets/mosque/giali_slam_geo_centered.wt3.wt3",
+        "latitude": 35.517394,
+        "longitude": 24.017851
+      }
+    ],
+    "viewports": [
+      {
+        "viewport_id": 1,
+        "latitude": 35.517398,
+        "longitude" : 24.01779,
+        "rotate" : 0,
+        "translate_x" : 0.0,
+        "translate_y" : 0.0
+      }
+    ]
+  }
+]

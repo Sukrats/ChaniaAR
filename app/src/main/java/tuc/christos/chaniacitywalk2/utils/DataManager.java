@@ -11,10 +11,14 @@ import android.util.Log;
 import android.widget.Toast;
 
 
+import com.google.android.gms.maps.model.LatLng;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Array;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -26,6 +30,7 @@ import tuc.christos.chaniacitywalk2.MyApp;
 import tuc.christos.chaniacitywalk2.mInterfaces.ContentListener;
 import tuc.christos.chaniacitywalk2.mInterfaces.LocalDBWriteListener;
 import tuc.christos.chaniacitywalk2.model.ArScene;
+import tuc.christos.chaniacitywalk2.model.Content;
 import tuc.christos.chaniacitywalk2.model.Level;
 import tuc.christos.chaniacitywalk2.model.Period;
 import tuc.christos.chaniacitywalk2.model.Place;
@@ -47,6 +52,8 @@ public class DataManager {
 
     private boolean scenesLoaded = false;
     private Level currentLevel;
+
+    private Scene tempScene;
 
     private HashMap<String, Scene> Route = new HashMap<>();
     private HashMap<Long, Scene> ScenesMap = new HashMap<>();
@@ -73,7 +80,8 @@ public class DataManager {
         if (!instantiated && INSTANCE != null) {
             mDBh = new mDBHelper(context);
             instantiated = true;
-            initRoute();
+            //initRoute();
+            initRouteFromJson();
         }
     }
 
@@ -133,9 +141,9 @@ public class DataManager {
         Log.i(TAG, "" + scenesLoaded);
         getScenes();            //DUMMY FOR ROUTE IMPL
         if (getActivePlayer().getUsername().equals("Guest"))
-            return new ArrayList<>(Route.values());
+            return new ArrayList<>(getRoute());
 
-        if (getActivePlayer().getScore() < 750)
+        if (getActivePlayer().getScore() < 501)
             return new ArrayList<>(getRoute());
         else
             return new ArrayList<>(getScenes());
@@ -226,7 +234,7 @@ public class DataManager {
         return mDBh.isPlayersEmpty();
     }
 
-    public void updatePlayer(boolean success, Context context) {
+    public void updatePlayer(boolean success, String sceneid, Context context) {
         if (activePlayer.getUsername().contains("Guest"))
             return;
 
@@ -234,12 +242,16 @@ public class DataManager {
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
         if (activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
-            getActivePlayer().updateScore(success);
+            if(Route.containsKey(sceneid)){
+                getActivePlayer().updateBaseScore();
+            }else
+                getActivePlayer().updateScore(success);
             mDBh.updatePlayer(getActivePlayer());
             RestClient rs = RestClient.getInstance();
             rs.putPlayer(getActivePlayer(), context);
             return;
         }
+
         Toast.makeText(context, "No Internet Connection cannot update your Progress :(", Toast.LENGTH_SHORT).show();
     }
 
@@ -624,10 +636,16 @@ public class DataManager {
         v.setScene_name(temp.getName());
         v.setCountry(getCurrentLevel().getCountry());
         v.setCreated(new java.sql.Date(new java.util.Date().getTime()));
-        mDBh.insertVisit(v);
-        activePlayer.addVisit(v);
+        //mDBh.insertVisit(v);
+        //activePlayer.addVisit(v);
     }
 
+    public void setTempScene(Scene scene){
+        tempScene = scene;
+    }
+    public Scene getTempScene(){
+        return tempScene;
+    }
    /*
     public boolean hasVisited(long scene_id) {
         Player p = getPlayer();
@@ -680,56 +698,93 @@ public class DataManager {
     }
 
    /* /*****************************************************POLYLINES************************************************************************/
-/*
-    public ArrayList<LatLng> getPolyPoints(Scene scene) {
+
+    /*  public ArrayList<LatLng> getPolyPoints(Scene scene) {
         return sceneToPointsMap.get(scene);
     }
+    */
 
-    private void setPolyPoints() {
-        ArrayList<LatLng> polyListRocco = new ArrayList<>();
-        ArrayList<LatLng> polyListByz = new ArrayList<>();
-        ArrayList<LatLng> polyListKast = new ArrayList<>();
-        ArrayList<LatLng> polyListGlass = new ArrayList<>();
+    private HashMap<String,ArrayList<LatLng>> lineSegments = new HashMap<>();
 
-        polyListRocco.add(new LatLng(35.5164899, 24.021208));//stRocco
-        polyListRocco.add(new LatLng(35.51711, 24.020557));//ByzWall
+    public HashMap<String,ArrayList<LatLng>> getRoutePolyLinePoints() {
+        ArrayList<LatLng> roccoWall = new ArrayList<>();
+        ArrayList<LatLng> wallMosque = new ArrayList<>();
+        ArrayList<LatLng> mosque = new ArrayList<>();
 
-        polyListByz.add(new LatLng(35.51711, 24.020557));//ByzWall
-        polyListByz.add(new LatLng(35.5171461, 24.019581));//kasteli
+        roccoWall.add(new LatLng(35.5164899, 24.021208)); //ROCCO TO WALL
+        roccoWall.add(new LatLng(35.516454, 24.021122)); //ROCCO 1
+        roccoWall.add(new LatLng(35.517124, 24.020819)); //ROCCO 2
+        roccoWall.add(new LatLng(35.517006, 24.020593)); //ROCCO 4
+        roccoWall.add(new LatLng(35.516904, 24.020253)); //ROCCO 4
+        lineSegments.put("39",roccoWall);
 
-        polyListKast.add(new LatLng(35.5171461, 24.019581));//kasteli
-        polyListKast.add(new LatLng(35.517398, 24.01779));//Glass Mosque
+        wallMosque.add(new LatLng(35.516904, 24.020253)); //WALL TO MOSQUE
+        wallMosque.add(new LatLng(35.516723, 24.020314)); //WALL 1
+        wallMosque.add(new LatLng(35.516243, 24.019727)); //WALL 2
+        wallMosque.add(new LatLng(35.516143, 24.018756)); //WALL 3
+        wallMosque.add(new LatLng(35.516206, 24.017911)); //WALL 4
+        wallMosque.add(new LatLng(35.516527, 24.017924)); //WALL 5
+        wallMosque.add(new LatLng(35.516787, 24.017743)); //WALL 6
+        wallMosque.add(new LatLng(35.517245, 24.017657)); //WALL 7
+        wallMosque.add(new LatLng(35.517398, 24.01779)); //WALL 7
+        lineSegments.put("37",wallMosque);
 
-        polyListGlass.add(new LatLng(35.517398, 24.01779));//Glass Mosque
+        mosque.add(new LatLng(35.517398, 24.01779)); //MOSQUE
+        lineSegments.put("36",mosque);
 
-        for (Scene temp : Route.values()) {
-            if (temp.getId() == 1) {
-                sceneToPointsMap.put(temp, polyListGlass);
-                //pointsToSceneMap.put(polyListGlass, temp);
-            }
-            if (temp.getId() == 2) {
-                sceneToPointsMap.put(temp, polyListByz);
-                //pointsToSceneMap.put(polyListByz, temp);
-            }
-            if (temp.getId() == 3) {
-                sceneToPointsMap.put(temp, polyListKast);
-                //pointsToSceneMap.put(polyListKast, temp);
-            }
-            if (temp.getId() == 4) {
-                sceneToPointsMap.put(temp, polyListRocco);
-                //pointsToSceneMap.put(polyListRocco, temp);
-            }
-        }
 
-    }*/
+
+        return lineSegments;
+
+
+    }
 
     /**********************************************************ROUTE HARD CODED *************************************************************/
+
+    private String loadJSONFromAsset() {
+        String json;
+        try {
+            InputStream is = MyApp.getAppContext().getAssets().open("ARscenes.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            json = new String(buffer, "UTF-8");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+        return json;
+    }
+
+    private void initRouteFromJson(){
+        Route = new HashMap<>();
+        String str = loadJSONFromAsset();
+        ArrayList<Scene> scenes = JsonHelper.parseArScenesFromLocalJson(str);
+        for (Scene temp : scenes) {
+            temp.setHasAR(true);
+            Route.put(String.valueOf(temp.getId()), temp);
+        }
+    }
+    /*
     private void initRoute() {
         Route = new HashMap<>();
         ArrayList<Scene> mRoute = new ArrayList<>();
         //KIDONIA PENDING
         //Scene minoiki = new Scene(35.5171461, 24.019581, 38, 1, "Minoan Kydonia", "");
         //mRoute.add(new Scene(35.5171461, 24.019581, 38, 1, "Minoan Kydonia", ""));
+
+        // Saint Rocco asset initialization
+        Scene rocco = new Scene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "");//35.516551, 24.021191
+        rocco.addViewport(new Viewport("1", 35.5164899, 24.021208, 0, 0.0f, 0.0f));
+        //rocco.addViewport(new Viewport("2", 35.516419, 24.021270, -90, (float) -5.3, 8.0f));
+        //rocco.addSlamScene(new ArScene("assets/rocco/rocco_slam_geo_centered.wt3", 35.516551, 24.021191));
+        rocco.addSlamScene(new ArScene("assets/rocco/rocco_2048_geo.wt3", 35.516551, 24.021191));
+        //rocco.addSlamScene(new ArScene("assets/rocco/rocco_1024_slam_skt.wt3", 35.516551, 24.021191));
+        //rocco.addSlamScene(new ArScene("assets/rocco/rocco_2048_slam.wt3",35.516551, 24.021191));
+        //rocco.addArScene(new ArScene("assets/rocco/rocco_1024_geo.wt3",35.516551, 24.021191));
+        rocco.addArScene(new ArScene("assets/rocco/rocco_2048_geo.wt3", 35.516551, 24.021191));
+        mRoute.add(rocco);
 
         //BYZANTINE WALL PENDING
         Scene wall = new Scene(35.516904, 24.020253, 37, 2, "The Byzantine Wall", "");//35.516954, 24.020359
@@ -755,35 +810,27 @@ public class DataManager {
         //mosque.addArScene(new ArScene("assets/mosque/minaret_Geo_no_base.wt3", 35.517394, 24.017851));
         mRoute.add(mosque);
 
-        // Saint Rocco asset initialization
-        Scene rocco = new Scene(35.5164899, 24.021208, 39, 3, "Church of St. Rocco", "");//35.516551, 24.021191
-        rocco.addViewport(new Viewport("1", 35.5164899, 24.021208, 0, 0.0f, 0.0f));
-        //rocco.addViewport(new Viewport("2", 35.516419, 24.021270, -90, (float) -5.3, 8.0f));
-        //rocco.addSlamScene(new ArScene("assets/rocco/rocco_slam_geo_centered.wt3", 35.516551, 24.021191));
-        rocco.addSlamScene(new ArScene("assets/rocco/rocco_2048_geo.wt3", 35.516551, 24.021191));
-        //rocco.addSlamScene(new ArScene("assets/rocco/rocco_1024_slam_skt.wt3", 35.516551, 24.021191));
-        //rocco.addSlamScene(new ArScene("assets/rocco/rocco_2048_slam.wt3",35.516551, 24.021191));
-        //rocco.addArScene(new ArScene("assets/rocco/rocco_1024_geo.wt3",35.516551, 24.021191));
-        rocco.addArScene(new ArScene("assets/rocco/rocco_2048_geo.wt3", 35.516551, 24.021191));
-        mRoute.add(rocco);
-
         for (Scene temp : mRoute) {
             temp.setHasAR(true);
             Route.put(String.valueOf(temp.getId()), temp);
         }
     }
-
+*/
     public Scene getArScene(String scene_id) {
         return Route.get(scene_id);
     }
 
 
-    public void setLevelLocality(Level level) {
+    public void setLevelLocality(Location location, Level level, LocalDBWriteListener listener) {
+        level.setLatitude(location.getLatitude());
+        level.setLongitude(location.getLongitude());
         if (mDBh.insertLocality(level)) {
             Toast.makeText(MyApp.getAppContext(), "Updated Level", Toast.LENGTH_SHORT).show();
             this.currentLevel = level;
+            listener.OnWriteComplete(true);
             return;
         }
+        listener.OnWriteComplete(false);
         Toast.makeText(MyApp.getAppContext(), "Can't find Locality", Toast.LENGTH_SHORT).show();
     }
 
@@ -819,8 +866,9 @@ public class DataManager {
         if (level != null) {
             if (!c.moveToNext())
                 return true;
-            else if (level.getAdminArea().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA))))
+            else if (level.getAdminAreaID().equals(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA_ID))))
                 return false;
+
             String adminArea = c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA));
             String country = c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY));
             String city = c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_LOCALITY));
@@ -849,9 +897,13 @@ public class DataManager {
         currentLevel = new Level();
         if (c.moveToNext()) {
             currentLevel.setAdminArea(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA)));
+            currentLevel.setAdminAreaID(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_ADMIN_AREA)));
             currentLevel.setCountry(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY)));
             currentLevel.setCountry_code(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_COUNTRY_CODE)));
             currentLevel.setCity(c.getString(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_LOCALITY)));
+            currentLevel.setBound(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_BOUND)));
+            currentLevel.setBoundLatitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_BOUND_LATITUDE)));
+            currentLevel.setBoundLongitude(c.getDouble(c.getColumnIndexOrThrow(mDBHelper.LocalityEntry.COLUMN_BOUND_LONGITUDE)));
             return currentLevel;
         }
         return null;
@@ -893,6 +945,19 @@ public class DataManager {
     void populateUserData(JSONArray jsonArray, String tableName, LocalDBWriteListener l) {
         PopulateDBTask myTask = new PopulateDBTask(jsonArray, tableName, l);
         myTask.execute();
+    }
+
+    void populateContent(final Content content, final LocalDBWriteListener listener){
+        PopulateDBTask periodTask = new PopulateDBTask(content.getPeriods(), mDBHelper.PeriodEntry.TABLE_NAME, new LocalDBWriteListener() {
+            @Override
+            public void OnWriteComplete(boolean success) {
+                if(success){
+                    PopulateDBTask sceneTask = new PopulateDBTask(content.getScenes(),mDBHelper.SceneEntry.TABLE_NAME, listener);
+                    sceneTask.execute();
+                }else listener.OnWriteComplete(false);
+            }
+        });
+        periodTask.execute();
     }
 
     private class PopulateDBTask extends AsyncTask<Void, Double, Boolean> {

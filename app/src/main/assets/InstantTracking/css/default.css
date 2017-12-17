@@ -2,6 +2,17 @@ body {
     margin: 0;
 }
 
+#backBtn
+{
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    display: none;
+}
+#tracking-start-stop-button {
+    width: 14%;
+    max-width: 50px;
+}
 #controls-container-lower {
     position: absolute;
     right: 0;
@@ -9,10 +20,6 @@ body {
     left: 0;
     width: 100%;
     text-align: center;
-}
-#tracking-start-stop-button {
-    width: 14%;
-    max-width: 50px;
 }
 #tracking-height-slider-container {
     text-align: center;

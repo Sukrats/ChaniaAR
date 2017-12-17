@@ -1,6 +1,8 @@
 package tuc.christos.chaniacitywalk2;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -19,17 +21,23 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,14 +53,26 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.Dash;
+import com.google.android.gms.maps.model.Dot;
+import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PatternItem;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import tuc.christos.chaniacitywalk2.testSensorService.SensorCheckActivity;
 import tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity;
@@ -80,6 +100,7 @@ public class MapsActivity extends AppCompatActivity implements
 
     private DataManager mDataManager;
     private GoogleMap mMap;
+    private LinearLayout arButtonsHolder;
 
     private HashMap<String, Scene> scenesShown = new HashMap<>();
     private HashMap<Scene, Marker> sceneToMarkerMap = new HashMap<>();
@@ -129,6 +150,8 @@ public class MapsActivity extends AppCompatActivity implements
             mBount = false;
         }
     };
+    ImageButton instant;
+    ImageButton sensor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,6 +159,8 @@ public class MapsActivity extends AppCompatActivity implements
         Log.i("ACTIVITY", "CREATED MAPS ACTIVITY");
         //setContentView(R.layout.activity_maps_custom);
         setContentView(R.layout.activity_maps);
+        arButtonsHolder = (LinearLayout) findViewById(R.id.ar_buttons_holder);
+        arButtonsHolder.setVisibility(View.GONE);
         //PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         //get data Manager instance and read from db
         mDataManager = DataManager.getInstance();
@@ -153,12 +178,7 @@ public class MapsActivity extends AppCompatActivity implements
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
-                if (isFenceTriggered && mDataManager.getScene(fenceTriggered).hasAR()) {
-                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
-                    intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
-                } else {
-                    intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
-                }
+                intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ArNavigation/index.html");
                 aSyncActivity(intent);
             }
         });
@@ -173,14 +193,18 @@ public class MapsActivity extends AppCompatActivity implements
                 }
             }
         });
-        ImageButton sensors = (ImageButton) findViewById(R.id.sensor_button);
-        sensors.setOnClickListener(new View.OnClickListener() {
+
+        instant = (ImageButton) findViewById(R.id.instant_tracking);
+        sensor = (ImageButton) findViewById(R.id.sensors_tracking);
+        //ImageButton sensors = (ImageButton) findViewById(R.id.sensor_button);
+        /*sensors.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MapsActivity.this, SensorCheckActivity.class));
             }
         });
-
+        */
+        //sensors.setVisibility(View.GONE);
         if (mCurrentLocation != null) {
             defaultCameraPosition = new CameraPosition.Builder()
                     .target(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude())).zoom(DEFAULT_ZOOM_LEVEL)
@@ -248,14 +272,14 @@ public class MapsActivity extends AppCompatActivity implements
 
                 // Since we return true, we have to show the info window manually
                 //marker.showInfoWindow();
-                if (markerToViewport.containsKey(marker)) {
+                /*if (markerToViewport.containsKey(marker)) {
                     Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
                     intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "InstantTracking/index.html");
                     intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
                     intent.putExtra(Constants.ARCHITECT_ORIGIN, markerToViewport.get(marker).getId());
                     startActivity(intent);
                     return true;
-                }
+                }*/
                 if (!marker.equals(mLocationMarker)) {
                     if (marker.equals(mSelectedMarker)) {
                         mSelectedMarker = null;
@@ -277,16 +301,43 @@ public class MapsActivity extends AppCompatActivity implements
 
         if (!mDataManager.isScenesEmpty()) {
             for (Scene temp : mDataManager.getActiveMapContent()) {
+                Log.i("Guest","scene: "+temp.getName()+" drawn");
                 scenesShown.put(String.valueOf(temp.getId()), temp);
+            }
+            for(Scene test: scenesShown.values()){
+                Log.i("Guest","scene: "+test.getName()+" drawn");
             }
             drawMap();
         } else {
             for (Scene temp : mDataManager.getActiveMapContent()) {
+                Log.i("Guest","scene: "+temp.getName()+" drawn");
                 scenesShown.put(String.valueOf(temp.getId()), temp);
+            }
+            for(Scene test: scenesShown.values()){
+                Log.i("Guest","scene: "+test.getName()+" drawn");
             }
             drawMap();
         }
     }
+
+    private static final int PATTERN_DASH_LENGTH_PX = 20;
+    private static final int PATTERN_GAP_LENGTH_PX = 20;
+
+    private static final PatternItem DASH = new Dash(PATTERN_DASH_LENGTH_PX);
+    private static final PatternItem GAP = new Gap(PATTERN_GAP_LENGTH_PX);
+    private static final PatternItem DOT = new Dot();
+
+    // Create a stroke pattern of a gap followed by a dot.
+    private static final List<PatternItem> PATTERN_POLYLINE_DOTTED = Arrays.asList(GAP, DOT);
+
+    // Create a stroke pattern of a gap followed by a dash.
+    private static final List<PatternItem> PATTERN_POLYGON_ALPHA = Arrays.asList(GAP, DASH);
+    // Create a stroke pattern of a dot followed by a gap, a dash, and another gap.
+    private static final List<PatternItem> PATTERN_POLYGON_BETA =
+            Arrays.asList(DOT, GAP, DASH, GAP);
+
+    Polyline mosqueWallLine;
+    Polyline wallRoccoLine;
 
     private void drawMap() {
         if (mMap != null) {
@@ -305,6 +356,10 @@ public class MapsActivity extends AppCompatActivity implements
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(defaultCameraPosition));
                 camToStart = false;
             }
+            if (mosqueWallLine != null)
+                mosqueWallLine.remove();
+            if (wallRoccoLine != null)
+                wallRoccoLine.remove();
 
             if (!scenesShown.isEmpty())
                 for (Scene temp : scenesShown.values()) {
@@ -315,8 +370,170 @@ public class MapsActivity extends AppCompatActivity implements
                             .title(temp.getName())
                             .snippet(currentPeriod.getName()));
 
+                    Log.i("Guest","scene: "+temp.getName()+" drawn");
                     if (temp.hasAR()) {
                         marker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(R.drawable.ar_photo)));
+
+                        Player player = mDataManager.getActivePlayer();
+                        if ( !player.getUsername().contains("Guest") && player.getScore() < 501 ) {
+
+                            PolylineOptions roccoWall = new PolylineOptions();
+                            PolylineOptions wallMosque = new PolylineOptions();
+                            PolylineOptions mosque = new PolylineOptions();
+
+                            HashMap<String, ArrayList<LatLng>> segments = new HashMap<>(mDataManager.getRoutePolyLinePoints());
+                            for (LatLng point : segments.get("39")) {
+                                roccoWall.add(point);
+                            }
+                            for (LatLng point : segments.get("37")) {
+                                wallMosque.add(point);
+                            }
+                            for (LatLng point : segments.get("36")) {
+                                mosque.add(point);
+                            }
+                            String condition = "";
+                            int partA;
+                            int partB;
+                            int partC;
+                            if(player.hasVisited(Long.parseLong("39"))) partA = 1; else partA = 0;
+                            if(player.hasVisited(Long.parseLong("37"))) partB = 1; else partB = 0;
+                            if(player.hasVisited(Long.parseLong("36"))) partC = 1; else partC = 0;
+                            condition = String.valueOf(partA) + String.valueOf(partB) + String.valueOf(partC) ;
+
+                            switch(condition){
+                                case "111":
+                                    if (mosqueWallLine != null)
+                                        mosqueWallLine.remove();
+                                    if (wallRoccoLine != null)
+                                        wallRoccoLine.remove();
+                                    break;
+                                case "000":
+                                    roccoWall.color(Color.rgb(74, 141, 224));
+                                    roccoWall.width(25.0f);
+                                    roccoWall.geodesic(true);
+                                    roccoWall.pattern(PATTERN_POLYLINE_DOTTED);
+                                    wallRoccoLine = mMap.addPolyline(roccoWall);
+                                    wallMosque.color(Color.rgb(74, 141, 224));
+                                    wallMosque.width(25.0f);
+                                    wallMosque.geodesic(true);
+                                    wallMosque.pattern(PATTERN_POLYLINE_DOTTED);
+                                    mosqueWallLine = mMap.addPolyline(wallMosque);
+                                    break;
+                                case "001":
+                                    roccoWall.color(Color.rgb(74, 141, 224));
+                                    roccoWall.width(25.0f);
+                                    roccoWall.geodesic(true);
+                                    roccoWall.pattern(PATTERN_POLYLINE_DOTTED);
+                                    wallRoccoLine = mMap.addPolyline(roccoWall);
+
+                                    wallMosque.color(Color.GREEN);
+                                    wallMosque.width(25.0f);
+                                    wallMosque.geodesic(true);
+                                    wallMosque.pattern(PATTERN_POLYLINE_DOTTED);
+                                    mosqueWallLine = mMap.addPolyline(wallMosque);
+                                    break;
+                                case "010":
+                                    roccoWall.color(Color.GREEN);
+                                    roccoWall.width(25.0f);
+                                    roccoWall.geodesic(true);
+                                    roccoWall.pattern(PATTERN_POLYLINE_DOTTED);
+                                    wallRoccoLine = mMap.addPolyline(roccoWall);
+
+                                    wallMosque.color(Color.GREEN);
+                                    wallMosque.width(25.0f);
+                                    wallMosque.geodesic(true);
+                                    wallMosque.pattern(PATTERN_POLYLINE_DOTTED);
+                                    mosqueWallLine = mMap.addPolyline(wallMosque);
+                                    break;
+                                case "100":
+                                    roccoWall.color(Color.GREEN);
+                                    roccoWall.width(25.0f);
+                                    roccoWall.geodesic(true);
+                                    roccoWall.pattern(PATTERN_POLYLINE_DOTTED);
+                                    wallRoccoLine = mMap.addPolyline(roccoWall);
+
+                                    wallMosque.color(Color.rgb(74, 141, 224));
+                                    wallMosque.width(25.0f);
+                                    wallMosque.geodesic(true);
+                                    wallMosque.pattern(PATTERN_POLYLINE_DOTTED);
+                                    mosqueWallLine = mMap.addPolyline(wallMosque);
+                                    break;
+                                case "011":
+                                    roccoWall.color(Color.GREEN);
+                                    roccoWall.width(25.0f);
+                                    roccoWall.geodesic(true);
+                                    roccoWall.pattern(PATTERN_POLYLINE_DOTTED);
+                                    wallRoccoLine = mMap.addPolyline(roccoWall);
+
+                                    wallMosque.color(Color.LTGRAY);
+                                    wallMosque.width(25.0f);
+                                    wallMosque.geodesic(true);
+                                    wallMosque.pattern(PATTERN_POLYLINE_DOTTED);
+                                    mosqueWallLine = mMap.addPolyline(wallMosque);
+                                    break;
+                                case "101":
+                                    roccoWall.color(Color.GREEN);
+                                    roccoWall.width(25.0f);
+                                    roccoWall.geodesic(true);
+                                    roccoWall.pattern(PATTERN_POLYLINE_DOTTED);
+                                    wallRoccoLine = mMap.addPolyline(roccoWall);
+
+                                    wallMosque.color(Color.GREEN);
+                                    wallMosque.width(25.0f);
+                                    wallMosque.geodesic(true);
+                                    wallMosque.pattern(PATTERN_POLYLINE_DOTTED);
+                                    mosqueWallLine = mMap.addPolyline(wallMosque);
+                                    break;
+
+                                case "110":
+                                    roccoWall.color(Color.LTGRAY);
+                                    roccoWall.width(25.0f);
+                                    roccoWall.geodesic(true);
+                                    roccoWall.pattern(PATTERN_POLYLINE_DOTTED);
+                                    wallRoccoLine = mMap.addPolyline(roccoWall);
+
+                                    wallMosque.color(Color.GREEN);
+                                    wallMosque.width(25.0f);
+                                    wallMosque.geodesic(true);
+                                    wallMosque.pattern(PATTERN_POLYLINE_DOTTED);
+                                    mosqueWallLine = mMap.addPolyline(wallMosque);
+                                    break;
+
+                                default:
+                                    mosqueWallLine.remove();
+                                    wallRoccoLine.remove();
+                            }
+
+                        }else if(player.getUsername().contains("Guest")){
+                            PolylineOptions roccoWall = new PolylineOptions();
+                            PolylineOptions wallMosque = new PolylineOptions();
+                            PolylineOptions mosque = new PolylineOptions();
+
+                            HashMap<String, ArrayList<LatLng>> segments = new HashMap<>(mDataManager.getRoutePolyLinePoints());
+                            for (LatLng point : segments.get("39")) {
+                                roccoWall.add(point);
+                            }
+                            for (LatLng point : segments.get("37")) {
+                                wallMosque.add(point);
+                            }
+                            for (LatLng point : segments.get("36")) {
+                                mosque.add(point);
+                            }
+
+                            roccoWall.color(Color.rgb(74, 141, 224));
+                            roccoWall.width(25.0f);
+                            roccoWall.geodesic(true);
+                            roccoWall.pattern(PATTERN_POLYLINE_DOTTED);
+                            wallRoccoLine = mMap.addPolyline(roccoWall);
+
+                            wallMosque.color(Color.rgb(74, 141, 224));
+                            wallMosque.width(25.0f);
+                            wallMosque.geodesic(true);
+                            wallMosque.pattern(PATTERN_POLYLINE_DOTTED);
+                            mosqueWallLine = mMap.addPolyline(wallMosque);
+
+                        }
+
                     } else {
 
                         if (activePlayer.hasVisited(temp.getId())) {
@@ -347,6 +564,8 @@ public class MapsActivity extends AppCompatActivity implements
                     sceneToMarkerMap.put(temp, marker);
                     markerToSceneMap.put(marker, temp);
                 }
+        }else{
+            Log.i("GuestDuo","Map is Null");
         }
     }
 
@@ -464,7 +683,10 @@ public class MapsActivity extends AppCompatActivity implements
                 intent = new Intent(this, SettingsActivity.class);
                 break;
             case R.id.collection_activity:
-                intent = new Intent(this, CollectionActivity.class);
+                if (!mDataManager.getActivePlayer().getUsername().contains("Guest")) {
+                    intent = new Intent(this, CollectionActivity.class);
+                } else
+                    Toast.makeText(this, "Guest Session", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.pending_activity:
                 intent = new Intent(this, LeaderBoardActivity.class);
@@ -484,7 +706,7 @@ public class MapsActivity extends AppCompatActivity implements
                 //start your activity here
                 startActivity(intent);
             }
-        }, 20L);
+        }, 50L);
     }
 
     public void setCameraPosition(double latitude, double longitude, float zoomf) {
@@ -524,6 +746,7 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onPause() {
         super.onPause();
+        hideARButtonsBar();
         if (mBount) {
             mService.removeListener(this);
             unbindService(mConnection);
@@ -535,7 +758,9 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onResume() {
         super.onResume();
+        scenesShown.clear();
         for (Scene scene : mDataManager.getActiveMapContent()) {
+            Log.i("GuestDuo","scene: "+scene.getName()+" drawn");
             scenesShown.put(String.valueOf(scene.getId()), scene);
         }
         drawMap();
@@ -575,8 +800,6 @@ public class MapsActivity extends AppCompatActivity implements
         moveMyLocationMarker(location);
     }
 
-    private HashMap<String, Viewport> viewports = new HashMap<>();
-    private HashMap<Viewport, Circle> circles = new HashMap<>();
     private HashMap<Marker, Viewport> markerToViewport = new HashMap<>();
     private HashMap<Viewport, Marker> viewportToMarker = new HashMap<>();
 
@@ -589,55 +812,145 @@ public class MapsActivity extends AppCompatActivity implements
         isFenceTriggered = true;
         fenceTriggered = areaID;
         Scene scene = scenesShown.get(String.valueOf(areaID));
-        if (scene.hasAR() && !scene.getViewports().isEmpty()) {
-            for (Viewport view : scene.getViewports()) {
-                Marker marker = mMap.addMarker(new MarkerOptions()
-                        .position(new LatLng(view.getLatitude(), view.getLongitude()))
-                        .title(scene.getName())
-                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.camera_video)));
-                Circle circle = mMap.addCircle(new CircleOptions()
-                        .center(new LatLng(view.getLatitude(), view.getLongitude()))
-                        .radius(view.getRadius())
-                        .strokeWidth(2)
-                        .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
-                        .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
 
-                viewports.put(view.getId(), view);
-                circles.put(view, circle);
-
-                markerToViewport.put(marker, view);
-                viewportToMarker.put(view, marker);
+        if (scene.hasAR() ) { //&& !scene.getViewports().isEmpty()
+            showARButtonsBar();
+            for (final Viewport view : scene.getViewports()) {
+                instant.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
+                        intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "InstantTracking/index.html");
+                        intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
+                        intent.putExtra(Constants.ARCHITECT_ORIGIN, view.getId());
+                        aSyncActivity(intent);
+                    }
+                });
+                sensor.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(getApplicationContext(), ArNavigationActivity.class);
+                        intent.putExtra(Constants.ARCHITECT_WORLD_KEY, "ModelAtGeoLocation/index.html");
+                        intent.putExtra(Constants.ARCHITECT_AR_SCENE_KEY, fenceTriggered);
+                        aSyncActivity(intent);
+                    }
+                });
             }
         }
+
+        if(circleMap.containsKey(areaID))
+            circleMap.get(areaID).remove();
+        Log.i("FENCES", "DRAW GEOFENCE MAP+" + scene.getId());
+        Circle circle = mMap.addCircle(new CircleOptions()
+                .center(new LatLng(scene.getLatitude(), scene.getLongitude()))
+                .radius(20)
+                .strokeWidth(2)
+                .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
+                .fillColor(ContextCompat.getColor(this, R.color.transparent)));
+        circleMap.put(areaID, circle);
+        startCircleAnimation(scene, circle);
     }
 
     public void userLeftArea(long areaID) {
         isFenceTriggered = false;
         fenceTriggered = -1;
 
-        if (!circles.isEmpty()) {
+        /*if (!circles.isEmpty()) {
             for (Viewport key : circles.keySet()) {
                 circles.get(key).remove();
             }
             circles.clear();
             viewports.clear();
-        }
-        if (!viewportToMarker.isEmpty()) {
+        }*/
+        /*if (!viewportToMarker.isEmpty()) {
             for (Viewport key : viewportToMarker.keySet()) {
                 viewportToMarker.get(key).remove();
             }
             viewportToMarker.clear();
             markerToViewport.clear();
             viewports.clear();
-        }
+        }*/
         //if (circleMap.containsKey(areaID)){
         //Toast.makeText(this, "User Left Area:" + mDataManager.getScene(areaID).getName(), Toast.LENGTH_LONG).show();
         //Circle circle = circleMap.get(areaID);
         //circle.remove();
         //circleMap.remove(areaID);
         //}
+        Scene scene = scenesShown.get(String.valueOf(areaID));
+        if (circleMap.get(areaID) == null)
+            return;
+        circleMap.get(areaID).remove();
+        Log.i("FENCES", "DRAW GEOFENCE MAP+" + scene.getId());
+        Circle circle = mMap.addCircle(new CircleOptions()
+                .center(new LatLng(scene.getLatitude(), scene.getLongitude()))
+                .radius(20)
+                .strokeWidth(2)
+                .strokeColor(ContextCompat.getColor(this, R.color.circleStroke))
+                .fillColor(ContextCompat.getColor(this, R.color.circleFill)));
+
+        circleMap.put(areaID, circle);
+        stopCircleAnimation();
+        if (scene.hasAR()) {
+            hideARButtonsBar();
+        }
 
     }
+
+    public void startCircleAnimation(Scene scene, final Circle circle) {
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        final long duration = 2000;
+
+        animatedCircle = circle;
+
+        final int startAlpha = 0x10, targetAlpha = 0xA5;
+
+        final Interpolator interpolator = new FastOutSlowInInterpolator();
+        Runnable anim = new Runnable() {
+            @Override
+            public void run() {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = Math.max(interpolator.getInterpolation((float) elapsed / duration), 0);
+
+                int r = (int) (startAlpha + t * (targetAlpha - startAlpha));
+                Log.i("COLORANIM", "#" + Integer.toHexString(r) + "3cc473" + "\nt: " + t);
+                circle.setFillColor(Color.parseColor("#" + Integer.toHexString(r) + "3cc473"));
+
+                if (t >= 0 && t < 1)
+                    handler.postDelayed(this, 16);
+            }
+        };
+
+        handler.post(anim);
+        animHandler = handler;
+    }
+
+    Handler animHandler = null;
+    Circle animatedCircle;
+
+    public void stopCircleAnimation() {
+        if (animatedCircle == null)
+            return;
+        animatedCircle.remove();
+        animHandler.removeCallbacksAndMessages(null);
+    }
+
+
+    public void showARButtonsBar() {
+
+        arButtonsHolder.setVisibility(View.VISIBLE);
+        Animation bottomTop = AnimationUtils.loadAnimation(this, R.anim.bottom_to_top);
+        arButtonsHolder.startAnimation(bottomTop);
+
+    }
+
+    public void hideARButtonsBar() {
+
+        arButtonsHolder.setVisibility(View.GONE);
+        Animation topBottom = AnimationUtils.loadAnimation(this, R.anim.top_to_bottom);
+        arButtonsHolder.startAnimation(topBottom);
+    }
+
 
     public void regionChanged(String region, String Country) {
         Toast.makeText(this, "Redraw Map Called", Toast.LENGTH_SHORT).show();
@@ -669,7 +982,6 @@ public class MapsActivity extends AppCompatActivity implements
         customMarkerView.draw(canvas);
         return returnedBitmap;
     }
-
 
     private class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
 

@@ -77,25 +77,7 @@ public class ArNavigationActivity extends Activity {
     protected ArchitectView.SensorAccuracyChangeListener sensorAccuracyListener;
     protected boolean onlyOnce = false;
     protected float magneticDeclination = 0.0f;
-    /**
-     * sensorservice listener to simulate instant tracking mechanics
-     */
-    protected SensorServiceListener mSensorServiceListener = new SensorServiceListener() {
-        @Override
-        public void updateData(double bearing, double theta, double distance) {
 
-            if (ArNavigationActivity.this.lastKnownLocation != null && !onlyOnce){
-                onlyOnce = true;
-                Location location = ArNavigationActivity.this.lastKnownLocation;
-                GeomagneticField field = new GeomagneticField((float)location.getLatitude(), (float)location.getLatitude(), (float)location.getAltitude(), System.currentTimeMillis());
-                magneticDeclination = field.getDeclination();
-                Toast.makeText(MyApp.getAppContext(),"Declination: "+magneticDeclination,Toast.LENGTH_SHORT).show();
-            }
-
-            //bearing += magneticDeclination;
-            callJavaScript("World.OnCrosshairPositionChange", new String[]{String.valueOf((float) bearing), String.valueOf((float) distance)});
-        }
-    };
 
     /**
      * last known location of the user, used internally for content-loading after user location was fetched
@@ -169,7 +151,7 @@ public class ArNavigationActivity extends Activity {
 
         @Override
         public void userEnteredArea(long areaID) {
-            if (!mDataManager.getActivePlayer().hasVisited(areaID))
+            if (!mDataManager.getActivePlayer().hasVisited(areaID) || mDataManager.getScene(areaID).hasAR())
                 callJavaScript("World.userEnteredArea", new String[]{String.valueOf(areaID)});
             Log.i("GeoFence", "Fence Triggered: " + areaID);
         }
@@ -186,7 +168,7 @@ public class ArNavigationActivity extends Activity {
             //update JS Location
             ArNavigationActivity.this.architectView.setLocation(location.getLatitude(), location.getLongitude(), location.getAccuracy());
 
-            if(WorldToLoad.contains("Instant")) {
+            if(WorldToLoad.contains("Instant") || calledFromJS) {
                 //if (instantTrackingLocation == null)
                     //instantTrackingLocation = location;
 
@@ -200,17 +182,46 @@ public class ArNavigationActivity extends Activity {
 
                     double distance = instantModelLocation.distanceTo(location);
 
+                //INITIAL BEARING
                     double dLon = (lng2-lng1);
                     double y = Math.sin(dLon) * Math.cos(lat2);
                     double x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
-                    double bearing = Math.toDegrees((Math.atan2(y, x)));
-                    bearing = (360 - ((bearing + 360) % 360));
+                    double initialBearing = Math.toDegrees((Math.atan2(y, x)));
+                    initialBearing = (360 - ((initialBearing + 360) % 360));
 
-                    callJavaScript("World.UpdateUserPosition", new String[]{String.valueOf(bearing), String.valueOf(distance)});
+                //RHUMB LINE BEARING -Bearing of a straight line in a mercator projection with an angle equal to the compass bearing
+                    double df = Math.log(Math.tan(Math.PI/4+lat2/2)/Math.tan(Math.PI/4+lat1/2));
+                    if (Math.abs(dLon) > Math.PI) dLon = dLon>0 ? -(2*Math.PI-dLon) : (2*Math.PI+dLon);
+                    double brng = Math.toDegrees(Math.atan2(dLon, df));
+                    //brng = (360 - ((brng + 360) % 360));
+                    brng = brng + 360;
+
+                    callJavaScript("World.UpdateUserPosition", new String[]{String.valueOf(initialBearing), String.valueOf(distance)});
                 //}
             }
         }
     };
+
+    /**
+     * sensorservice listener to simulate instant tracking mechanics
+     */
+    protected SensorServiceListener mSensorServiceListener = new SensorServiceListener() {
+        @Override
+        public void updateData(double bearing, double theta, double distance) {
+
+            if (ArNavigationActivity.this.lastKnownLocation != null && !onlyOnce){
+                onlyOnce = true;
+                Location location = ArNavigationActivity.this.lastKnownLocation;
+                GeomagneticField field = new GeomagneticField((float)location.getLatitude(), (float)location.getLatitude(), (float)location.getAltitude(), System.currentTimeMillis());
+                magneticDeclination = field.getDeclination();
+                Toast.makeText(MyApp.getAppContext(),"Declination: "+magneticDeclination,Toast.LENGTH_SHORT).show();
+            }
+
+            bearing -= magneticDeclination;
+            callJavaScript("World.OnCrosshairPositionChange", new String[]{String.valueOf((float) bearing), String.valueOf((float) distance)});
+        }
+    };
+
 
     protected boolean mBount = false;
     protected String WorldToLoad = "";
@@ -276,7 +287,7 @@ public class ArNavigationActivity extends Activity {
                 } else if (WorldToLoad.contains(Constants.ARCHITECT_MODEL_AT_GEOLOCATION_KEY)) {
 
                     if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(scene_id)) {
-                        mDataManager.updatePlayer(true, this);
+                        mDataManager.updatePlayer(true, String.valueOf(scene_id),this);
                         mDataManager.addVisit(scene_id, this);
                     } else {
                         mDataManager.addGuestVisit(scene_id);
@@ -284,6 +295,13 @@ public class ArNavigationActivity extends Activity {
                     injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(String.valueOf(scene_id))).toString()});
 
                 } else if (WorldToLoad.contains(Constants.ARCHITECT_INSTANT_TRACKING_KEY)) {
+
+                    if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(scene_id)) {
+                        mDataManager.updatePlayer(true,String.valueOf(scene_id), this);
+                        mDataManager.addVisit(scene_id, this);
+                    } else {
+                        mDataManager.addGuestVisit(scene_id);
+                    }
 
                     startService(new Intent(this, SensorService.class));
                     String origin = getIntent().getStringExtra(Constants.ARCHITECT_ORIGIN);
@@ -455,18 +473,21 @@ public class ArNavigationActivity extends Activity {
                         case "GEOAR":
                             loadWorld("GEOAR", jsonObject.getString("id"));
                             break;
+                        case "INSTANT":
+                            loadWorld("INSTANT", jsonObject.getString("id"));
+                            break;
                         case "arNav":
                             loadWorld("arNav", null);
                             break;
                         case "score":
                             if (jsonObject.getBoolean("success")) {
                                 Log.i("Answer", "correct" + jsonObject.getString("id"));
-                                mDataManager.updatePlayer(true, getApplicationContext());
+                                mDataManager.updatePlayer(true, jsonObject.getString("id"),getApplicationContext());
                                 mDataManager.addVisit(jsonObject.getLong("id"), getApplicationContext());
                                 injectPlayer(mDataManager.getActivePlayer());
                             } else {
                                 Log.i("Answer", "wrong");
-                                mDataManager.updatePlayer(false, getApplicationContext());
+                                mDataManager.updatePlayer(false,jsonObject.getString("id"), getApplicationContext());
                                 injectPlayer(mDataManager.getActivePlayer());
                             }
                             break;
@@ -489,6 +510,7 @@ public class ArNavigationActivity extends Activity {
         };
     }
 
+    boolean calledFromJS = false;
     public void loadWorld(final String world, final String id) {
         ArNavigationActivity.this.runOnUiThread(new Runnable() {
             @Override
@@ -497,11 +519,41 @@ public class ArNavigationActivity extends Activity {
                     switch (world) {
                         case "GEOAR":
                             architectView.load("ModelAtGeoLocation/index.html");
+                            if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(Long.parseLong(id))) {
+                                mDataManager.updatePlayer(true, id, MyApp.getAppContext());
+                                mDataManager.addVisit(Long.parseLong(id), MyApp.getAppContext());
+                            } else {
+                                mDataManager.addGuestVisit(Long.parseLong(id));
+                            }
                             callJavaScript("World.ShowBackBtn", new String[]{});
                             injectArgs("World.getScene", new String[]{JsonHelper.arSceneToJson(mDataManager.getArScene(id)).toString()});
                             break;
+                        case "INSTANT":
+                            calledFromJS = true;
+                            architectView.load("InstantTracking/index.html");
+                            if (!mDataManager.getActivePlayer().getUsername().contains("Guest") && !mDataManager.getActivePlayer().hasVisited(Long.parseLong(id))) {
+                                mDataManager.updatePlayer(true, id, MyApp.getAppContext());
+                                mDataManager.addVisit(Long.parseLong(id), MyApp.getAppContext());
+                            } else {
+                                mDataManager.addGuestVisit(Long.parseLong(id));
+                            }
+                            ArNavigationActivity.this.startService(new Intent(ArNavigationActivity.this, SensorService.class));
+                            bindService(new Intent(ArNavigationActivity.this, SensorService.class), mSensorConnection, Context.BIND_NOT_FOREGROUND);
+
+                            Scene scene = mDataManager.getArScene(id);
+
+                            instantModelLocation = new Location("");
+                            ArrayList<ArScene> l = scene.getArScene();
+                            instantModelLocation.setLatitude(l.get(0).getLatitude());
+                            instantModelLocation.setLongitude(l.get(0).getLongitude());
+
+                            callJavaScript("World.ShowBackBtn", new String[]{});
+                            injectArgs("World.getInstantiation", new String[]{JsonHelper.sceneWithViewportToJSON(scene, scene.getViewport("1")).toString()});
+                            break;
                         case "arNav":
+                            if(calledFromJS) calledFromJS = false;
                             architectView.load("ArNavigation/index.html");
+                            mService.isFenceTriggered();
                             injectData(mDataManager.getActiveMapContent());
                             break;
                     }
@@ -516,12 +568,12 @@ public class ArNavigationActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!mBount) {
+        if (!mBount ) {
             startService(new Intent(this, LocationService.class));
             bindService(new Intent(this, LocationService.class), mConnection, Context.BIND_NOT_FOREGROUND);
             mBount = true;
         }
-        if (!mSensorBount) {
+        if (!mSensorBount && WorldToLoad.contains("Instant")) {
             bindService(new Intent(this, SensorService.class), mSensorConnection, Context.BIND_NOT_FOREGROUND);
         }
 

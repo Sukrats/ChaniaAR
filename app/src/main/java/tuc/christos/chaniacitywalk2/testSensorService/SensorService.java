@@ -1,6 +1,7 @@
 package tuc.christos.chaniacitywalk2.testSensorService;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
@@ -10,6 +11,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 
@@ -86,7 +88,7 @@ public class SensorService extends Service implements SensorDataListener {
         ServiceHandler(Looper looper) {
             super(looper);
             Log.i("SensorService","Provider Created");
-            sensorDataProvider = new PointerLocationProvider(SensorService.this, SensorService.this);
+            sensorDataProvider = new PointerLocationProvider(SensorService.this, (WindowManager) getSystemService(Context.WINDOW_SERVICE), SensorService.this);
         }
 
         @Override

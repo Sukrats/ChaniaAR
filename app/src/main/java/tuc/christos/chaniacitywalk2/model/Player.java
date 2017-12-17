@@ -15,6 +15,7 @@ public class Player {
     private String email;
     private String username;
     private String password;
+    private String newPassword;
     private String firstname;
     private String lastname;
     private Date created;
@@ -62,6 +63,14 @@ public class Player {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getNewPassword() {
+        return newPassword;
+    }
+
+    public void setNewPassword(String password) {
+        this.newPassword = password;
     }
 
     public String getUsername() {
@@ -162,9 +171,13 @@ public class Player {
 
     public void updateScore(boolean success){
         if(success)
-            this.score += 250;
+            this.score +=(this.score - 501)*15/100; //this.score += 250;
         else
-            this.score -= 250;
+            this.score -=(this.score - 501)*15/100;// -= 250;
+    }
+    public void updateBaseScore(){
+        this.score += 250;
+
     }
 
 

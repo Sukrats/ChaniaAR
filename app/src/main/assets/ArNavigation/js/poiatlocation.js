@@ -26,7 +26,7 @@ var World = {
 
 		// show radar & set click-listener
 		PoiRadar.show();
-        PoiRadar.setMaxDistance(Math.max(1000, 1));
+        PoiRadar.setMaxDistance(Math.max(100, 1));
 		$('#radarContainer').unbind('click');
 		$("#radarContainer").click(PoiRadar.clickedRadar);
 
@@ -115,6 +115,7 @@ var World = {
 	// fired when user pressed maker in cam
     onMarkerSelected: function onMarkerSelectedFn(marker) {
         $("#play-ar").hide();
+        $("#play-inst").hide();
         $("#poi-detail-description").hide();
         $("#answer-ar").hide();
 		/*
@@ -128,7 +129,7 @@ var World = {
 		if( marker.poiData.visited == true ){
 		    $("#poi-detail-description").html(descr);
             $("#poi-detail-description").show();
-		}else{
+		}else if(marker.poiData.hasAR == false){
             $("#answer-ar").show();
             $("#answer-ar").unbind();
             $("#answer-ar").click(function(){
@@ -156,6 +157,20 @@ var World = {
                 if(World.isInArea){
                     var args = {
                         action: "GEOAR",
+                        id: World.areaMarker.poiData.id
+                    };
+                    World.areaMarker.setDeselected(World.areaMarker);
+                    AR.platform.sendJSONObject(args);
+                }else{
+                    alert("You need to get closer!")
+                }
+            });
+            $("#play-inst").show();
+            $("#play-inst").unbind();
+            $("#play-inst").click(function(){
+                if(World.isInArea){
+                    var args = {
+                        action: "INSTANT",
                         id: World.areaMarker.poiData.id
                     };
                     World.areaMarker.setDeselected(World.areaMarker);
