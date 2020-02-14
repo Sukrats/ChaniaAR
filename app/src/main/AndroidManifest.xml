@@ -3,14 +3,30 @@
     package="tuc.christos.chaniacitywalk2">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    !-- Needed only if your app targets Android 5.0 (API level 21) or higher. -->
+
+    !-- Needed only if the app targets Android 5.0 (API level 21) or higher. -->
     <uses-feature android:name="android.hardware.location.gps" />
     <uses-feature android:name="android.hardware.location.network" />
 
+    !-- Needed for Augmented Reality -->
+    <uses-feature android:name="android.hardware.camera.autofocus" />
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <uses-feature android:name="android.hardware.location" android:required="true" />
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
+    <uses-feature android:name="android.hardware.sensor.compass" android:required="true" />
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+
+    !-- Needed by SQLite for local storage. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
+        android:name=".MyApp"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -18,17 +34,24 @@
         android:theme="@style/AppTheme">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key" />
+            android:value="AIzaSyDQpGOwAEEwez9OkJ7atLCO0Sv8C3JAmr0" />
         <activity
-            android:name=".MapsActivity"
-            android:screenOrientation="portrait">
+            android:name=".LoginActivity"
+            android:noHistory="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.Dark">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
-            android:name=".collection.CollectionActivity"
+            android:name=".MapsActivity"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".collectionActivity.CollectionActivity"
             android:label="@string/title_activity_collection_siblings"
             android:parentActivityName=".MapsActivity"
             android:screenOrientation="portrait"
@@ -37,16 +60,72 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
         </activity>
+
         <activity
-            android:name=".collection.SceneDetailActivity"
+            android:name=".collectionActivity.SceneDetailActivity"
             android:label="@string/title_scene_detail"
-            android:parentActivityName=".collection.CollectionActivity"
+            android:parentActivityName=".collectionActivity.CollectionActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="tuc.christos.chaniacitywalk2.collection.CollectionActivity" />
-    </activity>
+                android:value="tuc.christos.chaniacitywalk2.collectionActivity.CollectionActivity" />
+        </activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_settings"
+            android:parentActivityName=".MapsActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/PreferenceTheme">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
+        </activity>
+
+        <activity
+            android:name=".ProfileActivity"
+            android:label="@string/title_profile"
+            android:parentActivityName=".MapsActivity"
+            android:screenOrientation="portrait">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
+        </activity>
+
+        <activity
+            android:name=".ArNavigationActivity"
+            android:configChanges="screenSize|orientation">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="tuc.christos.chaniacitywalk2.MapsActivity" />
+        </activity>
+
+        <service
+            android:name=".locationService.LocationService"
+            android:exported="false" />
+
+        <service
+            android:name=".testSensorService.SensorService" />
+
+        <activity
+            android:name=".locationService.NotificationResult"
+            android:excludeFromRecents="true"
+            android:theme="@style/PreferenceThemeDialog" />
+        <activity
+            android:name=".leaderboards.LeaderBoardActivity"
+            android:label="@string/title_activity_leader_board" />
+        <activity
+            android:name=".collectionActivity.FullscreenActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/title_activity_fullscreen"
+            android:parentActivityName=".collectionActivity.SceneDetailActivity"
+            android:theme="@style/FullscreenTheme">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity" />
+        </activity>
+        <activity android:name=".testSensorService.SensorCheckActivity"/>
     </application>
 
 </manifest>

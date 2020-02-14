@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="tuc.christos.chaniacitywalk2.collection.SceneDetailActivity"
+    tools:context="tuc.christos.chaniacitywalk2.collectionActivity.SceneDetailActivity"
     tools:ignore="MergeRootFrame">
 
     <android.support.design.widget.AppBarLayout
@@ -23,6 +23,14 @@
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:toolbarId="@+id/toolbar">
 
+            <ImageView
+                android:id="@+id/scene_thumb"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/title_scene_detail"
+                android:scaleType="centerCrop"
+                android:transitionName="image" />
+
             <android.support.v7.widget.Toolbar
                 android:id="@+id/detail_toolbar"
                 android:layout_width="match_parent"
@@ -40,14 +48,40 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+    <LinearLayout
+        android:id="@+id/textLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/Accent"
+        android:elevation="4dp"
+        android:orientation="vertical"
+        android:paddingBottom="16dp"
+        android:paddingEnd="72dp"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        app:layout_anchor="@+id/scene_detail_container"
+        app:layout_anchorGravity="top|start">
+
+        <TextView
+            android:id="@+id/nameTextView"
+            style="@style/TextAppearance.AppCompat.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textIsSelectable="true" />
+
+    </LinearLayout>
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:elevation="4dp"
         android:layout_gravity="center_vertical|start"
         android:layout_margin="@dimen/fab_margin"
         app:layout_anchor="@+id/scene_detail_container"
         app:layout_anchorGravity="top|end"
-        app:srcCompat="@android:drawable/stat_notify_chat" />
+        app:srcCompat="@drawable/ic_star_border_white_48dp" />
 
 </android.support.design.widget.CoordinatorLayout>

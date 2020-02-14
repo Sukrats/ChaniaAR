@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceScreen
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="@string/pref_user_settings">
+
+        <CheckBoxPreference
+            android:key="pref_key_auto_sign_in"
+            android:summary="@string/pref_keep_logged_in_summary"
+            android:title="@string/pref_keep_logged_in"
+            android:defaultValue="false"/>
+
+    </PreferenceScreen>
+
+    <PreferenceScreen
+        android:icon="@android:drawable/ic_menu_mapmode"
+        android:title="@string/pref_maps">
+
+        <SwitchPreferenceCompat
+            android:key="pref_key_camera_follow"
+            android:summary="@string/pref_maps_camera_follow_summary"
+            android:title="@string/pref_maps_camera_follow_title"
+            android:defaultValue="false"/>
+
+        <ListPreference
+            android:key="pref_key_map_type"
+            android:entries="@array/pref_maps_map_style_titles"
+            android:entryValues="@array/pref_maps_map_style_values"
+            android:defaultValue="Retro Mode"
+            android:title="@string/pref_maps_map_style"/>
+    </PreferenceScreen>
+
+    <PreferenceScreen
+        android:icon="@drawable/ic_menu_mylocation"
+        android:title="@string/pref_location">
+
+        <ListPreference
+            android:key="pref_key_location_update_interval"
+            android:title="@string/pref_location_mode"
+            android:entries="@array/pref_location_mode_titles"
+            android:defaultValue="High Accuracy"
+            android:entryValues="@array/pref_location_mode_values"/>
+    </PreferenceScreen>
+
+    <PreferenceScreen
+        android:icon="@android:drawable/ic_menu_compass"
+        android:title="@string/pref_geo_fence">
+
+        <CheckBoxPreference
+            android:key="pref_key_allow_background_locations"
+            android:summary="@string/allow_background_locations"
+            android:title="@string/allow_background_locations_title"
+            android:defaultValue="true"/>
+
+        <CheckBoxPreference
+            android:key="pref_key_google_api_client"
+            android:summary="@string/use_google_api_client"
+            android:title="@string/google_api_client"
+            android:defaultValue="true"/>
+
+    </PreferenceScreen>
+
+</PreferenceScreen>

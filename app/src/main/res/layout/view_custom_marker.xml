@@ -3,12 +3,12 @@
     android:id="@+id/custom_marker_view"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/marker_mask">
+    android:background="@drawable/markerborderdark">
 
     <ImageView
         android:id="@+id/profile_image"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:layout_gravity="center_horizontal"
         android:contentDescription="@null" />
 </FrameLayout>

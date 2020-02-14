@@ -1,0 +1,36 @@
+body
+{
+    margin: 0;
+    padding: 0;
+}
+#page1
+{
+    position: fixed;
+    margin: 0;
+    padding: 0;
+}
+#panel-poidetail
+{
+    position: absolute;
+    bottom: 0%;
+    width: 100%;
+    display: none;
+    align-self: baseline|center;
+}
+.ui-header .ui-title {
+    margin-right: 15%!important;
+    margin-left: 15%!important;
+}
+.radarContainer_left {
+	position:absolute;
+	top:0px;
+	right:0px;
+	width:100px;
+	height:100px;
+}
+#user_image {
+ 	position:absolute;
+ 	bottom: 2%;
+ 	width:100%;
+    text-align: center;
+}

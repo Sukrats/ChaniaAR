@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:key="pref_key_allow_background_locations"
+        android:summary="@string/allow_background_locations"
+        android:title="@string/allow_background_locations_title"
+        android:defaultValue="true"/>
+
+    <ListPreference
+        android:key="pref_key_location_update_interval"
+        android:title="@string/pref_location_mode"
+        android:entries="@array/pref_location_mode_titles"
+        android:defaultValue="High Accuracy"
+        android:entryValues="@array/pref_location_mode_values"/>
+
+    <CheckBoxPreference
+        android:key="pref_key_google_api_client"
+        android:summary="@string/use_google_api_client"
+        android:title="@string/google_api_client"
+        android:defaultValue="true"/>
+
+
+</PreferenceScreen>

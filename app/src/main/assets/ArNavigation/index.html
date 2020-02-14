@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <!--  basic meta information -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Type" content="application/json; charset=utf-8">
+    <meta content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes"
+          name="viewport">
+
+    <title>My ARchitect World</title>
+
+    <script src="https://www.wikitude.com/libs/architect.js"></script>
+    <!--<script src="architect://architect.js"></script>-->
+
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="css/detail_panel.css"/>
+
+    <!-- jquery mobile CSS -->
+    <link rel="stylesheet" href="../jquery/jquery.mobile-1.3.2.min.css"/>
+    <link rel="stylesheet" href="../jquery/icon-pack-custom.css"/>
+    <!-- required to set background transparent & enable "click through" -->
+    <link rel="stylesheet" href="../jquery/jquery-mobile-transparent-ui-overlay.css"/>
+
+    <!-- jquery JS files -->
+    <script type="text/javascript" src="../jquery/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="../jquery/jquery.mobile-1.3.2.min.js"></script>
+    <link rel="stylesheet" href="../font-awesome/css/font-awesome.min.css">
+
+
+    <!-- marker representation-->
+    <script src="js/marker.js"></script>
+    <script src="js/questionObject.js"></script>
+    <!-- radar component -->
+    <script type="text/javascript" src="js/radar.js"></script>
+    <!-- World logic-->
+    <script type="text/javascript" src="js/poiatlocation.js"></script>
+</head>
+
+<body>
+<div data-role="page" id="page1" style="background: none;">
+    <!-- MAIN PAGE CONTENT -->
+    <div class="radarContainer_left" id="radarContainer"></div>
+    <div id="user_image">
+        <a id="score" href="#positionOrigin" data-rel="popup" data-position-to="origin" data-transition="slideup">
+            <img src="assets/circular_user_image_2.png" alt="usermaybe" width="100" height="82" >
+        </a>
+    </div>
+    <div data-role="popup"  id="positionOrigin" class="ui-content" data-theme="d">
+        <p></p>
+    </div>
+
+    <!-- transparent footer-->
+    <div id="info-footer" data-role="footer" class="ui-bar" data-theme="f" data-position="fixed"
+         style="text-align:center;">
+
+        <!-- small status-button -->
+        <a style="text-align:right;" id="popupInfoButton" href="#popupInfo" data-rel="popup"
+           data-role="button"
+           class="ui-icon-alt" data-inline="true" data-transition="pop" data-icon="alert"
+           data-theme="e"
+           data-iconpos="notext">Log</a> </p>
+
+        <!-- popup displayed when button clicked -->
+        <div data-role="popup" id="popupInfo" class="ui-content" data-theme="e">
+            <p style="text-align:right;" id="status-message">Trying to find out where you are</p>
+        </div>
+
+    </div>
+    <!-- PANELS, ONLY VISIBLE ON DEMAND -->
+    <!-- panel containing POI detail information -->
+    <div id="panel-poidetail">
+        <!-- header with "close" button -->
+        <div data-role="header" data-theme="d">
+            <h3 id="poi-detail-title"></h3>
+            <a id="closeBtn" href="#header" data-rel="close">Close</a>
+        </div>
+        <!-- content of POI detail page -->
+        <div data-role="content" style="background-color:#F0F0F0;">
+            <!-- title button -->
+            <div class="ui-grid-solo" style="align-self:stretch">
+
+                <div class="ui-block-a" style="align-self:stretch;text-align:center;">
+                    <!-- description -->
+                    <h4 id="poi-detail-description"></h4>
+                    <!-- distance and map button -->
+                    <h4>Distance: <a id="poi-detail-distance"></a></h4>
+
+                    <a id="play-ar" data-shadow="true" data-role="button" style="display:none"
+                        data-theme="d"
+                        data-inline="true">Sensor Tracking
+                        <i class="fa fa-play-circle" aria-hidden="true"></i>
+                    </a>
+                    <a id="play-inst" data-shadow="true" data-role="button" style="display:none"
+                           data-theme="d"
+                           data-inline="true">Instant Tracking
+                    <i class="fa fa-play-circle" aria-hidden="true"></i>
+                    </a>
+                    <a id="answer-ar" data-shadow="true" data-role="button" style="display:none"
+                           data-theme="d"
+                           data-inline="true">Unlock Monument
+                        <i class="fa fa-unlock" aria-hidden="true"></i>
+                    </a>
+                </div>
+
+            </div>
+            <div class="ui-grid-solo" style="align-self:stretch;text-align:center;">
+                <div class="ui-block-a" style="align-self:center;text-align:center;" data-role="controlgroup"
+                     data-type="horizontal">
+                    <a id="open-details-activity"
+                       data-icon="info" data-role="button" data-iconpos="notext" data-theme="d">Details</a>
+                    <a id="open-map"
+                       data-icon="back" data-role="button" data-iconpos="notext"
+                       data-theme="d">Map</a>
+                    <a id="mark-place"
+                       data-icon="star" data-role="button" data-iconpos="notext"
+                       data-theme="d">Mark</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+
+</html>
