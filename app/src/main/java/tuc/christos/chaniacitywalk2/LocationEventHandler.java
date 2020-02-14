@@ -126,7 +126,6 @@ public class LocationEventHandler implements LocationCallback {
          */
         if(GeoFences.isEmpty()){
             Toast.makeText(mContext,"NO GEO FENCE ACTIVE ", Toast.LENGTH_LONG).show();
-
         }
         else{
             /*
@@ -142,7 +141,7 @@ public class LocationEventHandler implements LocationCallback {
             }
             triggerDrawGeoFences(areaIds);
             Toast.makeText(mContext,"GEO FENCES ACTIVE: " + GeoFences.size(), Toast.LENGTH_LONG).show();
-        }
+
 
     }
 
@@ -209,3 +208,11 @@ public class LocationEventHandler implements LocationCallback {
         }
     }
 }
+}
+
+
+
+
+
+
+

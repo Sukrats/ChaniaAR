@@ -25,7 +25,13 @@ import android.support.design.widget.BottomNavigationView;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+<<<<<<< HEAD
+=======
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.BounceInterpolator;
+>>>>>>> master
 import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -224,10 +230,8 @@ public class MapsActivity extends AppCompatActivity implements
                 public void run() {
                     long elapsed = SystemClock.uptimeMillis() - start;
                     float t = Math.max(interpolator.getInterpolation((float) elapsed / duration), 0);
-
                     double x = currentX + t*(targetX - currentX);
                     double y = currentY + t*(targetY - currentY);
-
                     mLocationMarker.setPosition(new LatLng( x, y));
 
                     if (t > 0.0 && t < 1.0) {
